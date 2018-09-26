@@ -34,9 +34,9 @@ entity EvrFrontEnd is
       AXI_BASE_ADDR_G  : slv(31 downto 0) := (others => '0'));
    port (
       -- Timing Interface
-      evrClk          : out sl;
-      evrRst          : out sl;
-      evrTimingBus    : out TimingBusType;
+      appTimingClk    : in  sl;
+      appTimingRst    : in  sl;
+      appTimingBus    : out TimingBusType;
       -- AXI-Lite Interface
       sysClk          : in  sl;
       sysRst          : in  sl;
@@ -102,15 +102,6 @@ architecture mapping of EvrFrontEnd is
    signal timingPhy : TimingPhyType;
 
 begin
-
-   evrClk <= rxClk;
-   U_Rst : entity work.RstPipeline
-      generic map (
-         TPD_G => TPD_G)
-      port map (
-         clk    => rxClk,
-         rstIn  => rxRst,
-         rstOut => evrRst);
 
    ---------------------
    -- AXI-Lite Crossbar
@@ -249,9 +240,9 @@ begin
          gtRxControl     => rxControl,
          gtRxStatus      => rxStatus,
          -- Decoded timing message interface
-         appTimingClk    => rxClk,
-         appTimingRst    => rxRst,
-         appTimingBus    => evrTimingBus,
+         appTimingClk    => appTimingClk,
+         appTimingRst    => appTimingRst,
+         appTimingBus    => appTimingBus,
          timingPhy       => timingPhy,
          -- AXI Lite interface
          axilClk         => sysClk,

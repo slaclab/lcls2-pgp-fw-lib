@@ -25,6 +25,7 @@ use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
 use work.TimingPkg.all;
 use work.AxiPciePkg.all;
+use work.Pgp2bPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -57,7 +58,10 @@ entity PgpLaneWrapper is
       axilReadMaster  : in  AxiLiteReadMasterType;
       axilReadSlave   : out AxiLiteReadSlaveType;
       axilWriteMaster : in  AxiLiteWriteMasterType;
-      axilWriteSlave  : out AxiLiteWriteSlaveType);
+      axilWriteSlave  : out AxiLiteWriteSlaveType;
+      -- PGP TX OP-codes (pgpTxClk domains)
+      pgpTxClk        : out slv(7 downto 0);
+      pgpTxIn         : in  Pgp2bTxInArray(7 downto 0));            
 end PgpLaneWrapper;
 
 architecture mapping of PgpLaneWrapper is
@@ -183,7 +187,10 @@ begin
             axilReadMaster   => axilReadMasters(i+WEST_C),
             axilReadSlave    => axilReadSlaves(i+WEST_C),
             axilWriteMaster  => axilWriteMasters(i+WEST_C),
-            axilWriteSlave   => axilWriteSlaves(i+WEST_C));
+            axilWriteSlave   => axilWriteSlaves(i+WEST_C),
+            -- PGP TX OP-codes (pgpTxClk domains)
+            pgpTxClkOut     => pgpTxClk(i+WEST_C),
+            appPgpTxIn      => pgpTxIn(i+WEST_C));            
 
       U_East : entity work.PgpLane
          generic map (
@@ -218,7 +225,10 @@ begin
             axilReadMaster   => axilReadMasters(i+EAST_C),
             axilReadSlave    => axilReadSlaves(i+EAST_C),
             axilWriteMaster  => axilWriteMasters(i+EAST_C),
-            axilWriteSlave   => axilWriteSlaves(i+EAST_C));
+            axilWriteSlave   => axilWriteSlaves(i+EAST_C),
+            -- PGP TX OP-codes (pgpTxClk domains)
+            pgpTxClkOut     => pgpTxClk(i+EAST_C),
+            appPgpTxIn      => pgpTxIn(i+EAST_C));               
 
    end generate GEN_VEC;
 

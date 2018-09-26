@@ -64,7 +64,10 @@ entity PgpLane is
       axilReadMaster   : in  AxiLiteReadMasterType;
       axilReadSlave    : out AxiLiteReadSlaveType;
       axilWriteMaster  : in  AxiLiteWriteMasterType;
-      axilWriteSlave   : out AxiLiteWriteSlaveType);
+      axilWriteSlave   : out AxiLiteWriteSlaveType;
+      -- PGP TX OP-codes (pgpTxClk domain)
+      pgpTxClkOut     : out sl;
+      appPgpTxIn      : in  Pgp2bTxInType);      
 end PgpLane;
 
 architecture mapping of PgpLane is
@@ -82,7 +85,6 @@ architecture mapping of PgpLane is
    signal axilReadMasters  : AxiLiteReadMasterArray(NUM_AXI_MASTERS_C-1 downto 0);
    signal axilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXI_MASTERS_C-1 downto 0);
 
-   signal locTxIn  : Pgp2bTxInType;
    signal pgpTxIn  : Pgp2bTxInType;
    signal pgpTxOut : Pgp2bTxOutType;
 
@@ -109,8 +111,13 @@ architecture mapping of PgpLane is
 
    signal status : StatusType;
    signal config : ConfigType;
+   
+   signal evrPgpTxIn : Pgp2bTxInType := PGP2B_TX_IN_INIT_C;
+   signal locTxIn    : Pgp2bTxInType := PGP2B_TX_IN_INIT_C;   
 
 begin
+
+   pgpTxClkOut <= pgpTxClk;
 
    ---------------------
    -- AXI-Lite Crossbar
@@ -237,6 +244,15 @@ begin
          axilReadSlave   => axilReadSlaves(MON_INDEX_C),
          axilWriteMaster => axilWriteMasters(MON_INDEX_C),
          axilWriteSlave  => axilWriteSlaves(MON_INDEX_C));
+         
+   locTxIn.flush       <= appPgpTxIn.flush;
+   locTxIn.opCodeEn    <= appPgpTxIn.opCodeEn or evrPgpTxIn.opCodeEn; 
+   locTxIn.opCode      <= appPgpTxIn.opCode when(appPgpTxIn.opCodeEn = '1') else evrPgpTxIn.opCode;
+   locTxIn.locData     <= appPgpTxIn.locData;
+   locTxIn.flowCntlDis <= appPgpTxIn.flowCntlDis;
+   locTxIn.resetTx     <= appPgpTxIn.resetTx;
+   locTxIn.resetGt     <= appPgpTxIn.resetGt;         
+         
    ------------
    -- Misc Core
    ------------
@@ -319,7 +335,7 @@ begin
             -- PGP Trigger Interface (pgpTxClk domain)
             pgpTxClk     => pgpTxClk,
             pgpTxRst     => pgpTxRst,
-            pgpTxIn      => locTxIn,
+            pgpTxIn      => evrPgpTxIn,
             -- PGP RX Interface (pgpRxClk domain)
             pgpRxClk     => pgpRxClk,
             pgpRxRst     => pgpRxRst,
@@ -335,7 +351,7 @@ begin
       -- PGP RX
       dmaIbMaster  <= AXI_STREAM_MASTER_INIT_C;
       status       <= STATUS_INIT_C;
-      locTxIn      <= PGP2B_TX_IN_INIT_C;
+      evrPgpTxIn   <= PGP2B_TX_IN_INIT_C;
       pgpRxCtrl    <= (others => AXI_STREAM_CTRL_UNUSED_C);
    end generate;
 

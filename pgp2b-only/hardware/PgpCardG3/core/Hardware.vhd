@@ -24,6 +24,7 @@ use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
 use work.TimingPkg.all;
+use work.Pgp2bPkg.all;
 
 entity Hardware is
    generic (
@@ -44,6 +45,13 @@ entity Hardware is
       dmaObSlaves     : out AxiStreamSlaveArray(7 downto 0);
       dmaIbMasters    : out AxiStreamMasterArray(7 downto 0);
       dmaIbSlaves     : in  AxiStreamSlaveArray(7 downto 0);
+      -- Timing information (appTimingClk domain)
+      appTimingClk    : in  sl;
+      appTimingRst    : in  sl;
+      appTimingBus    : out TimingBusType;
+      -- PGP TX OP-codes (pgpTxClk domains)
+      pgpTxClk        : out slv(7 downto 0);
+      pgpTxIn         : in  Pgp2bTxInArray(7 downto 0) := (others => PGP2B_TX_IN_INIT_C);      
       -- PGP GT Serial Ports
       pgpRefClkP      : in  sl;
       pgpRefClkN      : in  sl;
@@ -125,8 +133,8 @@ begin
          dmaIbMasters    => dmaIbMasters,
          dmaIbSlaves     => dmaIbSlaves,
          -- Timing Interface (evrClk domain)
-         evrClk          => evrClk,
-         evrRst          => evrRst,
+         evrClk          => appTimingClk,
+         evrRst          => appTimingRst,
          evrTimingBus    => evrTimingBus,
          -- AXI-Lite Interface (sysClk domain)
          sysClk          => sysClk,
@@ -134,7 +142,10 @@ begin
          axilReadMaster  => axilReadMasters(PGP_INDEX_C),
          axilReadSlave   => axilReadSlaves(PGP_INDEX_C),
          axilWriteMaster => axilWriteMasters(PGP_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(PGP_INDEX_C));
+         axilWriteSlave  => axilWriteSlaves(PGP_INDEX_C),
+         -- PGP TX OP-codes (pgpTxClk domains)
+         pgpTxClk        => pgpTxClk,
+         pgpTxIn         => pgpTxIn);         
 
    ------------------
    -- Timing Receiver
@@ -144,10 +155,10 @@ begin
          TPD_G           => TPD_G,
          AXI_BASE_ADDR_G => AXI_CONFIG_C(EVR_INDEX_C).baseAddr)
       port map (
-         -- Timing Interface (evrClk domain)
-         evrClk          => evrClk,
-         evrRst          => evrRst,
-         evrTimingBus    => evrTimingBus,
+         -- Timing Interface (appTimingClk domain)
+         appTimingClk    => appTimingClk,
+         appTimingRst    => appTimingRst,
+         appTimingBus    => evrTimingBus,
          -- AXI-Lite Interface
          sysClk          => sysClk,
          sysRst          => sysRst,
