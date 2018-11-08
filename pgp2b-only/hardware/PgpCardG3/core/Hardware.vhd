@@ -1,8 +1,6 @@
 -------------------------------------------------------------------------------
 -- File       : Hardware.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2017-10-04
--- Last update: 2018-03-15
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -25,12 +23,14 @@ use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
 use work.TimingPkg.all;
 use work.Pgp2bPkg.all;
+use work.SsiPkg.all;
 
 entity Hardware is
    generic (
-      TPD_G           : time                 := 1 ns;
-      LANE_SIZE_G     : natural range 0 to 8 := 8;
-      AXI_BASE_ADDR_G : slv(31 downto 0)     := x"0080_0000");
+      TPD_G             : time                 := 1 ns;
+      LANE_SIZE_G       : natural range 0 to 8 := 8;
+      DMA_AXIS_CONFIG_G : AxiStreamConfigType  := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
+      AXI_BASE_ADDR_G   : slv(31 downto 0)     := x"0080_0000");
    port (
       -- System Clock and Reset
       sysClk          : in  sl;
@@ -51,7 +51,7 @@ entity Hardware is
       appTimingBus    : out TimingBusType;
       -- PGP TX OP-codes (pgpTxClk domains)
       pgpTxClk        : out slv(7 downto 0);
-      pgpTxIn         : in  Pgp2bTxInArray(7 downto 0) := (others => PGP2B_TX_IN_INIT_C);      
+      pgpTxIn         : in  Pgp2bTxInArray(7 downto 0) := (others => PGP2B_TX_IN_INIT_C);
       -- PGP GT Serial Ports
       pgpRefClkP      : in  sl;
       pgpRefClkN      : in  sl;
@@ -116,9 +116,10 @@ begin
    --------------
    U_Pgp : entity work.PgpLaneWrapper
       generic map (
-         TPD_G           => TPD_G,
-         LANE_SIZE_G     => LANE_SIZE_G,
-         AXI_BASE_ADDR_G => AXI_CONFIG_C(PGP_INDEX_C).baseAddr)
+         TPD_G             => TPD_G,
+         LANE_SIZE_G       => LANE_SIZE_G,
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
+         AXI_BASE_ADDR_G   => AXI_CONFIG_C(PGP_INDEX_C).baseAddr)
       port map (
          -- PGP GT Serial Ports
          pgpRefClkP      => pgpRefClkP,
@@ -145,7 +146,7 @@ begin
          axilWriteSlave  => axilWriteSlaves(PGP_INDEX_C),
          -- PGP TX OP-codes (pgpTxClk domains)
          pgpTxClk        => pgpTxClk,
-         pgpTxIn         => pgpTxIn);         
+         pgpTxIn         => pgpTxIn);
 
    ------------------
    -- Timing Receiver

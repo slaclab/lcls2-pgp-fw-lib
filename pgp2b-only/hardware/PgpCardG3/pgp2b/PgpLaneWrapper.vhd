@@ -1,8 +1,6 @@
 -------------------------------------------------------------------------------
 -- File       : PgpLaneWrapper.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2017-10-04
--- Last update: 2018-03-15
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -26,15 +24,17 @@ use work.AxiStreamPkg.all;
 use work.TimingPkg.all;
 use work.AxiPciePkg.all;
 use work.Pgp2bPkg.all;
+use work.SsiPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
 
 entity PgpLaneWrapper is
    generic (
-      TPD_G           : time                 := 1 ns;
-      LANE_SIZE_G     : natural range 0 to 8 := 8;
-      AXI_BASE_ADDR_G : slv(31 downto 0)     := (others => '0'));
+      TPD_G             : time                 := 1 ns;
+      LANE_SIZE_G       : natural range 0 to 8 := 8;
+      DMA_AXIS_CONFIG_G : AxiStreamConfigType  := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
+      AXI_BASE_ADDR_G   : slv(31 downto 0)     := (others => '0'));
    port (
       -- PGP GT Serial Ports
       pgpRefClkP      : in  sl;
@@ -61,7 +61,7 @@ entity PgpLaneWrapper is
       axilWriteSlave  : out AxiLiteWriteSlaveType;
       -- PGP TX OP-codes (pgpTxClk domains)
       pgpTxClk        : out slv(7 downto 0);
-      pgpTxIn         : in  Pgp2bTxInArray(7 downto 0));            
+      pgpTxIn         : in  Pgp2bTxInArray(7 downto 0));
 end PgpLaneWrapper;
 
 architecture mapping of PgpLaneWrapper is
@@ -156,10 +156,11 @@ begin
 
       U_West : entity work.PgpLane
          generic map (
-            TPD_G           => TPD_G,
-            ENABLE_G        => ite((i+WEST_C) < LANE_SIZE_G, true, false),
-            LANE_G          => (i+WEST_C),
-            AXI_BASE_ADDR_G => AXI_CONFIG_C(i+WEST_C).baseAddr)
+            TPD_G             => TPD_G,
+            DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
+            ENABLE_G          => ite((i+WEST_C) < LANE_SIZE_G, true, false),
+            LANE_G            => (i+WEST_C),
+            AXI_BASE_ADDR_G   => AXI_CONFIG_C(i+WEST_C).baseAddr)
          port map (
             -- QPLL Clocking
             gtQPllOutRefClk  => qPllRefClk(0),
@@ -189,15 +190,16 @@ begin
             axilWriteMaster  => axilWriteMasters(i+WEST_C),
             axilWriteSlave   => axilWriteSlaves(i+WEST_C),
             -- PGP TX OP-codes (pgpTxClk domains)
-            pgpTxClkOut     => pgpTxClk(i+WEST_C),
-            appPgpTxIn      => pgpTxIn(i+WEST_C));            
+            pgpTxClkOut      => pgpTxClk(i+WEST_C),
+            appPgpTxIn       => pgpTxIn(i+WEST_C));
 
       U_East : entity work.PgpLane
          generic map (
-            TPD_G           => TPD_G,
-            ENABLE_G        => ite((i+EAST_C) < LANE_SIZE_G, true, false),
-            LANE_G          => (i+EAST_C),
-            AXI_BASE_ADDR_G => AXI_CONFIG_C(i+EAST_C).baseAddr)
+            TPD_G             => TPD_G,
+            ENABLE_G          => ite((i+EAST_C) < LANE_SIZE_G, true, false),
+            LANE_G            => (i+EAST_C),
+            DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
+            AXI_BASE_ADDR_G   => AXI_CONFIG_C(i+EAST_C).baseAddr)
          port map (
             -- QPLL Clocking
             gtQPllOutRefClk  => qPllRefClk(1),
@@ -227,8 +229,8 @@ begin
             axilWriteMaster  => axilWriteMasters(i+EAST_C),
             axilWriteSlave   => axilWriteSlaves(i+EAST_C),
             -- PGP TX OP-codes (pgpTxClk domains)
-            pgpTxClkOut     => pgpTxClk(i+EAST_C),
-            appPgpTxIn      => pgpTxIn(i+EAST_C));               
+            pgpTxClkOut      => pgpTxClk(i+EAST_C),
+            appPgpTxIn       => pgpTxIn(i+EAST_C));
 
    end generate GEN_VEC;
 

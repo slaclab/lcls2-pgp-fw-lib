@@ -1,8 +1,6 @@
 -------------------------------------------------------------------------------
 -- File       : PgpLaneTx.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2017-10-04
--- Last update: 2018-01-15
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -22,12 +20,13 @@ use ieee.std_logic_unsigned.all;
 
 use work.StdRtlPkg.all;
 use work.AxiStreamPkg.all;
-use work.AxiPciePkg.all;
 use work.Pgp2bPkg.all;
+use work.SsiPkg.all;
 
 entity PgpLaneTx is
    generic (
-      TPD_G : time := 1 ns);
+      TPD_G : time := 1 ns;
+      DMA_AXIS_CONFIG_G : AxiStreamConfigType  := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2));
    port (
       -- DMA Interface (sysClk domain)
       sysClk       : in  sl;
@@ -74,7 +73,7 @@ begin
    U_Flush : entity work.AxiStreamFlush
       generic map (
          TPD_G         => TPD_G,
-         AXIS_CONFIG_G => DMA_AXIS_CONFIG_C,
+         AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
          SSI_EN_G      => true)
       port map (
          axisClk     => sysClk,
@@ -99,7 +98,7 @@ begin
          FIFO_ADDR_WIDTH_G   => 5,
          FIFO_PAUSE_THRESH_G => 20,
          -- AXI Stream Port Configurations
-         SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_C,
+         SLAVE_AXI_CONFIG_G  => DMA_AXIS_CONFIG_G,
          MASTER_AXI_CONFIG_G => SSI_PGP2B_CONFIG_C)
       port map (
          -- Slave Port

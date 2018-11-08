@@ -1,8 +1,6 @@
 -------------------------------------------------------------------------------
 -- File       : PgpLaneRx.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2017-10-04
--- Last update: 2017-12-06
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -22,14 +20,15 @@ use ieee.std_logic_unsigned.all;
 
 use work.StdRtlPkg.all;
 use work.AxiStreamPkg.all;
-use work.AxiPciePkg.all;
 use work.AppPkg.all;
 use work.Pgp2bPkg.all;
 use work.TimingPkg.all;
+use work.SsiPkg.all;
 
 entity PgpLaneRx is
    generic (
       TPD_G            : time                 := 1 ns;
+      DMA_AXIS_CONFIG_G : AxiStreamConfigType  := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
       SLAVE_READY_EN_G : boolean              := false;
       CASCADE_SIZE_G   : positive             := 1;
       LANE_G           : natural range 0 to 7 := 0);
@@ -289,7 +288,7 @@ begin
             FIFO_ADDR_WIDTH_G   => 9,
             -- AXI Stream Port Configurations
             SLAVE_AXI_CONFIG_G  => APP_AXIS_CONFIG_C,
-            MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_C)
+            MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
          port map (
             -- Slave Port
             sAxisClk    => sysClk,

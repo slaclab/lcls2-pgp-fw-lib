@@ -1,8 +1,6 @@
 -------------------------------------------------------------------------------
 -- File       : EvrMisc.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2017-10-04
--- Last update: 2018-03-15
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -131,7 +129,7 @@ begin
       generic map (
          TPD_G          => TPD_G,
          USE_DSP48_G    => "yes",
-         REF_CLK_FREQ_G => SYS_CLK_FREQ_C,
+         REF_CLK_FREQ_G => DMA_CLK_FREQ_C,
          REFRESH_RATE_G => 1.0,
          CNT_WIDTH_G    => 32)
       port map (
@@ -154,7 +152,7 @@ begin
       generic map (
          TPD_G          => TPD_G,
          USE_DSP48_G    => "yes",
-         REF_CLK_FREQ_G => SYS_CLK_FREQ_C,
+         REF_CLK_FREQ_G => DMA_CLK_FREQ_C,
          REFRESH_RATE_G => 1.0,
          CNT_WIDTH_G    => 32)
       port map (

@@ -1,8 +1,6 @@
 -------------------------------------------------------------------------------
 -- File       : Hardware.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2017-03-22
--- Last update: 2018-09-24
 -------------------------------------------------------------------------------
 -- Description: Hardware File
 -------------------------------------------------------------------------------
@@ -28,14 +26,17 @@ use work.AxiStreamPkg.all;
 use work.AxiPciePkg.all;
 use work.TimingPkg.all;
 use work.Pgp2bPkg.all;
+use work.SsiPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
 
 entity Hardware is
    generic (
-      TPD_G           : time             := 1 ns;
-      AXI_BASE_ADDR_G : slv(31 downto 0) := x"0000_0000");
+      TPD_G             : time                := 1 ns;
+      DMA_SIZE_G        : positive            := 1;
+      DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
+      AXI_BASE_ADDR_G   : slv(31 downto 0)    := x"0000_0000");
    port (
       ------------------------      
       --  Top Level Interfaces
@@ -50,17 +51,17 @@ entity Hardware is
       axilWriteMaster : in  AxiLiteWriteMasterType;
       axilWriteSlave  : out AxiLiteWriteSlaveType;
       -- DMA Interface (sysClk domain)
-      dmaObMasters    : in  AxiStreamMasterArray(7 downto 0);
-      dmaObSlaves     : out AxiStreamSlaveArray(7 downto 0);
-      dmaIbMasters    : out AxiStreamMasterArray(7 downto 0);
-      dmaIbSlaves     : in  AxiStreamSlaveArray(7 downto 0);
+      dmaObMasters    : in  AxiStreamMasterArray(DMA_SIZE_G-1 downto 0);
+      dmaObSlaves     : out AxiStreamSlaveArray(DMA_SIZE_G-1 downto 0);
+      dmaIbMasters    : out AxiStreamMasterArray(DMA_SIZE_G-1 downto 0);
+      dmaIbSlaves     : in  AxiStreamSlaveArray(DMA_SIZE_G-1 downto 0);
       -- Timing information (appTimingClk domain)
       appTimingClk    : in  sl;
       appTimingRst    : in  sl;
       appTimingBus    : out TimingBusType;
       -- PGP TX OP-codes (pgpTxClk domains)
-      pgpTxClk        : out slv(5 downto 0);
-      pgpTxIn         : in  Pgp2bTxInArray(5 downto 0) := (others => PGP2B_TX_IN_INIT_C);
+      pgpTxClk        : out slv(DMA_SIZE_G-1 downto 0);
+      pgpTxIn         : in  Pgp2bTxInArray(DMA_SIZE_G-1 downto 0) := (others => PGP2B_TX_IN_INIT_C);
       ---------------------
       --  Hardware Ports
       ---------------------    
@@ -108,6 +109,13 @@ architecture mapping of Hardware is
    signal drpRst   : sl;
 
    signal evrTimingBus : TimingBusType;
+
+   signal obMasters : AxiStreamMasterArray(5 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+   signal obSlaves  : AxiStreamSlaveArray(5 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
+   signal ibMasters : AxiStreamMasterArray(5 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
+   signal ibSlaves  : AxiStreamSlaveArray(5 downto 0)  := (others => AXI_STREAM_SLAVE_FORCE_C);
+   signal txClk     : slv(5 downto 0)                  := (others => '0');
+   signal txIn      : Pgp2bTxInArray(5 downto 0)       := (others => PGP2B_TX_IN_INIT_C);
 
 begin
 
@@ -164,8 +172,9 @@ begin
    --------------
    U_Pgp : entity work.PgpLaneWrapper
       generic map (
-         TPD_G           => TPD_G,
-         AXI_BASE_ADDR_G => AXI_CONFIG_C(PGP_INDEX_C).baseAddr)
+         TPD_G             => TPD_G,
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
+         AXI_BASE_ADDR_G   => AXI_CONFIG_C(PGP_INDEX_C).baseAddr)
       port map (
          -- QSFP[0] Ports
          qsfp0RefClkP    => qsfp0RefClkP,
@@ -190,10 +199,10 @@ begin
          drpClk          => drpClk,
          drpRst          => drpRst,
          -- DMA Interfaces (sysClk domain)
-         dmaObMasters    => dmaObMasters,
-         dmaObSlaves     => dmaObSlaves,
-         dmaIbMasters    => dmaIbMasters,
-         dmaIbSlaves     => dmaIbSlaves,
+         dmaObMasters    => obMasters,
+         dmaObSlaves     => obSlaves,
+         dmaIbMasters    => ibMasters,
+         dmaIbSlaves     => ibSlaves,
          -- Timing Interface (evrClk domain)
          evrClk          => appTimingClk,
          evrRst          => appTimingRst,
@@ -206,8 +215,17 @@ begin
          axilWriteMaster => axilWriteMasters(PGP_INDEX_C),
          axilWriteSlave  => axilWriteSlaves(PGP_INDEX_C),
          -- PGP TX OP-codes (pgpTxClk domains)
-         pgpTxClk        => pgpTxClk,
-         pgpTxIn         => pgpTxIn);
+         pgpTxClk        => txClk,
+         pgpTxIn         => txIn);
+
+   obMasters(DMA_SIZE_G-1 downto 0) <= dmaObMasters;
+   dmaObSlaves                      <= obSlaves(DMA_SIZE_G-1 downto 0);
+
+   dmaIbMasters                    <= ibMasters(DMA_SIZE_G-1 downto 0);
+   ibSlaves(DMA_SIZE_G-1 downto 0) <= dmaIbSlaves;
+
+   pgpTxClk                    <= txClk(DMA_SIZE_G-1 downto 0);
+   txIn(DMA_SIZE_G-1 downto 0) <= pgpTxIn;
 
    ------------------
    -- Timing Receiver

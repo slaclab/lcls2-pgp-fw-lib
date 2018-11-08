@@ -1,8 +1,6 @@
 -------------------------------------------------------------------------------
 -- File       : AppPkg.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2017-10-04
--- Last update: 2017-12-10
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -21,17 +19,11 @@ use ieee.std_logic_1164.all;
 use work.StdRtlPkg.all;
 use work.AxiStreamPkg.all;
 use work.AxiPciePkg.all;
+use work.SsiPkg.all;
 
 package AppPkg is
 
-   constant APP_AXIS_CONFIG_C : AxiStreamConfigType := (
-      TSTRB_EN_C    => DMA_AXIS_CONFIG_C.TSTRB_EN_C,
-      TDATA_BYTES_C => 4,               -- 32-bit interface
-      TDEST_BITS_C  => DMA_AXIS_CONFIG_C.TDEST_BITS_C,
-      TID_BITS_C    => DMA_AXIS_CONFIG_C.TID_BITS_C,
-      TKEEP_MODE_C  => DMA_AXIS_CONFIG_C.TKEEP_MODE_C,
-      TUSER_BITS_C  => DMA_AXIS_CONFIG_C.TUSER_BITS_C,
-      TUSER_MODE_C  => DMA_AXIS_CONFIG_C.TUSER_MODE_C);
+   constant APP_AXIS_CONFIG_C : AxiStreamConfigType := ssiAxiStreamConfig(4, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);-- 32-bit interface
 
    type EvrToPgpType is record
       run     : sl;

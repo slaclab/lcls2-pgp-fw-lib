@@ -1,8 +1,6 @@
 -------------------------------------------------------------------------------
 -- File       : EvrMisc.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2017-09-20
--- Last update: 2018-03-15
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -95,7 +93,7 @@ begin
    U_userClk156 : entity work.SyncClockFreq
       generic map (
          TPD_G          => TPD_G,
-         REF_CLK_FREQ_G => SYS_CLK_FREQ_C,
+         REF_CLK_FREQ_G => DMA_CLK_FREQ_C,
          REFRESH_RATE_G => 1.0,
          CNT_WIDTH_G    => 32)
       port map (
@@ -111,7 +109,7 @@ begin
       U_refClk : entity work.SyncClockFreq
          generic map (
             TPD_G          => TPD_G,
-            REF_CLK_FREQ_G => SYS_CLK_FREQ_C,
+            REF_CLK_FREQ_G => DMA_CLK_FREQ_C,
             REFRESH_RATE_G => 1.0,
             CNT_WIDTH_G    => 32)
          port map (
@@ -134,7 +132,7 @@ begin
    U_txClkFreq : entity work.SyncClockFreq
       generic map (
          TPD_G          => TPD_G,
-         REF_CLK_FREQ_G => SYS_CLK_FREQ_C,
+         REF_CLK_FREQ_G => DMA_CLK_FREQ_C,
          REFRESH_RATE_G => 1.0,
          CNT_WIDTH_G    => 32)
       port map (
@@ -156,7 +154,7 @@ begin
    U_rxClkFreq : entity work.SyncClockFreq
       generic map (
          TPD_G          => TPD_G,
-         REF_CLK_FREQ_G => SYS_CLK_FREQ_C,
+         REF_CLK_FREQ_G => DMA_CLK_FREQ_C,
          REFRESH_RATE_G => 1.0,
          CNT_WIDTH_G    => 32)
       port map (

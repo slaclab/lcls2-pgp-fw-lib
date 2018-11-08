@@ -1,8 +1,6 @@
 -------------------------------------------------------------------------------
 -- File       : PgpLaneWrapper.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2017-10-04
--- Last update: 2018-03-15
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -26,14 +24,16 @@ use work.AxiStreamPkg.all;
 use work.TimingPkg.all;
 use work.AxiPciePkg.all;
 use work.Pgp2bPkg.all;
+use work.SsiPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
 
 entity PgpLaneWrapper is
    generic (
-      TPD_G           : time             := 1 ns;
-      AXI_BASE_ADDR_G : slv(31 downto 0) := (others => '0'));
+      TPD_G             : time                := 1 ns;
+      DMA_AXIS_CONFIG_G : AxiStreamConfigType := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
+      AXI_BASE_ADDR_G   : slv(31 downto 0)    := (others => '0'));
    port (
       -- QSFP[0] Ports
       qsfp0RefClkP    : in  slv(1 downto 0);
@@ -58,10 +58,10 @@ entity PgpLaneWrapper is
       drpClk          : in  sl;
       drpRst          : in  sl;
       -- DMA Interface (sysClk domain)
-      dmaObMasters    : in  AxiStreamMasterArray(7 downto 0);
-      dmaObSlaves     : out AxiStreamSlaveArray(7 downto 0);
-      dmaIbMasters    : out AxiStreamMasterArray(7 downto 0);
-      dmaIbSlaves     : in  AxiStreamSlaveArray(7 downto 0);
+      dmaObMasters    : in  AxiStreamMasterArray(5 downto 0);
+      dmaObSlaves     : out AxiStreamSlaveArray(5 downto 0);
+      dmaIbMasters    : out AxiStreamMasterArray(5 downto 0);
+      dmaIbSlaves     : in  AxiStreamSlaveArray(5 downto 0);
       -- Timing Interface (evrClk domain)
       evrClk          : in  sl;
       evrRst          : in  sl;
@@ -75,12 +75,12 @@ entity PgpLaneWrapper is
       axilWriteSlave  : out AxiLiteWriteSlaveType;
       -- PGP TX OP-codes (pgpTxClk domains)
       pgpTxClk        : out slv(5 downto 0);
-      pgpTxIn         : in  Pgp2bTxInArray(5 downto 0));      
+      pgpTxIn         : in  Pgp2bTxInArray(5 downto 0));
 end PgpLaneWrapper;
 
 architecture mapping of PgpLaneWrapper is
 
-   constant NUM_AXI_MASTERS_C : natural := 6;
+   constant NUM_AXI_MASTERS_C : positive := 6;
 
    constant AXI_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXI_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXI_MASTERS_C, AXI_BASE_ADDR_G, 20, 16);
 
@@ -93,10 +93,10 @@ architecture mapping of PgpLaneWrapper is
    signal sysReset        : slv(NUM_AXI_MASTERS_C-1 downto 0);
    signal evrTimingBusDly : TimingBusArray(NUM_AXI_MASTERS_C-1 downto 0);
 
-   signal pgpRxP   : slv(NUM_AXI_MASTERS_C-1 downto 0);
-   signal pgpRxN   : slv(NUM_AXI_MASTERS_C-1 downto 0);
-   signal pgpTxP   : slv(NUM_AXI_MASTERS_C-1 downto 0);
-   signal pgpTxN   : slv(NUM_AXI_MASTERS_C-1 downto 0);
+   signal pgpRxP : slv(5 downto 0);
+   signal pgpRxN : slv(5 downto 0);
+   signal pgpTxP : slv(5 downto 0);
+   signal pgpTxN : slv(5 downto 0);
 
    signal refClk : slv(3 downto 0);
 
@@ -104,10 +104,6 @@ architecture mapping of PgpLaneWrapper is
    attribute dont_touch of refClk : signal is "TRUE";
 
 begin
-
-   -- Unused DMA lanes
-   dmaObSlaves(7 downto 6)  <= (others => AXI_STREAM_SLAVE_FORCE_C);
-   dmaIbMasters(7 downto 6) <= (others => AXI_STREAM_MASTER_INIT_C);
 
    -- Remapping for EVR[1] interface
    evrRxP(1)   <= qsfp1RxP(3);
@@ -201,9 +197,10 @@ begin
 
       U_Lane : entity work.PgpLane
          generic map (
-            TPD_G           => TPD_G,
-            LANE_G          => (i),
-            AXI_BASE_ADDR_G => AXI_CONFIG_C(i).baseAddr)
+            TPD_G             => TPD_G,
+            DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
+            LANE_G            => (i),
+            AXI_BASE_ADDR_G   => AXI_CONFIG_C(i).baseAddr)
          port map (
             -- PGP Serial Ports
             pgpRxP          => pgpRxP(i),

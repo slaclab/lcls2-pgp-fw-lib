@@ -1,8 +1,6 @@
 -------------------------------------------------------------------------------
 -- File       : PgpLane.vhd
 -- Company    : SLAC National Accelerator Laboratory
--- Created    : 2017-10-04
--- Last update: 2018-03-15
 -------------------------------------------------------------------------------
 -- Description: 
 -------------------------------------------------------------------------------
@@ -27,16 +25,18 @@ use work.AxiPciePkg.all;
 use work.AppPkg.all;
 use work.Pgp2bPkg.all;
 use work.TimingPkg.all;
+use work.SsiPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
 
 entity PgpLane is
    generic (
-      TPD_G           : time                 := 1 ns;
-      ENABLE_G        : boolean              := true;
-      LANE_G          : natural range 0 to 7 := 0;
-      AXI_BASE_ADDR_G : slv(31 downto 0)     := (others => '0'));
+      TPD_G             : time                 := 1 ns;
+      ENABLE_G          : boolean              := true;
+      LANE_G            : natural range 0 to 7 := 0;
+      DMA_AXIS_CONFIG_G : AxiStreamConfigType  := ssiAxiStreamConfig(16, TKEEP_COMP_C, TUSER_FIRST_LAST_C, 8, 2);
+      AXI_BASE_ADDR_G   : slv(31 downto 0)     := (others => '0'));
    port (
       -- QPLL Clocking
       gtQPllOutRefClk  : in  slv(1 downto 0);
@@ -66,8 +66,8 @@ entity PgpLane is
       axilWriteMaster  : in  AxiLiteWriteMasterType;
       axilWriteSlave   : out AxiLiteWriteSlaveType;
       -- PGP TX OP-codes (pgpTxClk domain)
-      pgpTxClkOut     : out sl;
-      appPgpTxIn      : in  Pgp2bTxInType);      
+      pgpTxClkOut      : out sl;
+      appPgpTxIn       : in  Pgp2bTxInType);
 end PgpLane;
 
 architecture mapping of PgpLane is
@@ -111,9 +111,9 @@ architecture mapping of PgpLane is
 
    signal status : StatusType;
    signal config : ConfigType;
-   
+
    signal evrPgpTxIn : Pgp2bTxInType := PGP2B_TX_IN_INIT_C;
-   signal locTxIn    : Pgp2bTxInType := PGP2B_TX_IN_INIT_C;   
+   signal locTxIn    : Pgp2bTxInType := PGP2B_TX_IN_INIT_C;
 
 begin
 
@@ -222,7 +222,7 @@ begin
          COMMON_TX_CLK_G    => false,
          COMMON_RX_CLK_G    => false,
          WRITE_EN_G         => true,
-         AXI_CLK_FREQ_G     => SYS_CLK_FREQ_C,
+         AXI_CLK_FREQ_G     => DMA_CLK_FREQ_C,
          STATUS_CNT_WIDTH_G => 8,
          ERROR_CNT_WIDTH_G  => 8)
       port map (
@@ -244,15 +244,15 @@ begin
          axilReadSlave   => axilReadSlaves(MON_INDEX_C),
          axilWriteMaster => axilWriteMasters(MON_INDEX_C),
          axilWriteSlave  => axilWriteSlaves(MON_INDEX_C));
-         
+
    locTxIn.flush       <= appPgpTxIn.flush;
-   locTxIn.opCodeEn    <= appPgpTxIn.opCodeEn or evrPgpTxIn.opCodeEn; 
+   locTxIn.opCodeEn    <= appPgpTxIn.opCodeEn or evrPgpTxIn.opCodeEn;
    locTxIn.opCode      <= appPgpTxIn.opCode when(appPgpTxIn.opCodeEn = '1') else evrPgpTxIn.opCode;
    locTxIn.locData     <= appPgpTxIn.locData;
    locTxIn.flowCntlDis <= appPgpTxIn.flowCntlDis;
    locTxIn.resetTx     <= appPgpTxIn.resetTx;
-   locTxIn.resetGt     <= appPgpTxIn.resetGt;         
-         
+   locTxIn.resetGt     <= appPgpTxIn.resetGt;
+
    ------------
    -- Misc Core
    ------------
@@ -295,7 +295,8 @@ begin
       ---------
       U_Tx : entity work.PgpLaneTx
          generic map (
-            TPD_G => TPD_G)
+            TPD_G             => TPD_G,
+            DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
          port map (
             -- DMA Interface (sysClk domain)
             sysClk       => sysClk,
@@ -315,10 +316,11 @@ begin
       ---------
       U_Rx : entity work.PgpLaneRx
          generic map (
-            TPD_G          => TPD_G,
+            TPD_G             => TPD_G,
+            DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
             -- CASCADE_SIZE_G => 4,
-            CASCADE_SIZE_G => 1,
-            LANE_G         => LANE_G)
+            CASCADE_SIZE_G    => 1,
+            LANE_G            => LANE_G)
          port map (
             -- DMA Interface (sysClk domain)
             sysClk       => sysClk,
