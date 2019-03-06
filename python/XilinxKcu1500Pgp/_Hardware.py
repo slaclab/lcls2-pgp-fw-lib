@@ -37,7 +37,7 @@ class Hardware(pr.Device):
         
             if (version3):
                 self.add(pgp.Pgp3AxiL(            
-                    name    = ('Lane[%i]' % i), 
+                    name    = ('PgpMon[%i]' % i), 
                     offset  = (0x00800000 + i*0x00010000), 
                     numVc   = 4,
                     writeEn = True,
@@ -45,15 +45,15 @@ class Hardware(pr.Device):
                 )) 
             else:
                 self.add(pgp.Pgp2bAxi(            
-                    name    = ('Lane[%i]' % i), 
+                    name    = ('PgpMon[%i]' % i), 
                     offset  = (0x00800000 + i*0x00010000), 
                     writeEn = True,
                     expand  = False,
                 ))         
         
-        # # Add Timing Core
-        # self.add(XilinxKcu1500Pgp.TimingCore(
-            # offset = 0x00900000,
+        # Add Timing Core
+        self.add(XilinxKcu1500Pgp.Timing(
+            offset = 0x00900000,
             # expand = False,
-        # ))
+        ))
         

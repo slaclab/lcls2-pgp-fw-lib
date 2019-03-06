@@ -91,18 +91,26 @@ architecture mapping of Kcu1500TimingRx is
    signal axilReadMasters  : AxiLiteReadMasterArray(NUM_AXIL_MASTERS_C-1 downto 0);
    signal axilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXIL_MASTERS_C-1 downto 0);
 
-   signal mmcmRst        : sl;
-   signal refClk         : slv(1 downto 0);
-   signal refRst         : slv(1 downto 0);
-   signal mmcmLocked     : slv(1 downto 0);
-   signal timingClockSel : sl;
-   signal loopback       : Slv3Array(1 downto 0);
+   signal initReadMaster  : AxiLiteReadMasterType;
+   signal initReadSlave   : AxiLiteReadSlaveType;
+   signal initWriteMaster : AxiLiteWriteMasterType;
+   signal initWriteSlave  : AxiLiteWriteSlaveType;
+
+   signal mmcmRst      : sl;
+   signal refClk       : slv(1 downto 0);
+   signal refClkDiv2   : slv(1 downto 0);
+   signal refRst       : slv(1 downto 0);
+   signal refRstDiv2   : slv(1 downto 0);
+   signal mmcmLocked   : slv(1 downto 0);
+   signal timingClkSel : sl;
+   signal useMiniTpg   : sl;
+   signal loopback     : slv(2 downto 0);
 
    signal rxUserRst   : sl;
    signal gtRxClk     : slv(1 downto 0);
+   signal gtRxClock   : slv(1 downto 0);
    signal rxClk       : sl;
    signal rxRst       : sl;
-   signal rxReset     : sl;
    signal gtRxData    : Slv16Array(1 downto 0);
    signal rxData      : slv(15 downto 0);
    signal gtRxDataK   : Slv2Array(1 downto 0);
@@ -116,34 +124,33 @@ architecture mapping of Kcu1500TimingRx is
    signal rxCtrl      : TimingPhyControlType;
    signal rxControl   : TimingPhyControlType;
 
-   signal txUserRst    : sl;
-   signal gtTxClk      : slv(1 downto 0);
-   signal txClk        : sl;
-   signal txRst        : sl;
-   signal txData       : slv(15 downto 0);
-   signal txDataK      : slv(1 downto 0);
-   signal txDiffCtrl   : slv(3 downto 0);
-   signal txPreCursor  : slv(4 downto 0);
-   signal txPostCursor : slv(4 downto 0);
-   signal gtTxStatus   : TimingPhyStatusArray(1 downto 0);
-   signal txStatus     : TimingPhyStatusType := TIMING_PHY_STATUS_INIT_C;
+   signal txUserRst  : sl;
+   signal gtTxClk    : slv(1 downto 0);
+   signal txClk      : sl;
+   signal txRst      : sl;
+   signal txData     : slv(15 downto 0);
+   signal txDataK    : slv(1 downto 0);
+   signal txStatus   : TimingPhyStatusType := TIMING_PHY_STATUS_FORCE_C;
+   signal gtTxStatus : TimingPhyStatusArray(1 downto 0);
 
-   signal appTimingPhy  : TimingPhyType;
+   signal timingPhy     : TimingPhyType;
    signal appTimingBus  : TimingBusType;
    signal appTimingTrig : TimingTrigType;
    signal appTimingMode : sl;
 
    signal appTrigMasters : AxiStreamMasterArray(3 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
    signal appTrigCtrl    : AxiStreamCtrlArray(3 downto 0);
+   signal trigMon        : slv(3 downto 0);
+   signal trigDrop       : slv(3 downto 0);
 
    signal txMasters : AxiStreamMasterArray(3 downto 0);
    signal txSlaves  : AxiStreamSlaveArray(3 downto 0);
 
 begin
 
-   txRst   <= txUserRst;
-   rxReset <= rxUserRst or not(rxStatus.resetDone);
-   rxRst   <= rxUserRst;
+   txStatus <= TIMING_PHY_STATUS_FORCE_C;
+   txRst    <= txUserRst;
+   rxRst    <= rxUserRst;
 
    -------------------------   
    -- Reference LCLS-I Clock
@@ -203,22 +210,45 @@ begin
          -- Locked Status
          locked    => mmcmLocked(1));
 
+   -------------------------------------------------------
+   -- Power Up Initialization of the KCU1500 Timing RX PHY
+   -------------------------------------------------------
+   U_TimingPhyInit : entity work.TimingPhyInit
+      generic map (
+         TPD_G              => TPD_G,
+         SIMULATION_G       => SIMULATION_G,
+         TIMING_BASE_ADDR_G => AXIL_CONFIG_C(TIMING_INDEX_C).baseAddr,
+         AXIL_CLK_FREQ_G    => AXIL_CLK_FREQ_G)
+      port map (
+         mmcmLocked       => mmcmLocked,
+         -- AXI-Lite Register Interface (sysClk domain)
+         axilClk          => axilClk,
+         axilRst          => axilRst,
+         mAxilReadMaster  => initReadMaster,
+         mAxilReadSlave   => initReadSlave,
+         mAxilWriteMaster => initWriteMaster,
+         mAxilWriteSlave  => initWriteSlave);
+
    ---------------------
    -- AXI-Lite Crossbar
    ---------------------
    U_XBAR : entity work.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
-         NUM_SLAVE_SLOTS_G  => 1,
+         NUM_SLAVE_SLOTS_G  => 2,
          NUM_MASTER_SLOTS_G => NUM_AXIL_MASTERS_C,
          MASTERS_CONFIG_G   => AXIL_CONFIG_C)
       port map (
          axiClk              => axilClk,
          axiClkRst           => axilRst,
          sAxiWriteMasters(0) => axilWriteMaster,
+         sAxiWriteMasters(1) => initWriteMaster,
          sAxiWriteSlaves(0)  => axilWriteSlave,
+         sAxiWriteSlaves(1)  => initWriteSlave,
          sAxiReadMasters(0)  => axilReadMaster,
+         sAxiReadMasters(1)  => initReadMaster,
          sAxiReadSlaves(0)   => axilReadSlave,
+         sAxiReadSlaves(1)   => initReadSlave,
          mAxiWriteMasters    => axilWriteMasters,
          mAxiWriteSlaves     => axilWriteSlaves,
          mAxiReadMasters     => axilReadMasters,
@@ -249,7 +279,7 @@ begin
                stableRst       => axilRst,
                -- GTH FPGA IO
                gtRefClk        => refClk(i),
-               gtRefClkDiv2    => refClk(i),
+               gtRefClkDiv2    => refClkDiv2(i),
                gtRxP           => timingRxP(i),
                gtRxN           => timingRxN(i),
                gtTxP           => timingTxP(i),
@@ -258,39 +288,63 @@ begin
                rxControl       => rxControl,
                rxStatus        => gtRxStatus(i),
                rxUsrClkActive  => mmcmLocked(i),
-               rxUsrClk        => gtRxClk(i),
+               rxUsrClk        => rxClk,
                rxData          => gtRxData(i),
                rxDataK         => gtRxDataK(i),
                rxDispErr       => gtRxDispErr(i),
                rxDecErr        => gtRxDecErr(i),
                rxOutClk        => gtRxClk(i),
                -- Tx Ports
-               txControl       => appTimingPhy.control,
+               txControl       => timingPhy.control,
                txStatus        => gtTxStatus(i),
-               txUsrClk        => gtTxClk(i),
+               txUsrClk        => txClk,
                txUsrClkActive  => mmcmLocked(i),
-               txData          => appTimingPhy.data,
-               txDataK         => appTimingPhy.dataK,
+               txData          => timingPhy.data,
+               txDataK         => timingPhy.dataK,
                txOutClk        => gtTxClk(i),
                -- Misc.
-               loopback        => loopback(i));
+               loopback        => loopback);
+
+         U_RXCLK : BUFGMUX
+            generic map (
+               CLK_SEL_TYPE => "ASYNC")  -- ASYNC, SYNC
+            port map (
+               O  => gtRxClock(i),       -- 1-bit output: Clock output
+               I0 => gtRxClk(i),         -- 1-bit input: Clock input (S=0)
+               I1 => refClkDiv2(i),      -- 1-bit input: Clock input (S=1)
+               S  => useMiniTpg);        -- 1-bit input: Clock select      
+
       end generate;
+
+      U_refClkDiv2 : BUFGCE_DIV
+         generic map (
+            BUFGCE_DIVIDE => 2)
+         port map (
+            I   => refClk(i),
+            CE  => '1',
+            CLR => '0',
+            O   => refClkDiv2(i));
+
+      U_refRstDiv2 : entity work.RstSync
+         generic map (
+            TPD_G => TPD_G)
+         port map (
+            clk      => refClkDiv2(i),
+            asyncRst => refRst(i),
+            syncRst  => refRstDiv2(i));
+
       SIM_PCIE : if (SIMULATION_G) generate
 
          axilReadSlaves(RX_PHY0_INDEX_C+i)  <= AXI_LITE_READ_SLAVE_EMPTY_OK_C;
          axilWriteSlaves(RX_PHY0_INDEX_C+i) <= AXI_LITE_WRITE_SLAVE_EMPTY_OK_C;
 
-         gtRxClk(i) <= refClk(i);
-         gtTxClk(i) <= refClk(i);
+         gtRxClk(i) <= refClkDiv2(i);
+         gtTxClk(i) <= refClkDiv2(i);
 
-         gtRxStatus(i).locked       <= '1';
-         gtRxStatus(i).resetDone    <= '1';
-         gtRxStatus(i).bufferByDone <= '0';
-         gtRxStatus(i).bufferByErr  <= '0';
-         gtTxStatus(i)              <= gtRxStatus(i);
-
-         gtRxData(i)    <= appTimingPhy.data;
-         gtRxDataK(i)   <= appTimingPhy.dataK;
+         gtTxStatus(i)  <= TIMING_PHY_STATUS_FORCE_C;
+         gtRxStatus(i)  <= TIMING_PHY_STATUS_FORCE_C;
+         gtRxData(i)    <= timingPhy.data;
+         gtRxDataK(i)   <= timingPhy.dataK;
          gtRxDispErr(i) <= "00";
          gtRxDecErr(i)  <= "00";
 
@@ -298,30 +352,50 @@ begin
 
    end generate GEN_VEC;
 
-   rxStatus  <= gtRxStatus(1)  when (timingClockSel = '1') else gtRxStatus(0);
-   rxData    <= gtRxData(1)    when (timingClockSel = '1') else gtRxData(0);
-   rxDataK   <= gtRxDataK(1)   when (timingClockSel = '1') else gtRxDataK(0);
-   rxDispErr <= gtRxDispErr(1) when (timingClockSel = '1') else gtRxDispErr(0);
-   rxDecErr  <= gtRxDecErr(1)  when (timingClockSel = '1') else gtRxDecErr(0);
-   txStatus  <= gtTxStatus(1)  when (timingClockSel = '1') else gtTxStatus(0);
+   process(gtRxData, gtRxDataK, gtRxDecErr, gtRxDispErr, gtRxStatus,
+           gtTxStatus, timingClkSel, timingPhy, useMiniTpg)
+   begin
+      if (useMiniTpg = '1') then
+         txStatus  <= TIMING_PHY_STATUS_FORCE_C;
+         rxStatus  <= TIMING_PHY_STATUS_FORCE_C;
+         rxData    <= timingPhy.data;
+         rxDataK   <= timingPhy.dataK;
+         rxDispErr <= "00";
+         rxDecErr  <= "00";
+      elsif (timingClkSel = '1') then
+         txStatus  <= gtTxStatus(1);
+         rxStatus  <= gtRxStatus(1);
+         rxData    <= gtRxData(1);
+         rxDataK   <= gtRxDataK(1);
+         rxDispErr <= gtRxDispErr(1);
+         rxDecErr  <= gtRxDecErr(1);
+      else
+         txStatus  <= gtTxStatus(0);
+         rxStatus  <= gtRxStatus(0);
+         rxData    <= gtRxData(0);
+         rxDataK   <= gtRxDataK(0);
+         rxDispErr <= gtRxDispErr(0);
+         rxDecErr  <= gtRxDecErr(0);
+      end if;
+   end process;
 
    U_RXCLK : BUFGMUX
       generic map (
          CLK_SEL_TYPE => "ASYNC")       -- ASYNC, SYNC
       port map (
          O  => rxClk,                   -- 1-bit output: Clock output
-         I0 => gtRxClk(0),              -- 1-bit input: Clock input (S=0)
-         I1 => gtRxClk(1),              -- 1-bit input: Clock input (S=1)
-         S  => timingClockSel);         -- 1-bit input: Clock select
+         I0 => gtRxClock(0),            -- 1-bit input: Clock input (S=0)
+         I1 => gtRxClock(1),            -- 1-bit input: Clock input (S=1)
+         S  => timingClkSel);           -- 1-bit input: Clock select         
 
    U_TXCLK : BUFGMUX
       generic map (
          CLK_SEL_TYPE => "ASYNC")       -- ASYNC, SYNC
       port map (
          O  => txClk,                   -- 1-bit output: Clock output
-         I0 => gtTxClk(0),              -- 1-bit input: Clock input (S=0)
-         I1 => gtTxClk(1),              -- 1-bit input: Clock input (S=1)
-         S  => timingClockSel);         -- 1-bit input: Clock select         
+         I0 => refClkDiv2(0),           -- 1-bit input: Clock input (S=0)
+         I1 => refClkDiv2(1),           -- 1-bit input: Clock input (S=1)
+         S  => timingClkSel);           -- 1-bit input: Clock select         
 
    -----------------------
    -- Insert user RX reset
@@ -339,7 +413,7 @@ begin
       generic map (
          TPD_G             => TPD_G,
          DEFAULT_CLK_SEL_G => '0',  -- '0': default LCLS-I, '1': default LCLS-II
-         USE_TPGMINI_G     => true,
+         AXIL_RINGB_G      => false,
          ASYNC_G           => true,
          AXIL_BASE_ADDR_G  => AXIL_CONFIG_C(TIMING_INDEX_C).baseAddr)
       port map (
@@ -358,8 +432,8 @@ begin
          appTimingRst    => axilRst,
          appTimingMode   => appTimingMode,
          appTimingBus    => appTimingBus,
-         timingPhy       => appTimingPhy,
-         timingClkSel    => timingClockSel,
+         timingPhy       => timingPhy,
+         timingClkSel    => timingClkSel,
          -- AXI Lite interface
          axilClk         => axilClk,
          axilRst         => axilRst,
@@ -374,15 +448,16 @@ begin
    U_Monitor : entity work.TimingPhyMonitor
       generic map (
          TPD_G           => TPD_G,
+         SIMULATION_G    => SIMULATION_G,
          AXIL_CLK_FREQ_G => AXIL_CLK_FREQ_G)
       port map (
          rxUserRst       => rxUserRst,
          txUserRst       => txUserRst,
-         txDiffCtrl      => txDiffCtrl,
-         txPreCursor     => txPreCursor,
-         txPostCursor    => txPostCursor,
-         loopback        => loopback,
+         useMiniTpg      => useMiniTpg,
          mmcmRst         => mmcmRst,
+         loopback        => loopback,
+         trig            => trigMon,
+         trigDrop        => trigDrop,
          mmcmLocked      => mmcmLocked,
          refClk          => refClk,
          refRst          => refRst,
@@ -429,9 +504,11 @@ begin
    GEN_LANE : for i in 3 downto 0 generate
 
       -- Outputs
-      triggers(i) <= appTrigMasters(i).tValid;
+      triggers(i) <= trigMon(i);
+      trigMon(i)  <= appTimingTrig.trigPulse(i) and not (appTrigCtrl(i).pause);
+      trigDrop(i) <= appTimingTrig.trigPulse(i) and (appTrigCtrl(i).pause);
 
-      appTrigMasters(i).tValid                <= appTimingTrig.trigPulse(i) and not (appTrigCtrl(i).pause);
+      appTrigMasters(i).tValid                <= trigMon(i);
       appTrigMasters(i).tData(63 downto 0)    <= appTimingTrig.timeStamp;
       appTrigMasters(i).tData(191 downto 64)  <= appTimingTrig.bsa;
       appTrigMasters(i).tData(383 downto 192) <= appTimingTrig.dmod;
@@ -471,7 +548,7 @@ begin
          generic map (
             -- General Configurations
             TPD_G               => TPD_G,
-            READY_EN_G          => true,
+            READY_EN_G          => true,  -- Resizing from large to smaller is only supported in (READY_EN_G=true) mode, which is why we don't do it in the "U_Trig_Info_Fifo" module
             -- AXI Stream Port Configurations
             SLAVE_AXI_CONFIG_G  => ssiAxiStreamConfig(48),
             MASTER_AXI_CONFIG_G => DMA_AXIS_CONFIG_G)
