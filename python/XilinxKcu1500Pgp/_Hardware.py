@@ -37,7 +37,7 @@ class Hardware(pr.Device):
         
             if (version3):
                 self.add(pgp.Pgp3AxiL(            
-                    name    = ('PgpMon[%i]' % i), 
+                    name    = (f'PgpMon[{i}]'), 
                     offset  = (0x00800000 + i*0x00010000), 
                     numVc   = 4,
                     writeEn = True,
@@ -45,7 +45,7 @@ class Hardware(pr.Device):
                 )) 
             else:
                 self.add(pgp.Pgp2bAxi(            
-                    name    = ('PgpMon[%i]' % i), 
+                    name    = (f'PgpMon[{i}]'), 
                     offset  = (0x00800000 + i*0x00010000), 
                     writeEn = True,
                     expand  = False,

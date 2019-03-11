@@ -34,24 +34,24 @@ entity Kcu1500TimingRx is
       AXI_BASE_ADDR_G   : slv(31 downto 0));
    port (
       -- Trigger Interface (axilClk domain)
-      triggers        : out slv(3 downto 0);
-      trigMasters     : out AxiStreamMasterArray(3 downto 0);
-      trigSlaves      : in  AxiStreamSlaveArray(3 downto 0);
+      remoteTriggers   : out slv(3 downto 0);
+      localTrigMasters : out AxiStreamMasterArray(3 downto 0);
+      localTrigSlaves  : in  AxiStreamSlaveArray(3 downto 0);
       -- Reference Clock and Reset
-      userClk25       : in  sl;
-      userRst25       : in  sl;
+      userClk25        : in  sl;
+      userRst25        : in  sl;
       -- AXI-Lite Interface
-      axilClk         : in  sl;
-      axilRst         : in  sl;
-      axilReadMaster  : in  AxiLiteReadMasterType;
-      axilReadSlave   : out AxiLiteReadSlaveType;
-      axilWriteMaster : in  AxiLiteWriteMasterType;
-      axilWriteSlave  : out AxiLiteWriteSlaveType;
+      axilClk          : in  sl;
+      axilRst          : in  sl;
+      axilReadMaster   : in  AxiLiteReadMasterType;
+      axilReadSlave    : out AxiLiteReadSlaveType;
+      axilWriteMaster  : in  AxiLiteWriteMasterType;
+      axilWriteSlave   : out AxiLiteWriteSlaveType;
       -- GT Serial Ports
-      timingRxP       : in  slv(1 downto 0);
-      timingRxN       : in  slv(1 downto 0);
-      timingTxP       : out slv(1 downto 0);
-      timingTxN       : out slv(1 downto 0));
+      timingRxP        : in  slv(1 downto 0);
+      timingRxN        : in  slv(1 downto 0);
+      timingTxP        : out slv(1 downto 0);
+      timingTxN        : out slv(1 downto 0));
 end Kcu1500TimingRx;
 
 architecture mapping of Kcu1500TimingRx is
@@ -140,8 +140,12 @@ architecture mapping of Kcu1500TimingRx is
 
    signal appTrigMasters : AxiStreamMasterArray(3 downto 0) := (others => AXI_STREAM_MASTER_INIT_C);
    signal appTrigCtrl    : AxiStreamCtrlArray(3 downto 0);
-   signal trigMon        : slv(3 downto 0);
-   signal trigDrop       : slv(3 downto 0);
+
+   signal remTrig     : slv(3 downto 0);
+   signal remTrigDrop : slv(3 downto 0);
+
+   signal locTrig     : slv(3 downto 0);
+   signal locTrigDrop : slv(3 downto 0);
 
    signal txMasters : AxiStreamMasterArray(3 downto 0);
    signal txSlaves  : AxiStreamSlaveArray(3 downto 0);
@@ -352,30 +356,32 @@ begin
 
    end generate GEN_VEC;
 
-   process(gtRxData, gtRxDataK, gtRxDecErr, gtRxDispErr, gtRxStatus,
-           gtTxStatus, timingClkSel, timingPhy, useMiniTpg)
+   process(rxClk)
    begin
-      if (useMiniTpg = '1') then
-         txStatus  <= TIMING_PHY_STATUS_FORCE_C;
-         rxStatus  <= TIMING_PHY_STATUS_FORCE_C;
-         rxData    <= timingPhy.data;
-         rxDataK   <= timingPhy.dataK;
-         rxDispErr <= "00";
-         rxDecErr  <= "00";
-      elsif (timingClkSel = '1') then
-         txStatus  <= gtTxStatus(1);
-         rxStatus  <= gtRxStatus(1);
-         rxData    <= gtRxData(1);
-         rxDataK   <= gtRxDataK(1);
-         rxDispErr <= gtRxDispErr(1);
-         rxDecErr  <= gtRxDecErr(1);
-      else
-         txStatus  <= gtTxStatus(0);
-         rxStatus  <= gtRxStatus(0);
-         rxData    <= gtRxData(0);
-         rxDataK   <= gtRxDataK(0);
-         rxDispErr <= gtRxDispErr(0);
-         rxDecErr  <= gtRxDecErr(0);
+      -- Register to help with meet timing
+      if rising_edge(rxClk) then
+         if (useMiniTpg = '1') then
+            txStatus  <= TIMING_PHY_STATUS_FORCE_C after TPD_G;
+            rxStatus  <= TIMING_PHY_STATUS_FORCE_C after TPD_G;
+            rxData    <= timingPhy.data            after TPD_G;
+            rxDataK   <= timingPhy.dataK           after TPD_G;
+            rxDispErr <= "00"                      after TPD_G;
+            rxDecErr  <= "00"                      after TPD_G;
+         elsif (timingClkSel = '1') then
+            txStatus  <= gtTxStatus(1)  after TPD_G;
+            rxStatus  <= gtRxStatus(1)  after TPD_G;
+            rxData    <= gtRxData(1)    after TPD_G;
+            rxDataK   <= gtRxDataK(1)   after TPD_G;
+            rxDispErr <= gtRxDispErr(1) after TPD_G;
+            rxDecErr  <= gtRxDecErr(1)  after TPD_G;
+         else
+            txStatus  <= gtTxStatus(0)  after TPD_G;
+            rxStatus  <= gtRxStatus(0)  after TPD_G;
+            rxData    <= gtRxData(0)    after TPD_G;
+            rxDataK   <= gtRxDataK(0)   after TPD_G;
+            rxDispErr <= gtRxDispErr(0) after TPD_G;
+            rxDecErr  <= gtRxDecErr(0)  after TPD_G;
+         end if;
       end if;
    end process;
 
@@ -456,8 +462,10 @@ begin
          useMiniTpg      => useMiniTpg,
          mmcmRst         => mmcmRst,
          loopback        => loopback,
-         trig            => trigMon,
-         trigDrop        => trigDrop,
+         remTrig         => remTrig,
+         remTrigDrop     => remTrigDrop,
+         locTrig         => locTrig,
+         locTrigDrop     => locTrigDrop,
          mmcmLocked      => mmcmLocked,
          refClk          => refClk,
          refRst          => refRst,
@@ -479,8 +487,8 @@ begin
    U_Trig : entity work.EvrV2CoreTriggers
       generic map (
          TPD_G           => TPD_G,
-         NCHANNELS_G     => 4,
-         NTRIGGERS_G     => 4,
+         NCHANNELS_G     => 8,
+         NTRIGGERS_G     => 8,          -- 8 triggers (4 local and 4 remote)
          TRIG_DEPTH_G    => 19,         -- bitSize(125MHz/360Hz)
          TRIG_PIPE_G     => 0,
          COMMON_CLK_G    => true,
@@ -503,12 +511,16 @@ begin
 
    GEN_LANE : for i in 3 downto 0 generate
 
-      -- Outputs
-      triggers(i) <= trigMon(i);
-      trigMon(i)  <= appTimingTrig.trigPulse(i) and not (appTrigCtrl(i).pause);
-      trigDrop(i) <= appTimingTrig.trigPulse(i) and (appTrigCtrl(i).pause);
+      -- Remote Triggers
+      remTrig(i)     <= appTimingTrig.trigPulse(i+4) and not (appTrigCtrl(i).pause);
+      remTrigDrop(i) <= appTimingTrig.trigPulse(i+4) and (appTrigCtrl(i).pause);
 
-      appTrigMasters(i).tValid                <= trigMon(i);
+      -- Local Triggers
+      locTrig(i)     <= appTimingTrig.trigPulse(i+0) and not (appTrigCtrl(i).pause);
+      locTrigDrop(i) <= appTimingTrig.trigPulse(i+0) and (appTrigCtrl(i).pause);
+
+      -- Local Trigger Messages
+      appTrigMasters(i).tValid                <= locTrig(i);
       appTrigMasters(i).tData(63 downto 0)    <= appTimingTrig.timeStamp;
       appTrigMasters(i).tData(191 downto 64)  <= appTimingTrig.bsa;
       appTrigMasters(i).tData(383 downto 192) <= appTimingTrig.dmod;
@@ -521,11 +533,11 @@ begin
             TPD_G               => TPD_G,
             SLAVE_READY_EN_G    => false,
             -- FIFO configurations
-            BRAM_EN_G           => true,
+            BRAM_EN_G           => false,
             GEN_SYNC_FIFO_G     => true,
             FIFO_ADDR_WIDTH_G   => 4,
             FIFO_FIXED_THRESH_G => true,
-            FIFO_PAUSE_THRESH_G => 12,
+            FIFO_PAUSE_THRESH_G => 8,
             -- AXI Stream Port Configurations
             SLAVE_AXI_CONFIG_G  => ssiAxiStreamConfig(48),  -- 48 bytes = 384-bits wide
             MASTER_AXI_CONFIG_G => ssiAxiStreamConfig(48))
@@ -560,8 +572,13 @@ begin
             sAxisMaster => txMasters(i),
             sAxisSlave  => txSlaves(i),
             -- Master Port
-            mAxisMaster => trigMasters(i),
-            mAxisSlave  => trigSlaves(i));
+            mAxisMaster => localTrigMasters(i),
+            mAxisSlave  => localTrigSlaves(i));
+
+      ----------
+      -- Outputs
+      ----------
+      remoteTriggers(i) <= remTrig(i);
 
    end generate GEN_LANE;
 

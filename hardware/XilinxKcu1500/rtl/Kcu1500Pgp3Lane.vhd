@@ -24,6 +24,7 @@ use work.Pgp3Pkg.all;
 entity Kcu1500Pgp3Lane is
    generic (
       TPD_G             : time             := 1 ns;
+      SIMULATION_G      : boolean          := false;
       DMA_AXIS_CONFIG_G : AxiStreamConfigType;
       AXIL_CLK_FREQ_G   : real             := 156.25E+6;  -- units of Hz
       AXI_BASE_ADDR_G   : slv(31 downto 0) := (others => '0'));
@@ -58,12 +59,14 @@ architecture mapping of Kcu1500Pgp3Lane is
 
    signal pgpClk : sl;
    signal pgpRst : sl;
+   signal wdtRst : sl;
 
    signal pgpTxIn      : Pgp3TxInType := PGP3_TX_IN_INIT_C;
    signal pgpTxOut     : Pgp3TxOutType;
    signal pgpTxMasters : AxiStreamMasterArray(3 downto 0);
    signal pgpTxSlaves  : AxiStreamSlaveArray(3 downto 0);
 
+   signal pgpRxIn      : Pgp3RxInType := PGP3_RX_IN_INIT_C;
    signal pgpRxOut     : Pgp3RxOutType;
    signal pgpRxMasters : AxiStreamMasterArray(3 downto 0);
    signal pgpRxCtrl    : AxiStreamCtrlArray(3 downto 0);
@@ -77,6 +80,25 @@ begin
          clk     => pgpClk,
          dataIn  => trigger,
          dataOut => pgpTxIn.opCodeEn);
+
+   U_Wtd : entity work.WatchDogRst
+      generic map(
+         TPD_G      => TPD_G,
+         DURATION_G => getTimeRatio(AXIL_CLK_FREQ_G, 0.2))  -- 5 s timeout
+      port map (
+         clk    => axilClk,
+         monIn  => pgpRxOut.remRxLinkReady,
+         rstOut => wdtRst);
+
+   U_PwrUpRst : entity work.PwrUpRst
+      generic map (
+         TPD_G         => TPD_G,
+         SIM_SPEEDUP_G => SIMULATION_G,
+         DURATION_G    => getTimeRatio(AXIL_CLK_FREQ_G, 10.0))  -- 100 ms reset pulse
+      port map (
+         clk    => axilClk,
+         arst   => wdtRst,
+         rstOut => pgpRxIn.resetRx);
 
    -----------
    -- PGP Core
@@ -106,10 +128,10 @@ begin
          pgpClk          => pgpClk,
          pgpClkRst       => pgpRst,
          -- Non VC Rx Signals
-         pgpRxIn         => PGP3_RX_IN_INIT_C,
+         pgpRxIn         => pgpRxIn,
          pgpRxOut        => pgpRxOut,
          -- Non VC Tx Signals
-         pgpTxIn         => PGP3_TX_IN_INIT_C,
+         pgpTxIn         => pgpTxIn,
          pgpTxOut        => pgpTxOut,
          -- Frame Transmit Interface
          pgpTxMasters    => pgpTxMasters,

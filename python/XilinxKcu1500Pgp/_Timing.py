@@ -14,6 +14,8 @@ import time
 
 import LclsTimingCore as timingCore
 
+import XilinxKcu1500Pgp
+
 class TimingDbgMon(pr.Device):
     def __init__(   self,       
             name        = "TimingDbgMon",
@@ -157,8 +159,8 @@ class TimingDbgMon(pr.Device):
         ))       
         
         self.addRemoteVariables(   
-            name         = "TrigRate",
-            description  = "TrigRate",
+            name         = "LocalTrigRate",
+            description  = "Local Trig Rate",
             offset       =  0x40,
             bitSize      = 32,
             bitOffset    = 0,
@@ -168,11 +170,11 @@ class TimingDbgMon(pr.Device):
             pollInterval = 1,
             number       = 4,
             stride       = 4,
-        )          
+        ) 
 
         self.addRemoteVariables(   
-            name         = "TrigDropRate",
-            description  = "TrigDropRate",
+            name         = "RemoteTrigRate",
+            description  = "Remote Trig Rate",
             offset       =  0x50,
             bitSize      = 32,
             bitOffset    = 0,
@@ -182,32 +184,87 @@ class TimingDbgMon(pr.Device):
             pollInterval = 1,
             number       = 4,
             stride       = 4,
-        )          
-        
+        ) 
+
+
         self.addRemoteVariables(   
-            name         = "TrigCnt",
-            description  = "TrigCnt",
+            name         = "LocalTrigDropRate",
+            description  = "Local Trig Drop Rate",
             offset       =  0x60,
             bitSize      = 32,
             bitOffset    = 0,
+            units        = 'Hz',
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
             number       = 4,
             stride       = 4,
-        )  
+        ) 
 
         self.addRemoteVariables(   
-            name         = "TrigDropCnt",
-            description  = "TrigDropCnt",
+            name         = "RemoteTrigDropRate",
+            description  = "Remote Trig Drop Rate",
             offset       =  0x70,
             bitSize      = 32,
+            bitOffset    = 0,
+            units        = 'Hz',
+            disp         = '{:d}',
+            mode         = "RO",
+            pollInterval = 1,
+            number       = 4,
+            stride       = 4,
+        )         
+        
+        self.addRemoteVariables(   
+            name         = "LocalTrigCnt",
+            description  = "Local Trig Cnt",
+            offset       =  0x80,
+            bitSize      = 16,
             bitOffset    = 0,
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
             number       = 4,
-            stride       = 4,
+            stride       = 2,
+        )  
+        
+        self.addRemoteVariables(   
+            name         = "RemoteTrigCnt",
+            description  = "Remote Trig Cnt",
+            offset       =  0x88,
+            bitSize      = 16,
+            bitOffset    = 0,
+            disp         = '{:d}',
+            mode         = "RO",
+            pollInterval = 1,
+            number       = 4,
+            stride       = 2,
+        )  
+
+        self.addRemoteVariables(   
+            name         = "LocalTrigDropCnt",
+            description  = "Local Trig Drop Cnt",
+            offset       =  0x90,
+            bitSize      = 16,
+            bitOffset    = 0,
+            disp         = '{:d}',
+            mode         = "RO",
+            pollInterval = 1,
+            number       = 4,
+            stride       = 2,
+        )  
+        
+        self.addRemoteVariables(   
+            name         = "RemoteTrigDropCnt",
+            description  = "Remote Trig Drop Cnt",
+            offset       =  0x98,
+            bitSize      = 16,
+            bitOffset    = 0,
+            disp         = '{:d}',
+            mode         = "RO",
+            pollInterval = 1,
+            number       = 4,
+            stride       = 2,
         )          
 
         self.add(pr.RemoteVariable(
@@ -257,10 +314,8 @@ class Timing(pr.Device):
             expand = False,
         ))
         
-        self.add(timingCore.EvrV2CoreTriggers(
+        self.add(XilinxKcu1500Pgp.Triggering(
             offset   = 0x00030000,
-            numTrig  = 4,
-            tickUnit = '1/156.25MHz',
             expand   = False,
         ))             
         

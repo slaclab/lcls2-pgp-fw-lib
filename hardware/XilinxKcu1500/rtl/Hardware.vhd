@@ -117,7 +117,7 @@ architecture mapping of Hardware is
    signal refClk    : slv(3 downto 0);
    signal refClkDiv : slv(3 downto 0);
 
-   signal triggers : slv(3 downto 0);
+   signal remoteTriggers : slv(3 downto 0);
 
    attribute dont_touch              : string;
    attribute dont_touch of refClk    : signal is "TRUE";
@@ -204,12 +204,13 @@ begin
          U_Lane : entity work.Kcu1500Pgp3Lane
             generic map (
                TPD_G             => TPD_G,
+               SIMULATION_G      => SIMULATION_G,
                DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
                AXIL_CLK_FREQ_G   => AXIL_CLK_FREQ_G,
                AXI_BASE_ADDR_G   => AXIL_CONFIG_C(i).baseAddr)
             port map (
                -- Trigger Interface
-               trigger         => triggers(i),
+               trigger         => remoteTriggers(i),
                -- QPLL Interface
                qpllLock        => qpllLock(i),
                qpllClk         => qpllClk(i),
@@ -238,12 +239,13 @@ begin
          U_Lane : entity work.Kcu1500Pgp2bLane
             generic map (
                TPD_G             => TPD_G,
+               SIMULATION_G      => SIMULATION_G,
                DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
                AXIL_CLK_FREQ_G   => AXIL_CLK_FREQ_G,
                AXI_BASE_ADDR_G   => AXIL_CONFIG_C(i).baseAddr)
             port map (
                -- Trigger Interface
-               trigger         => triggers(i),
+               trigger         => remoteTriggers(i),
                -- PGP Serial Ports
                pgpRxP          => qsfp0RxP(i),
                pgpRxN          => qsfp0RxN(i),
@@ -278,24 +280,24 @@ begin
          AXI_BASE_ADDR_G   => AXIL_CONFIG_C(TIMING_INDEX_C).baseAddr)
       port map (
          -- Trigger Event streams (axilClk domain)
-         triggers        => triggers,
-         trigMasters     => trigMasters,
-         trigSlaves      => trigSlaves,
+         remoteTriggers   => remoteTriggers,
+         localTrigMasters => trigMasters,
+         localTrigSlaves  => trigSlaves,
          -- Reference Clock and Reset
-         userClk25       => userClk25,
-         userRst25       => userRst25,
+         userClk25        => userClk25,
+         userRst25        => userRst25,
          -- AXI-Lite Interface (axilClk domain)
-         axilClk         => axilClk,
-         axilRst         => axilRst,
-         axilReadMaster  => axilReadMasters(TIMING_INDEX_C),
-         axilReadSlave   => axilReadSlaves(TIMING_INDEX_C),
-         axilWriteMaster => axilWriteMasters(TIMING_INDEX_C),
-         axilWriteSlave  => axilWriteSlaves(TIMING_INDEX_C),
+         axilClk          => axilClk,
+         axilRst          => axilRst,
+         axilReadMaster   => axilReadMasters(TIMING_INDEX_C),
+         axilReadSlave    => axilReadSlaves(TIMING_INDEX_C),
+         axilWriteMaster  => axilWriteMasters(TIMING_INDEX_C),
+         axilWriteSlave   => axilWriteSlaves(TIMING_INDEX_C),
          -- GT Serial Ports
-         timingRxP       => qsfp1RxP(1 downto 0),
-         timingRxN       => qsfp1RxN(1 downto 0),
-         timingTxP       => qsfp1TxP(1 downto 0),
-         timingTxN       => qsfp1TxN(1 downto 0));
+         timingRxP        => qsfp1RxP(1 downto 0),
+         timingRxN        => qsfp1RxN(1 downto 0),
+         timingTxP        => qsfp1TxP(1 downto 0),
+         timingTxN        => qsfp1TxN(1 downto 0));
 
    --------------------
    -- Unused QSFP Links

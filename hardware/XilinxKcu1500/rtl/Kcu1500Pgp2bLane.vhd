@@ -27,6 +27,7 @@ use unisim.vcomponents.all;
 entity Kcu1500Pgp2bLane is
    generic (
       TPD_G             : time             := 1 ns;
+      SIMULATION_G      : boolean          := false;
       DMA_AXIS_CONFIG_G : AxiStreamConfigType;
       AXIL_CLK_FREQ_G   : real             := 156.25E+6;  -- units of Hz
       AXI_BASE_ADDR_G   : slv(31 downto 0) := (others => '0'));
@@ -62,6 +63,7 @@ architecture mapping of Kcu1500Pgp2bLane is
    signal pgpRxOutClk : sl;
    signal pgpRxClk    : sl;
    signal pgpRxRst    : sl;
+   signal wdtRst      : sl;
 
    signal locTxIn      : Pgp2bTxInType := PGP2B_TX_IN_INIT_C;
    signal pgpTxIn      : Pgp2bTxInType;
@@ -69,6 +71,7 @@ architecture mapping of Kcu1500Pgp2bLane is
    signal pgpTxMasters : AxiStreamMasterArray(3 downto 0);
    signal pgpTxSlaves  : AxiStreamSlaveArray(3 downto 0);
 
+   signal locRxIn      : Pgp2bRxInType := PGP2B_RX_IN_INIT_C;
    signal pgpRxIn      : Pgp2bRxInType;
    signal pgpRxOut     : Pgp2bRxOutType;
    signal pgpRxMasters : AxiStreamMasterArray(3 downto 0);
@@ -83,6 +86,25 @@ begin
          clk     => pgpTxClk,
          dataIn  => trigger,
          dataOut => locTxIn.opCodeEn);
+
+   U_Wtd : entity work.WatchDogRst
+      generic map(
+         TPD_G      => TPD_G,
+         DURATION_G => getTimeRatio(AXIL_CLK_FREQ_G, 0.2))  -- 5 s timeout
+      port map (
+         clk    => axilClk,
+         monIn  => pgpRxOut.remLinkReady,
+         rstOut => wdtRst);
+
+   U_PwrUpRst : entity work.PwrUpRst
+      generic map (
+         TPD_G         => TPD_G,
+         SIM_SPEEDUP_G => SIMULATION_G,
+         DURATION_G    => getTimeRatio(AXIL_CLK_FREQ_G, 10.0))  -- 100 ms reset pulse
+      port map (
+         clk    => axilClk,
+         arst   => wdtRst,
+         rstOut => locRxIn.resetRx);
 
    -----------
    -- PGP Core
@@ -171,6 +193,7 @@ begin
          pgpRxClkRst     => pgpRxRst,
          pgpRxIn         => pgpRxIn,
          pgpRxOut        => pgpRxOut,
+         locRxIn         => locRxIn,
          -- AXI-Lite Register Interface (axilClk domain)
          axilClk         => axilClk,
          axilRst         => axilRst,
