@@ -13,6 +13,7 @@ import pyrogue as pr
 
 import axipcie as pcie
 import surf.protocols.pgp as pgp
+import surf.axi           as axi
 
 import XilinxKcu1500Pgp
 
@@ -38,19 +39,34 @@ class Hardware(pr.Device):
             if (version3):
                 self.add(pgp.Pgp3AxiL(            
                     name    = (f'PgpMon[{i}]'), 
-                    offset  = (0x00800000 + i*0x00010000), 
+                    offset  = (0x00800000 + i*0x00010000 + 0*0x2000), 
                     numVc   = 4,
                     writeEn = True,
                     expand  = False,
-                )) 
+                ))
+                
             else:
                 self.add(pgp.Pgp2bAxi(            
                     name    = (f'PgpMon[{i}]'), 
                     offset  = (0x00800000 + i*0x00010000), 
                     writeEn = True,
                     expand  = False,
-                ))         
+                ))
         
+            self.add(axi.AxiStreamMonitoring(            
+                name        = (f'PgpTxAxisMon[{i}]'), 
+                offset      = (0x00800000 + i*0x00010000 + 1*0x2000), 
+                numberLanes = 4,
+                expand      = False,
+            ))        
+
+            self.add(axi.AxiStreamMonitoring(            
+                name        = (f'PgpRxAxisMon[{i}]'), 
+                offset      = (0x00800000 + i*0x00010000 + 2*0x2000), 
+                numberLanes = 4,
+                expand      = False,
+            ))           
+            
         # Add Timing Core
         self.add(XilinxKcu1500Pgp.Timing(
             offset = 0x00900000,

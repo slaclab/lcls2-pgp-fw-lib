@@ -57,6 +57,15 @@ end Kcu1500Pgp3Lane;
 
 architecture mapping of Kcu1500Pgp3Lane is
 
+   constant NUM_AXIL_MASTERS_C : natural := 3;
+
+   constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 16, 13);
+
+   signal axilWriteMasters : AxiLiteWriteMasterArray(NUM_AXIL_MASTERS_C-1 downto 0);
+   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXIL_MASTERS_C-1 downto 0);
+   signal axilReadMasters  : AxiLiteReadMasterArray(NUM_AXIL_MASTERS_C-1 downto 0);
+   signal axilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXIL_MASTERS_C-1 downto 0);
+
    signal pgpClk : sl;
    signal pgpRst : sl;
    signal wdtRst : sl;
@@ -100,6 +109,27 @@ begin
          arst   => wdtRst,
          rstOut => pgpRxIn.resetRx);
 
+   ---------------------
+   -- AXI-Lite Crossbar
+   ---------------------
+   U_XBAR : entity work.AxiLiteCrossbar
+      generic map (
+         TPD_G              => TPD_G,
+         NUM_SLAVE_SLOTS_G  => 1,
+         NUM_MASTER_SLOTS_G => NUM_AXIL_MASTERS_C,
+         MASTERS_CONFIG_G   => AXIL_CONFIG_C)
+      port map (
+         axiClk              => axilClk,
+         axiClkRst           => axilRst,
+         sAxiWriteMasters(0) => axilWriteMaster,
+         sAxiWriteSlaves(0)  => axilWriteSlave,
+         sAxiReadMasters(0)  => axilReadMaster,
+         sAxiReadSlaves(0)   => axilReadSlave,
+         mAxiWriteMasters    => axilWriteMasters,
+         mAxiWriteSlaves     => axilWriteSlaves,
+         mAxiReadMasters     => axilReadMasters,
+         mAxiReadSlaves      => axilReadSlaves);
+
    -----------
    -- PGP Core
    -----------
@@ -109,7 +139,7 @@ begin
          EN_PGP_MON_G     => true,
          NUM_VC_G         => 4,
          AXIL_CLK_FREQ_G  => AXIL_CLK_FREQ_G,
-         AXIL_BASE_ADDR_G => AXI_BASE_ADDR_G)
+         AXIL_BASE_ADDR_G => AXIL_CONFIG_C(0).baseAddr)
       port map (
          -- Stable Clock and Reset
          stableClk       => axilClk,
@@ -142,10 +172,58 @@ begin
          -- AXI-Lite Register Interface (axilClk domain)
          axilClk         => axilClk,
          axilRst         => axilRst,
-         axilReadMaster  => axilReadMaster,
-         axilReadSlave   => axilReadSlave,
-         axilWriteMaster => axilWriteMaster,
-         axilWriteSlave  => axilWriteSlave);
+         axilReadMaster  => axilReadMasters(0),
+         axilReadSlave   => axilReadSlaves(0),
+         axilWriteMaster => axilWriteMasters(0),
+         axilWriteSlave  => axilWriteSlaves(0));
+
+   -----------------------------
+   -- Monitor the PGP TX streams
+   -----------------------------
+   U_AXIS_TX_MON : entity work.AxiStreamMonAxiL
+      generic map(
+         TPD_G            => TPD_G,
+         COMMON_CLK_G     => false,
+         AXIS_CLK_FREQ_G  => 156.25E+6,
+         AXIS_NUM_SLOTS_G => 4,
+         AXIS_CONFIG_G    => PGP3_AXIS_CONFIG_C)
+      port map(
+         -- AXIS Stream Interface
+         axisClk          => pgpClk,
+         axisRst          => pgpRst,
+         axisMasters      => pgpTxMasters,
+         axisSlaves       => pgpTxSlaves,
+         -- AXI lite slave port for register access
+         axilClk          => axilClk,
+         axilRst          => axilRst,
+         sAxilWriteMaster => axilWriteMasters(1),
+         sAxilWriteSlave  => axilWriteSlaves(1),
+         sAxilReadMaster  => axilReadMasters(1),
+         sAxilReadSlave   => axilReadSlaves(1));
+
+   -----------------------------
+   -- Monitor the PGP RX streams
+   -----------------------------
+   U_AXIS_RX_MON : entity work.AxiStreamMonAxiL
+      generic map(
+         TPD_G            => TPD_G,
+         COMMON_CLK_G     => false,
+         AXIS_CLK_FREQ_G  => 156.25E+6,
+         AXIS_NUM_SLOTS_G => 4,
+         AXIS_CONFIG_G    => PGP3_AXIS_CONFIG_C)
+      port map(
+         -- AXIS Stream Interface
+         axisClk          => pgpClk,
+         axisRst          => pgpRst,
+         axisMasters      => pgpRxMasters,
+         axisSlaves       => (others => AXI_STREAM_SLAVE_FORCE_C),  -- SLAVE_READY_EN_G=false
+         -- AXI lite slave port for register access
+         axilClk          => axilClk,
+         axilRst          => axilRst,
+         sAxilWriteMaster => axilWriteMasters(2),
+         sAxilWriteSlave  => axilWriteSlaves(2),
+         sAxilReadMaster  => axilReadMasters(2),
+         sAxilReadSlave   => axilReadSlaves(2));
 
    --------------
    -- PGP TX Path
