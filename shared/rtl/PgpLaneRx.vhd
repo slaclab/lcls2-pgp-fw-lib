@@ -29,8 +29,8 @@ entity PgpLaneRx is
       -- AXIS Interface (axisClk domain)
       axisClk      : in  sl;
       axisRst      : in  sl;
-      mAxisMaster  : out AxiStreamMasterType;
-      mAxisSlave   : in  AxiStreamSlaveType;
+      mAxisMasters : out AxiStreamQuadMasterType;
+      mAxisSlaves  : in  AxiStreamQuadSlaveType;
       -- PGP Interface (pgpClk domain)
       pgpClk       : in  sl;
       pgpRst       : in  sl;
@@ -44,9 +44,6 @@ architecture mapping of PgpLaneRx is
    signal pgpMasters : AxiStreamMasterArray(3 downto 0);
    signal rxMasters  : AxiStreamMasterArray(3 downto 0);
    signal rxSlaves   : AxiStreamSlaveArray(3 downto 0);
-
-   signal rxMaster : AxiStreamMasterType;
-   signal rxSlave  : AxiStreamSlaveType;
 
 begin
 
@@ -66,21 +63,17 @@ begin
    GEN_VEC :
    for i in 3 downto 0 generate
 
-      PGP_FIFO : entity work.AxiStreamFifoV2
+      BUFFER_FIFO : entity work.AxiStreamFifoV2
          generic map (
             -- General Configurations
             TPD_G               => TPD_G,
-            INT_PIPE_STAGES_G   => 1,
-            PIPE_STAGES_G       => 1,
             SLAVE_READY_EN_G    => false,
-            VALID_THOLD_G       => 128,  -- Hold until enough to burst into the interleaving MUX
-            VALID_BURST_MODE_G  => true,
             -- FIFO configurations
             BRAM_EN_G           => true,
-            GEN_SYNC_FIFO_G     => true,
-            FIFO_ADDR_WIDTH_G   => 10,
+            GEN_SYNC_FIFO_G     => false,
+            FIFO_ADDR_WIDTH_G   => 9,
             FIFO_FIXED_THRESH_G => true,
-            FIFO_PAUSE_THRESH_G => 256,
+            FIFO_PAUSE_THRESH_G => 128,
             -- AXI Stream Port Configurations
             SLAVE_AXI_CONFIG_G  => PHY_AXI_CONFIG_G,
             MASTER_AXI_CONFIG_G => APP_AXI_CONFIG_G)
@@ -91,57 +84,37 @@ begin
             sAxisMaster => pgpMasters(i),
             sAxisCtrl   => pgpRxCtrl(i),
             -- Master Port
-            mAxisClk    => pgpClk,
-            mAxisRst    => pgpRst,
+            mAxisClk    => axisClk,
+            mAxisRst    => axisRst,
             mAxisMaster => rxMasters(i),
             mAxisSlave  => rxSlaves(i));
 
+      BURST_RESIZE_FIFO : entity work.AxiStreamFifoV2
+         generic map (
+            -- General Configurations
+            TPD_G               => TPD_G,
+            SLAVE_READY_EN_G    => true,
+            VALID_THOLD_G       => 128,  -- Hold until enough to burst into the interleaving MUX
+            VALID_BURST_MODE_G  => true,
+            -- FIFO configurations
+            BRAM_EN_G           => true,
+            GEN_SYNC_FIFO_G     => true,
+            FIFO_ADDR_WIDTH_G   => 9,
+            -- AXI Stream Port Configurations
+            SLAVE_AXI_CONFIG_G  => APP_AXI_CONFIG_G,
+            MASTER_AXI_CONFIG_G => APP_AXI_CONFIG_G)
+         port map (
+            -- Slave Port
+            sAxisClk    => axisClk,
+            sAxisRst    => axisRst,
+            sAxisMaster => rxMasters(i),
+            sAxisSlave  => rxSlaves(i),
+            -- Master Port
+            mAxisClk    => axisClk,
+            mAxisRst    => axisRst,
+            mAxisMaster => mAxisMasters(i),
+            mAxisSlave  => mAxisSlaves(i));
+
    end generate GEN_VEC;
-
-   U_Mux : entity work.AxiStreamMux
-      generic map (
-         TPD_G                => TPD_G,
-         NUM_SLAVES_G         => 4,
-         ILEAVE_EN_G          => true,
-         ILEAVE_ON_NOTVALID_G => false,
-         ILEAVE_REARB_G       => 128,
-         PIPE_STAGES_G        => 1)
-      port map (
-         -- Clock and reset
-         axisClk      => pgpClk,
-         axisRst      => pgpRst,
-         -- Slaves
-         sAxisMasters => rxMasters,
-         sAxisSlaves  => rxSlaves,
-         -- Master
-         mAxisMaster  => rxMaster,
-         mAxisSlave   => rxSlave);
-
-   ASYNC_FIFO : entity work.AxiStreamFifoV2
-      generic map (
-         -- General Configurations
-         TPD_G               => TPD_G,
-         INT_PIPE_STAGES_G   => 1,
-         PIPE_STAGES_G       => 1,
-         SLAVE_READY_EN_G    => true,
-         VALID_THOLD_G       => 1,
-         -- FIFO configurations
-         BRAM_EN_G           => true,
-         GEN_SYNC_FIFO_G     => false,
-         FIFO_ADDR_WIDTH_G   => 9,
-         -- AXI Stream Port Configurations
-         SLAVE_AXI_CONFIG_G  => APP_AXI_CONFIG_G,
-         MASTER_AXI_CONFIG_G => APP_AXI_CONFIG_G)
-      port map (
-         -- Slave Port
-         sAxisClk    => pgpClk,
-         sAxisRst    => pgpRst,
-         sAxisMaster => rxMaster,
-         sAxisSlave  => rxSlave,
-         -- Master Port
-         mAxisClk    => axisClk,
-         mAxisRst    => axisRst,
-         mAxisMaster => mAxisMaster,
-         mAxisSlave  => mAxisSlave);
 
 end mapping;

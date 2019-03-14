@@ -44,8 +44,8 @@ entity Kcu1500Pgp3Lane is
       -- Streaming Interface (axilClk domain)
       pgpIbMaster     : in  AxiStreamMasterType;
       pgpIbSlave      : out AxiStreamSlaveType;
-      pgpObMaster     : out AxiStreamMasterType;
-      pgpObSlave      : in  AxiStreamSlaveType;
+      pgpObMasters    : out AxiStreamQuadMasterType;
+      pgpObSlaves     : in  AxiStreamQuadSlaveType;
       -- AXI-Lite Interface (axilClk domain)
       axilClk         : in  sl;
       axilRst         : in  sl;
@@ -259,8 +259,8 @@ begin
          -- AXIS Interface (axisClk domain)
          axisClk      => axilClk,
          axisRst      => axilRst,
-         mAxisMaster  => pgpObMaster,
-         mAxisSlave   => pgpObSlave,
+         mAxisMasters => pgpObMasters,
+         mAxisSlaves  => pgpObSlaves,
          -- PGP RX Interface (pgpRxClk domain)
          pgpClk       => pgpClk,
          pgpRst       => pgpRst,

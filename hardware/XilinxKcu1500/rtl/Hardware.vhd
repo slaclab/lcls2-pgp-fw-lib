@@ -51,8 +51,8 @@ entity Hardware is
       -- PGP Streams (axilClk domain)
       pgpIbMasters    : in  AxiStreamMasterArray(3 downto 0);
       pgpIbSlaves     : out AxiStreamSlaveArray(3 downto 0);
-      pgpObMasters    : out AxiStreamMasterArray(3 downto 0);
-      pgpObSlaves     : in  AxiStreamSlaveArray(3 downto 0);
+      pgpObMasters    : out AxiStreamQuadMasterArray(3 downto 0);
+      pgpObSlaves     : in  AxiStreamQuadSlaveArray(3 downto 0);
       -- Trigger Event streams (axilClk domain)
       trigMasters     : out AxiStreamMasterArray(3 downto 0);
       trigSlaves      : in  AxiStreamSlaveArray(3 downto 0);
@@ -224,8 +224,8 @@ begin
                -- Streaming Interface (axilClk domain)
                pgpIbMaster     => pgpIbMasters(i),
                pgpIbSlave      => pgpIbSlaves(i),
-               pgpObMaster     => pgpObMasters(i),
-               pgpObSlave      => pgpObSlaves(i),
+               pgpObMasters    => pgpObMasters(i),
+               pgpObSlaves     => pgpObSlaves(i),
                -- AXI-Lite Interface (axilClk domain)
                axilClk         => axilClk,
                axilRst         => axilRst,
@@ -255,8 +255,8 @@ begin
                -- Streaming Interface (axilClk domain)
                pgpIbMaster     => pgpIbMasters(i),
                pgpIbSlave      => pgpIbSlaves(i),
-               pgpObMaster     => pgpObMasters(i),
-               pgpObSlave      => pgpObSlaves(i),
+               pgpObMasters    => pgpObMasters(i),
+               pgpObSlaves     => pgpObSlaves(i),
                -- AXI-Lite Interface (axilClk domain)
                axilClk         => axilClk,
                axilRst         => axilRst,
