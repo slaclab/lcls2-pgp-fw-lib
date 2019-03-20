@@ -21,7 +21,6 @@ use ieee.std_logic_unsigned.all;
 use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
-use work.AppPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
