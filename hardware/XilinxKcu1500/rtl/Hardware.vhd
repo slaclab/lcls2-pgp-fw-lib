@@ -27,12 +27,13 @@ use unisim.vcomponents.all;
 
 entity Hardware is
    generic (
-      TPD_G             : time             := 1 ns;
-      SIMULATION_G      : boolean          := false;
-      PGP_TYPE_G        : boolean          := false;  -- False: PGPv2b@3.125Gb/s, True: PGPv3@10.3125Gb/s, 
-      DMA_AXIS_CONFIG_G : AxiStreamConfigType;
-      AXIL_CLK_FREQ_G   : real             := 156.25E+6;  -- units of Hz
-      AXI_BASE_ADDR_G   : slv(31 downto 0) := x"0080_0000");
+      TPD_G                : time                        := 1 ns;
+      ROGUE_SIM_EN_G       : boolean                     := false;
+      ROGUE_SIM_PORT_NUM_G : natural range 1024 to 49151 := 7000;
+      DMA_AXIS_CONFIG_G    : AxiStreamConfigType;
+      PGP_TYPE_G           : boolean                     := false;  -- False: PGPv2b@3.125Gb/s, True: PGPv3@10.3125Gb/s, 
+      AXIL_CLK_FREQ_G      : real                        := 156.25E+6;  -- units of Hz
+      AXI_BASE_ADDR_G      : slv(31 downto 0)            := x"0080_0000");
    port (
       ------------------------      
       --  Top Level Interfaces
@@ -202,11 +203,12 @@ begin
       GEN_PGP3 : if (PGP_TYPE_G = true) generate
          U_Lane : entity work.Kcu1500Pgp3Lane
             generic map (
-               TPD_G             => TPD_G,
-               SIMULATION_G      => SIMULATION_G,
-               DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
-               AXIL_CLK_FREQ_G   => AXIL_CLK_FREQ_G,
-               AXI_BASE_ADDR_G   => AXIL_CONFIG_C(i).baseAddr)
+               TPD_G                => TPD_G,
+               ROGUE_SIM_EN_G       => ROGUE_SIM_EN_G,
+               ROGUE_SIM_PORT_NUM_G => (ROGUE_SIM_PORT_NUM_G + i*34),
+               DMA_AXIS_CONFIG_G    => DMA_AXIS_CONFIG_G,
+               AXIL_CLK_FREQ_G      => AXIL_CLK_FREQ_G,
+               AXI_BASE_ADDR_G      => AXIL_CONFIG_C(i).baseAddr)
             port map (
                -- Trigger Interface
                trigger         => remoteTriggers(i),
@@ -237,11 +239,12 @@ begin
       GEN_PGP2b : if (PGP_TYPE_G = false) generate
          U_Lane : entity work.Kcu1500Pgp2bLane
             generic map (
-               TPD_G             => TPD_G,
-               SIMULATION_G      => SIMULATION_G,
-               DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
-               AXIL_CLK_FREQ_G   => AXIL_CLK_FREQ_G,
-               AXI_BASE_ADDR_G   => AXIL_CONFIG_C(i).baseAddr)
+               TPD_G                => TPD_G,
+               ROGUE_SIM_EN_G       => ROGUE_SIM_EN_G,
+               ROGUE_SIM_PORT_NUM_G => (ROGUE_SIM_PORT_NUM_G + i*34),
+               DMA_AXIS_CONFIG_G    => DMA_AXIS_CONFIG_G,
+               AXIL_CLK_FREQ_G      => AXIL_CLK_FREQ_G,
+               AXI_BASE_ADDR_G      => AXIL_CONFIG_C(i).baseAddr)
             port map (
                -- Trigger Interface
                trigger         => remoteTriggers(i),
@@ -273,7 +276,7 @@ begin
    U_TimingRx : entity work.Kcu1500TimingRx
       generic map (
          TPD_G             => TPD_G,
-         SIMULATION_G      => SIMULATION_G,
+         SIMULATION_G      => ROGUE_SIM_EN_G,
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
          AXIL_CLK_FREQ_G   => AXIL_CLK_FREQ_G,
          AXI_BASE_ADDR_G   => AXIL_CONFIG_C(TIMING_INDEX_C).baseAddr)

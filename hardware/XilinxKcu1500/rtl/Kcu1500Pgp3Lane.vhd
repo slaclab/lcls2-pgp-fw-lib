@@ -23,11 +23,12 @@ use work.Pgp3Pkg.all;
 
 entity Kcu1500Pgp3Lane is
    generic (
-      TPD_G             : time             := 1 ns;
-      SIMULATION_G      : boolean          := false;
-      DMA_AXIS_CONFIG_G : AxiStreamConfigType;
-      AXIL_CLK_FREQ_G   : real             := 156.25E+6;  -- units of Hz
-      AXI_BASE_ADDR_G   : slv(31 downto 0) := (others => '0'));
+      TPD_G                : time                        := 1 ns;
+      ROGUE_SIM_EN_G       : boolean                     := false;
+      ROGUE_SIM_PORT_NUM_G : natural range 1024 to 49151 := 7000;
+      DMA_AXIS_CONFIG_G    : AxiStreamConfigType;
+      AXIL_CLK_FREQ_G      : real                        := 156.25E+6;  -- units of Hz
+      AXI_BASE_ADDR_G      : slv(31 downto 0)            := (others => '0'));
    port (
       -- Trigger Interface
       trigger         : in  sl;
@@ -79,6 +80,7 @@ architecture mapping of Kcu1500Pgp3Lane is
    signal pgpRxOut     : Pgp3RxOutType;
    signal pgpRxMasters : AxiStreamMasterArray(3 downto 0);
    signal pgpRxCtrl    : AxiStreamCtrlArray(3 downto 0);
+   signal pgpRxSlaves  : AxiStreamSlaveArray(3 downto 0);
 
 begin
 
@@ -102,7 +104,7 @@ begin
    U_PwrUpRst : entity work.PwrUpRst
       generic map (
          TPD_G         => TPD_G,
-         SIM_SPEEDUP_G => SIMULATION_G,
+         SIM_SPEEDUP_G => ROGUE_SIM_EN_G,
          DURATION_G    => getTimeRatio(AXIL_CLK_FREQ_G, 10.0))  -- 100 ms reset pulse
       port map (
          clk    => axilClk,
@@ -133,49 +135,90 @@ begin
    -----------
    -- PGP Core
    -----------
-   U_Pgp : entity work.Pgp3GthUs
-      generic map (
-         TPD_G            => TPD_G,
-         EN_PGP_MON_G     => true,
-         NUM_VC_G         => 4,
-         AXIL_CLK_FREQ_G  => AXIL_CLK_FREQ_G,
-         AXIL_BASE_ADDR_G => AXIL_CONFIG_C(0).baseAddr)
-      port map (
-         -- Stable Clock and Reset
-         stableClk       => axilClk,
-         stableRst       => axilRst,
-         -- QPLL Interface
-         qpllLock        => qpllLock,
-         qpllClk         => qpllClk,
-         qpllRefclk      => qpllRefclk,
-         qpllRst         => qpllRst,
-         -- Gt Serial IO
-         pgpGtTxP        => pgpTxP,
-         pgpGtTxN        => pgpTxN,
-         pgpGtRxP        => pgpRxP,
-         pgpGtRxN        => pgpRxN,
-         -- Clocking
-         pgpClk          => pgpClk,
-         pgpClkRst       => pgpRst,
-         -- Non VC Rx Signals
-         pgpRxIn         => pgpRxIn,
-         pgpRxOut        => pgpRxOut,
-         -- Non VC Tx Signals
-         pgpTxIn         => pgpTxIn,
-         pgpTxOut        => pgpTxOut,
-         -- Frame Transmit Interface
-         pgpTxMasters    => pgpTxMasters,
-         pgpTxSlaves     => pgpTxSlaves,
-         -- Frame Receive Interface
-         pgpRxMasters    => pgpRxMasters,
-         pgpRxCtrl       => pgpRxCtrl,
-         -- AXI-Lite Register Interface (axilClk domain)
-         axilClk         => axilClk,
-         axilRst         => axilRst,
-         axilReadMaster  => axilReadMasters(0),
-         axilReadSlave   => axilReadSlaves(0),
-         axilWriteMaster => axilWriteMasters(0),
-         axilWriteSlave  => axilWriteSlaves(0));
+   REAL_PGP : if (not ROGUE_SIM_EN_G) generate
+      U_Pgp : entity work.Pgp3GthUs
+         generic map (
+            TPD_G            => TPD_G,
+            EN_PGP_MON_G     => true,
+            NUM_VC_G         => 4,
+            AXIL_CLK_FREQ_G  => AXIL_CLK_FREQ_G,
+            AXIL_BASE_ADDR_G => AXIL_CONFIG_C(0).baseAddr)
+         port map (
+            -- Stable Clock and Reset
+            stableClk       => axilClk,
+            stableRst       => axilRst,
+            -- QPLL Interface
+            qpllLock        => qpllLock,
+            qpllClk         => qpllClk,
+            qpllRefclk      => qpllRefclk,
+            qpllRst         => qpllRst,
+            -- Gt Serial IO
+            pgpGtTxP        => pgpTxP,
+            pgpGtTxN        => pgpTxN,
+            pgpGtRxP        => pgpRxP,
+            pgpGtRxN        => pgpRxN,
+            -- Clocking
+            pgpClk          => pgpClk,
+            pgpClkRst       => pgpRst,
+            -- Non VC Rx Signals
+            pgpRxIn         => pgpRxIn,
+            pgpRxOut        => pgpRxOut,
+            -- Non VC Tx Signals
+            pgpTxIn         => pgpTxIn,
+            pgpTxOut        => pgpTxOut,
+            -- Frame Transmit Interface
+            pgpTxMasters    => pgpTxMasters,
+            pgpTxSlaves     => pgpTxSlaves,
+            -- Frame Receive Interface
+            pgpRxMasters    => pgpRxMasters,
+            pgpRxCtrl       => pgpRxCtrl,
+            -- AXI-Lite Register Interface (axilClk domain)
+            axilClk         => axilClk,
+            axilRst         => axilRst,
+            axilReadMaster  => axilReadMasters(0),
+            axilReadSlave   => axilReadSlaves(0),
+            axilWriteMaster => axilWriteMasters(0),
+            axilWriteSlave  => axilWriteSlaves(0));
+   end generate REAL_PGP;
+
+   SIM_PGP : if (ROGUE_SIM_EN_G) generate
+
+      U_Rogue : entity work.RoguePgp3Sim
+         generic map(
+            TPD_G      => TPD_G,
+            PORT_NUM_G => ROGUE_SIM_PORT_NUM_G,
+            NUM_VC_G   => 4)
+         port map(
+            -- GT Ports
+            pgpRefClk       => axilClk,
+            pgpGtTxP        => pgpTxP,
+            pgpGtTxN        => pgpTxN,
+            pgpGtRxP        => pgpRxP,
+            pgpGtRxN        => pgpRxN,
+            -- PGP Clock and Reset
+            pgpClk          => pgpClk,
+            pgpClkRst       => pgpRst,
+            -- Non VC Rx Signals
+            pgpRxIn         => pgpRxIn,
+            pgpRxOut        => pgpRxOut,
+            -- Non VC Tx Signals
+            pgpTxIn         => pgpTxIn,
+            pgpTxOut        => pgpTxOut,
+            -- Frame Transmit Interface
+            pgpTxMasters    => pgpTxMasters,
+            pgpTxSlaves     => pgpTxSlaves,
+            -- Frame Receive Interface
+            pgpRxMasters    => pgpRxMasters,
+            pgpRxSlaves     => pgpRxSlaves,
+            -- AXI-Lite Register Interface (axilClk domain)
+            axilClk         => axilClk,
+            axilRst         => axilRst,
+            axilReadMaster  => axilReadMasters(0),
+            axilReadSlave   => axilReadSlaves(0),
+            axilWriteMaster => axilWriteMasters(0),
+            axilWriteSlave  => axilWriteSlaves(0));
+
+   end generate SIM_PGP;
 
    -----------------------------
    -- Monitor the PGP TX streams
@@ -253,6 +296,7 @@ begin
    U_Rx : entity work.PgpLaneRx
       generic map (
          TPD_G            => TPD_G,
+         ROGUE_SIM_EN_G   => ROGUE_SIM_EN_G,
          APP_AXI_CONFIG_G => DMA_AXIS_CONFIG_G,
          PHY_AXI_CONFIG_G => PGP3_AXIS_CONFIG_C)
       port map (
@@ -266,6 +310,7 @@ begin
          pgpRst       => pgpRst,
          rxlinkReady  => pgpRxOut.linkReady,
          pgpRxMasters => pgpRxMasters,
-         pgpRxCtrl    => pgpRxCtrl);
+         pgpRxCtrl    => pgpRxCtrl,
+         pgpRxSlaves  => pgpRxSlaves);
 
 end mapping;

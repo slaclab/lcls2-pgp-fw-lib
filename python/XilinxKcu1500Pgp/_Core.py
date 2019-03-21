@@ -1,0 +1,79 @@
+#!/usr/bin/env python3
+#-----------------------------------------------------------------------------
+# This file is part of the 'Camera link gateway'. It is subject to 
+# the license terms in the LICENSE.txt file found in the top-level directory 
+# of this distribution and at: 
+#    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
+# No part of the 'Camera link gateway', including this file, may be 
+# copied, modified, propagated, or distributed except according to the terms 
+# contained in the LICENSE.txt file.
+#-----------------------------------------------------------------------------
+import pyrogue as pr
+
+import rogue.hardware.axi
+import rogue.protocols
+import pyrogue.interfaces.simulation
+
+import XilinxKcu1500Pgp as kcu1500
+
+class Core(pr.Root):
+
+    def __init__(self,
+            name        = 'Core',
+            description = 'Container for XilinxKcu1500Pgp Core',
+            dev         = '/dev/datadev_0',# path to PCIe device
+            version3    = False,           # true = PGPv3, false = PGP2b
+            numLane     = 4,               # Number of PGP lanes
+            **kwargs):
+        super().__init__(name=name, description=description, **kwargs)
+        
+        # Create PCIE memory mapped interface
+        if (dev != 'sim'):
+            # BAR0 access
+            self._memMap = rogue.hardware.axi.AxiMemMap(dev)     
+            # Set the timeout
+            self._timeout = 1.0 # 1.0 default
+        else:
+            # FW/SW co-simulation
+            self._memMap = rogue.interfaces.memory.TcpClient('localhost',8000)            
+            # Set the timeout
+            self._timeout = 100.0 # firmware simulation slow and timeout base on real time (not simulation time)
+            
+        # PGP Hardware on PCIe 
+        self.add(kcu1500.Hardware(            
+            memBase  = self._memMap,
+            numLane  = numLane,
+            version3 = version3,
+            expand   = False,
+        ))   
+
+        # Create arrays to be filled
+        self._dma = [[None for vc in range(4)] for lane in range(numLane)] # self._dma[lane][vc]
+        if (dev == 'sim'):
+            trigIndex     = 32 if version3 else 8
+            self._pgp     = [[None for vc in range(4)] for lane in range(numLane)] # self._dma[lane][vc]
+            self._pgpTrig = [None for lane in range(numLane)] # self._febTrig[lane]
+            
+        # Create the stream interface
+        for lane in range(numLane):
+        
+            # Map the virtual channels 
+            if (dev != 'sim'):
+                # PCIe DMA interface
+                self._dma[lane][0] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+0,True) # VC0
+                self._dma[lane][1] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+1,True) # VC1
+                self._dma[lane][2] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+2,True) # VC2
+                self._dma[lane][3] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+3,True) # VC3
+            else:
+                # PCIe DMA Interface
+                self._dma[lane][0] = rogue.interfaces.stream.TcpClient('localhost',8002+(512*lane)+2*0) # VC0
+                self._dma[lane][1] = rogue.interfaces.stream.TcpClient('localhost',8002+(512*lane)+2*1) # VC1
+                self._dma[lane][2] = rogue.interfaces.stream.TcpClient('localhost',8002+(512*lane)+2*2) # VC2
+                self._dma[lane][3] = rogue.interfaces.stream.TcpClient('localhost',8002+(512*lane)+2*3) # VC3
+                # FEB Board Interface
+                self._pgp[lane][0]  = rogue.interfaces.stream.TcpClient('localhost',7000+(34*lane)+2*0) # VC0
+                self._pgp[lane][1]  = rogue.interfaces.stream.TcpClient('localhost',7000+(34*lane)+2*1) # VC1
+                self._pgp[lane][2]  = rogue.interfaces.stream.TcpClient('localhost',7000+(34*lane)+2*2) # VC2
+                self._pgp[lane][3]  = rogue.interfaces.stream.TcpClient('localhost',7000+(34*lane)+2*3) # VC3    
+                self._pgpTrig[lane] = rogue.interfaces.stream.TcpClient('localhost',7000+(34*lane)+trigIndex) # OP-Code    
+                

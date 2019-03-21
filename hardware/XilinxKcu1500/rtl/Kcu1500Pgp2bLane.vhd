@@ -26,11 +26,12 @@ use unisim.vcomponents.all;
 
 entity Kcu1500Pgp2bLane is
    generic (
-      TPD_G             : time             := 1 ns;
-      SIMULATION_G      : boolean          := false;
-      DMA_AXIS_CONFIG_G : AxiStreamConfigType;
-      AXIL_CLK_FREQ_G   : real             := 156.25E+6;  -- units of Hz
-      AXI_BASE_ADDR_G   : slv(31 downto 0) := (others => '0'));
+      TPD_G                : time                        := 1 ns;
+      ROGUE_SIM_EN_G       : boolean                     := false;
+      ROGUE_SIM_PORT_NUM_G : natural range 1024 to 49151 := 7000;
+      DMA_AXIS_CONFIG_G    : AxiStreamConfigType;
+      AXIL_CLK_FREQ_G      : real                        := 156.25E+6;  -- units of Hz
+      AXI_BASE_ADDR_G      : slv(31 downto 0)            := (others => '0'));
    port (
       -- Trigger Interface
       trigger         : in  sl;
@@ -44,7 +45,7 @@ entity Kcu1500Pgp2bLane is
       pgpIbMaster     : in  AxiStreamMasterType;
       pgpIbSlave      : out AxiStreamSlaveType;
       pgpObMasters    : out AxiStreamQuadMasterType;
-      pgpObSlaves     : in  AxiStreamQuadSlaveType; 
+      pgpObSlaves     : in  AxiStreamQuadSlaveType;
       -- AXI-Lite Interface (axilClk domain)
       axilClk         : in  sl;
       axilRst         : in  sl;
@@ -85,6 +86,7 @@ architecture mapping of Kcu1500Pgp2bLane is
    signal pgpRxOut     : Pgp2bRxOutType;
    signal pgpRxMasters : AxiStreamMasterArray(3 downto 0);
    signal pgpRxCtrl    : AxiStreamCtrlArray(3 downto 0);
+   signal pgpRxSlaves  : AxiStreamSlaveArray(3 downto 0);
 
 begin
 
@@ -108,7 +110,7 @@ begin
    U_PwrUpRst : entity work.PwrUpRst
       generic map (
          TPD_G         => TPD_G,
-         SIM_SPEEDUP_G => SIMULATION_G,
+         SIM_SPEEDUP_G => ROGUE_SIM_EN_G,
          DURATION_G    => getTimeRatio(AXIL_CLK_FREQ_G, 10.0))  -- 100 ms reset pulse
       port map (
          clk    => axilClk,
@@ -139,65 +141,102 @@ begin
    -----------
    -- PGP Core
    -----------
-   U_Pgp : entity work.Pgp2bGthUltra
-      generic map (
-         TPD_G           => TPD_G,
-         VC_INTERLEAVE_G => 1)          -- AxiStreamDmaV2 supports interleaving
-      port map (
-         -- GT Clocking
-         stableClk       => axilClk,
-         stableRst       => axilRst,
-         gtRefClk        => pgpRefClk,
-         -- Gt Serial IO
-         pgpGtTxP        => pgpTxP,
-         pgpGtTxN        => pgpTxN,
-         pgpGtRxP        => pgpRxP,
-         pgpGtRxN        => pgpRxN,
-         -- Tx Clocking
-         pgpTxReset      => pgpTxRst,
-         pgpTxOutClk     => pgpTxOutClk,
-         pgpTxClk        => pgpTxClk,
-         pgpTxMmcmLocked => '1',
-         -- Rx clocking
-         pgpRxReset      => pgpRxRst,
-         pgpRxOutClk     => pgpRxOutClk,
-         pgpRxClk        => pgpRxClk,
-         pgpRxMmcmLocked => '1',
-         -- Non VC Rx Signals
-         pgpRxIn         => pgpRxIn,
-         pgpRxOut        => pgpRxOut,
-         -- Non VC Tx Signals
-         pgpTxIn         => pgpTxIn,
-         pgpTxOut        => pgpTxOut,
-         -- Frame Transmit Interface
-         pgpTxMasters    => pgpTxMasters,
-         pgpTxSlaves     => pgpTxSlaves,
-         -- Frame Receive Interface
-         pgpRxMasters    => pgpRxMasters,
-         pgpRxCtrl       => pgpRxCtrl,
-         -- AXI-Lite Interface 
-         axilClk         => axilClk,
-         axilRst         => axilRst);
+   REAL_PGP : if (not ROGUE_SIM_EN_G) generate
+      U_Pgp : entity work.Pgp2bGthUltra
+         generic map (
+            TPD_G           => TPD_G,
+            VC_INTERLEAVE_G => 1)       -- AxiStreamDmaV2 supports interleaving
+         port map (
+            -- GT Clocking
+            stableClk       => axilClk,
+            stableRst       => axilRst,
+            gtRefClk        => pgpRefClk,
+            -- Gt Serial IO
+            pgpGtTxP        => pgpTxP,
+            pgpGtTxN        => pgpTxN,
+            pgpGtRxP        => pgpRxP,
+            pgpGtRxN        => pgpRxN,
+            -- Tx Clocking
+            pgpTxReset      => pgpTxRst,
+            pgpTxOutClk     => pgpTxOutClk,
+            pgpTxClk        => pgpTxClk,
+            pgpTxMmcmLocked => '1',
+            -- Rx clocking
+            pgpRxReset      => pgpRxRst,
+            pgpRxOutClk     => pgpRxOutClk,
+            pgpRxClk        => pgpRxClk,
+            pgpRxMmcmLocked => '1',
+            -- Non VC Rx Signals
+            pgpRxIn         => pgpRxIn,
+            pgpRxOut        => pgpRxOut,
+            -- Non VC Tx Signals
+            pgpTxIn         => pgpTxIn,
+            pgpTxOut        => pgpTxOut,
+            -- Frame Transmit Interface
+            pgpTxMasters    => pgpTxMasters,
+            pgpTxSlaves     => pgpTxSlaves,
+            -- Frame Receive Interface
+            pgpRxMasters    => pgpRxMasters,
+            pgpRxCtrl       => pgpRxCtrl,
+            -- AXI-Lite Interface 
+            axilClk         => axilClk,
+            axilRst         => axilRst);
 
-   U_BUFG_TX : BUFG_GT
-      port map (
-         I       => pgpTxOutClk,
-         CE      => '1',
-         CEMASK  => '1',
-         CLR     => '0',
-         CLRMASK => '1',
-         DIV     => "000",              -- Divide by 1
-         O       => pgpTxClk);
+      U_BUFG_TX : BUFG_GT
+         port map (
+            I       => pgpTxOutClk,
+            CE      => '1',
+            CEMASK  => '1',
+            CLR     => '0',
+            CLRMASK => '1',
+            DIV     => "000",           -- Divide by 1
+            O       => pgpTxClk);
 
-   U_BUFG_RX : BUFG_GT
-      port map (
-         I       => pgpRxOutClk,
-         CE      => '1',
-         CEMASK  => '1',
-         CLR     => '0',
-         CLRMASK => '1',
-         DIV     => "000",              -- Divide by 1
-         O       => pgpRxClk);
+      U_BUFG_RX : BUFG_GT
+         port map (
+            I       => pgpRxOutClk,
+            CE      => '1',
+            CEMASK  => '1',
+            CLR     => '0',
+            CLRMASK => '1',
+            DIV     => "000",           -- Divide by 1
+            O       => pgpRxClk);
+
+   end generate REAL_PGP;
+
+   SIM_PGP : if (ROGUE_SIM_EN_G) generate
+
+      pgpTxP <= '0';
+      pgpTxN <= '1';
+
+      pgpRxClk <= axilClk;
+      pgpRxRst <= axilRst;
+      pgpTxClk <= axilClk;
+      pgpTxRst <= axilRst;
+
+      U_Rogue : entity work.RoguePgp2bSim
+         generic map(
+            TPD_G      => TPD_G,
+            PORT_NUM_G => ROGUE_SIM_PORT_NUM_G,
+            NUM_VC_G   => 4)
+         port map(
+            -- PGP Clock and Reset
+            pgpClk       => axilClk,
+            pgpClkRst    => axilRst,
+            -- Non VC Rx Signals
+            pgpRxIn      => pgpRxIn,
+            pgpRxOut     => pgpRxOut,
+            -- Non VC Tx Signals
+            pgpTxIn      => pgpTxIn,
+            pgpTxOut     => pgpTxOut,
+            -- Frame Transmit Interface
+            pgpTxMasters => pgpTxMasters,
+            pgpTxSlaves  => pgpTxSlaves,
+            -- Frame Receive Interface
+            pgpRxMasters => pgpRxMasters,
+            pgpRxSlaves  => pgpRxSlaves);
+
+   end generate SIM_PGP;
 
    --------------         
    -- PGP Monitor
@@ -308,19 +347,21 @@ begin
    U_Rx : entity work.PgpLaneRx
       generic map (
          TPD_G            => TPD_G,
+         ROGUE_SIM_EN_G   => ROGUE_SIM_EN_G,
          APP_AXI_CONFIG_G => DMA_AXIS_CONFIG_G,
          PHY_AXI_CONFIG_G => SSI_PGP2B_CONFIG_C)
       port map (
          -- AXIS Interface (axisClk domain)
          axisClk      => axilClk,
          axisRst      => axilRst,
-         mAxisMasters  => pgpObMasters,
-         mAxisSlaves   => pgpObSlaves,
+         mAxisMasters => pgpObMasters,
+         mAxisSlaves  => pgpObSlaves,
          -- PGP RX Interface (pgpRxClk domain)
          pgpClk       => pgpRxClk,
          pgpRst       => pgpRxRst,
          rxlinkReady  => pgpRxOut.linkReady,
          pgpRxMasters => pgpRxMasters,
-         pgpRxCtrl    => pgpRxCtrl);
+         pgpRxCtrl    => pgpRxCtrl,
+         pgpRxSlaves  => pgpRxSlaves);
 
 end mapping;

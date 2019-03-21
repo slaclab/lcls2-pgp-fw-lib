@@ -22,7 +22,8 @@ use work.Pgp3Pkg.all;
 
 entity PgpLaneRx is
    generic (
-      TPD_G            : time := 1 ns;
+      TPD_G            : time    := 1 ns;
+      ROGUE_SIM_EN_G   : boolean := false;
       APP_AXI_CONFIG_G : AxiStreamConfigType;
       PHY_AXI_CONFIG_G : AxiStreamConfigType);
    port (
@@ -36,7 +37,8 @@ entity PgpLaneRx is
       pgpRst       : in  sl;
       rxlinkReady  : in  sl;
       pgpRxMasters : in  AxiStreamMasterArray(3 downto 0);
-      pgpRxCtrl    : out AxiStreamCtrlArray(3 downto 0));
+      pgpRxCtrl    : out AxiStreamCtrlArray(3 downto 0);
+      pgpRxSlaves  : out AxiStreamSlaveArray(3 downto 0));
 end PgpLaneRx;
 
 architecture mapping of PgpLaneRx is
@@ -67,7 +69,7 @@ begin
          generic map (
             -- General Configurations
             TPD_G               => TPD_G,
-            SLAVE_READY_EN_G    => false,
+            SLAVE_READY_EN_G    => ROGUE_SIM_EN_G,
             -- FIFO configurations
             BRAM_EN_G           => true,
             GEN_SYNC_FIFO_G     => false,
@@ -83,6 +85,7 @@ begin
             sAxisRst    => pgpRst,
             sAxisMaster => pgpMasters(i),
             sAxisCtrl   => pgpRxCtrl(i),
+            sAxisSlave  => pgpRxSlaves(i),
             -- Master Port
             mAxisClk    => axisClk,
             mAxisRst    => axisRst,
