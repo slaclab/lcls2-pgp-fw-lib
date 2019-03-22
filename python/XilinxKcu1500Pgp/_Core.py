@@ -23,6 +23,8 @@ class Core(pr.Root):
             description = 'Container for XilinxKcu1500Pgp Core',
             dev         = '/dev/datadev_0',# path to PCIe device
             version3    = False,           # true = PGPv3, false = PGP2b
+            pollEn      = True,            # Enable automatic polling registers
+            initRead    = True,            # Read all registers at start of the system            
             numLane     = 4,               # Number of PGP lanes
             **kwargs):
         super().__init__(name=name, description=description, **kwargs)
@@ -33,11 +35,17 @@ class Core(pr.Root):
             self._memMap = rogue.hardware.axi.AxiMemMap(dev)     
             # Set the timeout
             self._timeout = 1.0 # 1.0 default
+            # Start up flags
+            self._pollEn   = pollEn
+            self._initRead = initRead
         else:
             # FW/SW co-simulation
             self._memMap = rogue.interfaces.memory.TcpClient('localhost',8000)            
             # Set the timeout
             self._timeout = 100.0 # firmware simulation slow and timeout base on real time (not simulation time)
+            # Start up flags
+            self._pollEn   = False
+            self._initRead = False
             
         # PGP Hardware on PCIe 
         self.add(kcu1500.Hardware(            
