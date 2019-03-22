@@ -21,7 +21,7 @@ class Hardware(pr.Device):
     def __init__(   self,       
             name        = "Hardware",
             description = "Container for PCIe Hardware Registers",
-            numLane     = 1,
+            numLane     = 4,
             version3    = False,
             **kwargs):
         super().__init__(name=name, description=description, **kwargs)
@@ -69,7 +69,8 @@ class Hardware(pr.Device):
             
         # Add Timing Core
         self.add(XilinxKcu1500Pgp.Timing(
-            offset = 0x00900000,
-            # expand = False,
+            offset  = 0x00900000,
+            numLane = numLane,
+            expand  = False,
         ))
         

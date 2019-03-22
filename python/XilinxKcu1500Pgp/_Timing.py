@@ -20,6 +20,7 @@ class TimingDbgMon(pr.Device):
     def __init__(   self,       
             name        = "TimingDbgMon",
             description = "Timing Debug Monitor Module",
+            numLane     = 4,
             **kwargs):
         super().__init__(name=name, description=description, **kwargs)
         
@@ -168,7 +169,7 @@ class TimingDbgMon(pr.Device):
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
-            number       = 4,
+            number       = numLane,
             stride       = 4,
         ) 
 
@@ -182,7 +183,7 @@ class TimingDbgMon(pr.Device):
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
-            number       = 4,
+            number       = numLane,
             stride       = 4,
         ) 
 
@@ -197,7 +198,7 @@ class TimingDbgMon(pr.Device):
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
-            number       = 4,
+            number       = numLane,
             stride       = 4,
         ) 
 
@@ -211,7 +212,7 @@ class TimingDbgMon(pr.Device):
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
-            number       = 4,
+            number       = numLane,
             stride       = 4,
         )         
         
@@ -224,7 +225,7 @@ class TimingDbgMon(pr.Device):
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
-            number       = 4,
+            number       = numLane,
             stride       = 2,
         )  
         
@@ -237,7 +238,7 @@ class TimingDbgMon(pr.Device):
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
-            number       = 4,
+            number       = numLane,
             stride       = 2,
         )  
 
@@ -250,7 +251,7 @@ class TimingDbgMon(pr.Device):
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
-            number       = 4,
+            number       = numLane,
             stride       = 2,
         )  
         
@@ -263,7 +264,7 @@ class TimingDbgMon(pr.Device):
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
-            number       = 4,
+            number       = numLane,
             stride       = 2,
         )          
 
@@ -288,6 +289,7 @@ class Timing(pr.Device):
     def __init__(   self,       
             name        = "Timing",
             description = "Timing",
+            numLane     = 4,
             **kwargs):
         super().__init__(name=name, description=description, **kwargs)
         
@@ -310,13 +312,15 @@ class Timing(pr.Device):
         ))   
 
         self.add(TimingDbgMon(
-            offset = 0x00020000,
-            expand = False,
+            offset  = 0x00020000,
+            numLane = numLane,
+            expand  = False,
         ))
         
         self.add(XilinxKcu1500Pgp.Triggering(
-            offset   = 0x00030000,
-            expand   = False,
+            offset  = 0x00030000,
+            numLane = numLane,
+            expand  = False,
         ))             
         
         self.add(timingCore.TimingFrameRx(

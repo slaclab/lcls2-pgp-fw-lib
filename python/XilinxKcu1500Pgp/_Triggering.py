@@ -16,13 +16,14 @@ class Triggering(pr.Device):
     def __init__(   self,
             name        = "Triggering",
             description = "https://confluence.slac.stanford.edu/download/attachments/216713616/ConfigTriggeringYaml.pdf",
+            numLane     = 4,
             dmaEnable   = False,
             useTap      = False,
             tickUnit    = '1/156.25MHz',
             **kwargs):
         super().__init__(name=name, description=description, **kwargs)
            
-        for i in range(4):
+        for i in range(numLane):
             self.add(timingCore.EvrV2ChannelReg(
                 name      = f'Ch[{i}]',
                 offset    = (i*0x100),
@@ -30,7 +31,7 @@ class Triggering(pr.Device):
                 expand    = False,
             ))
 
-        for i in range(4):
+        for i in range(numLane):
             self.add(timingCore.EvrV2TriggerReg(
                 name     = f'LocalTrig[{i}]',
                 offset   = 0x1000 + ((i+0)*0x100),
@@ -39,7 +40,7 @@ class Triggering(pr.Device):
                 expand    = False,
             ))
             
-        for i in range(4):
+        for i in range(numLane):
             self.add(timingCore.EvrV2TriggerReg(
                 name     = f'RemoteTrig[{i}]',
                 offset   = 0x1000 + ((i+4)*0x100),
