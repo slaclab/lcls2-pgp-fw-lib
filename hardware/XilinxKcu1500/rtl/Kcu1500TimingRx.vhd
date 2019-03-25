@@ -185,9 +185,9 @@ begin
          -- Locked Status
          locked    => mmcmLocked(0));
 
-   -------------------------   
-   -- Reference LCLS-I Clock
-   -------------------------           
+   --------------------------   
+   -- Reference LCLS-II Clock
+   --------------------------           
    U_371MHz : entity work.ClockManagerUltraScale
       generic map(
          TPD_G              => TPD_G,
