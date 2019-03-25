@@ -119,6 +119,12 @@ class Core(pr.Root):
             for i in range(len(EnableTrig)):
                 trigDev[i].EnableTrig.set(EnableTrig[i])
                 
+    def softReset(self):
+        self.Init()
+
+    def hardReset(self):
+        self.Init()               
+                
     def writeBlocks(self, force=False, recurse=True, variable=None, checkEach=False):
         """
         Write all of the blocks held by this Device to memory
