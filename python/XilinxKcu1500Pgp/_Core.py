@@ -15,6 +15,10 @@ import rogue.protocols
 import pyrogue.interfaces.simulation
 
 import XilinxKcu1500Pgp as kcu1500
+import surf.axi         as axi
+import LclsTimingCore   as timingCore
+
+import time
 
 class Core(pr.Root):
 
@@ -85,3 +89,62 @@ class Core(pr.Root):
                 self._pgp[lane][3]  = rogue.interfaces.stream.TcpClient('localhost',7000+(34*lane)+2*3) # VC3    
                 self._pgpTrig[lane] = rogue.interfaces.stream.TcpClient('localhost',7000+(34*lane)+trigIndex) # OP-Code    
                 
+                
+        @self.command(description="Initialization function routine")        
+        def Init():
+            # Get all the event builder and trigger devices
+            eventDev = self.find(typ=axi.AxiStreamBatcherEventBuilder)
+            trigDev  = self.find(typ=timingCore.EvrV2TriggerReg)
+            
+            # Get the current values to cache current configurations
+            Blowoff    = [dev.Blowoff.get()    for dev in eventDev]            
+            EnableTrig = [dev.EnableTrig.get() for dev in trigDev]            
+            
+            # Set EventBuilder.Blowoff to True
+            for dev in eventDev:
+                dev.Blowoff.set(True)
+
+            # Turn off the fiber/local triggers
+            for dev in trigDev:
+                dev.EnableTrig.set(False)
+
+            # Allow some time for the stale data to drain out of the pipeline
+            time.sleep(1.0)
+
+            # Restore the blowoff value
+            for i in range(len(Blowoff)):
+                eventDev[i].Blowoff.set(Blowoff[i])  
+                
+            # Restore the enableTrig value
+            for i in range(len(EnableTrig)):
+                trigDev[i].EnableTrig.set(EnableTrig[i])
+                
+    def writeBlocks(self, force=False, recurse=True, variable=None, checkEach=False):
+        """
+        Write all of the blocks held by this Device to memory
+        """
+        if not self.enable.get(): return
+
+        # Process local blocks.
+        if variable is not None:
+            variable._block.backgroundTransaction(rogue.interfaces.memory.Write)
+        else:
+            for block in self._blocks:
+                if force or block.stale:
+                    if block.bulkEn:
+                        block.backgroundTransaction(rogue.interfaces.memory.Write)
+
+        # Process rest of tree
+        if recurse:
+            for key,value in self.devices.items():
+                value.writeBlocks(force=force, recurse=True)
+                        
+        # Retire any in-flight transactions before continuing 
+        self._root.checkBlocks(recurse=True)
+        
+        # Perform the device init after loading the YAML files
+        self.Init()
+
+        # Retire any in-flight transactions before continuing
+        self.checkBlocks(recurse=True)
+        
