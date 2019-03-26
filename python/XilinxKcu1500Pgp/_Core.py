@@ -114,10 +114,12 @@ class Core(pr.Root):
             # Restore the blowoff value
             for i in range(len(Blowoff)):
                 eventDev[i].Blowoff.set(Blowoff[i])  
+                # print(eventDev[i].Blowoff.get())
                 
             # Restore the enableTrig value
             for i in range(len(EnableTrig)):
                 trigDev[i].EnableTrig.set(EnableTrig[i])
+                # print(trigDev[i].EnableTrig.get())
                 
     def softReset(self):
         self.Init()
