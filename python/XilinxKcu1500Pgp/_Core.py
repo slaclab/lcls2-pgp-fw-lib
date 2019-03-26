@@ -125,25 +125,8 @@ class Core(pr.Root):
     def hardReset(self):
         self.Init()               
                 
-    def writeBlocks(self, force=False, recurse=True, variable=None, checkEach=False):
-        """
-        Write all of the blocks held by this Device to memory
-        """
-        if not self.enable.get(): return
-
-        # Process local blocks.
-        if variable is not None:
-            variable._block.backgroundTransaction(rogue.interfaces.memory.Write)
-        else:
-            for block in self._blocks:
-                if force or block.stale:
-                    if block.bulkEn:
-                        block.backgroundTransaction(rogue.interfaces.memory.Write)
-
-        # Process rest of tree
-        if recurse:
-            for key,value in self.devices.items():
-                value.writeBlocks(force=force, recurse=True)
+    def writeBlocks(self, **kwargs):
+        super().writeBlocks(**kwargs)
                         
         # Retire any in-flight transactions before continuing 
         self._root.checkBlocks(recurse=True)
