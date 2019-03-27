@@ -14,9 +14,9 @@ import rogue.hardware.axi
 import rogue.protocols
 import pyrogue.interfaces.simulation
 
-import XilinxKcu1500Pgp as kcu1500
-import surf.axi         as axi
-import LclsTimingCore   as timingCore
+import XilinxKcu1500Pgp       as kcu1500
+import surf.protocols.batcher as batcher
+import LclsTimingCore         as timingCore
 
 import time
 
@@ -93,7 +93,7 @@ class Core(pr.Root):
         @self.command(description="Initialization function routine")        
         def Init():
             # Get all the event builder and trigger devices
-            eventDev = self.find(typ=axi.AxiStreamBatcherEventBuilder)
+            eventDev = self.find(typ=batcher.AxiStreamBatcherEventBuilder)
             trigDev  = self.find(typ=timingCore.EvrV2TriggerReg)
             
             # Get the current values to cache current configurations
