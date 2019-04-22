@@ -33,6 +33,23 @@ class Core(pr.Root):
             **kwargs):
         super().__init__(name=name, description=description, **kwargs)
         
+        # Simplify the Command Tab
+        self.WriteAll.hidden      = True        
+        self.ReadAll.hidden       = True        
+        self.SaveState.hidden     = True        
+        self.SaveConfig.hidden    = True        
+        self.LoadConfig.hidden    = True        
+        self.Initialize.hidden    = True        
+        self.SetYamlConfig.hidden = True        
+        self.GetYamlConfig.hidden = True        
+        self.GetYamlState.hidden  = True        
+        self.HardReset.hidden     = True        
+        self.CountReset.hidden    = True        
+        self.ClearLog.hidden      = True        
+        
+        # Enable Init after config
+        self.InitAfterConfig._default = True
+          
         # Create PCIE memory mapped interface
         if (dev != 'sim'):
             # BAR0 access
@@ -88,54 +105,3 @@ class Core(pr.Root):
                 self._pgp[lane][2]  = rogue.interfaces.stream.TcpClient('localhost',7000+(34*lane)+2*2) # VC2
                 self._pgp[lane][3]  = rogue.interfaces.stream.TcpClient('localhost',7000+(34*lane)+2*3) # VC3    
                 self._pgpTrig[lane] = rogue.interfaces.stream.TcpClient('localhost',7000+(34*lane)+trigIndex) # OP-Code    
-                
-                
-        @self.command(description="Initialization function routine")        
-        def Init():
-            # Get all the event builder and trigger devices
-            eventDev = self.find(typ=batcher.AxiStreamBatcherEventBuilder)
-            trigDev  = self.find(typ=timingCore.EvrV2TriggerReg)
-            
-            # Get the current values to cache current configurations
-            Blowoff    = [dev.Blowoff.get()    for dev in eventDev]            
-            EnableTrig = [dev.EnableTrig.get() for dev in trigDev]            
-            
-            # Set EventBuilder.Blowoff to True
-            for dev in eventDev:
-                dev.Blowoff.set(True)
-
-            # Turn off the fiber/local triggers
-            for dev in trigDev:
-                dev.EnableTrig.set(False)
-
-            # Allow some time for the stale data to drain out of the pipeline
-            time.sleep(1.0)
-
-            # Restore the blowoff value
-            for i in range(len(Blowoff)):
-                eventDev[i].Blowoff.set(Blowoff[i])  
-                # print(eventDev[i].Blowoff.get())
-                
-            # Restore the enableTrig value
-            for i in range(len(EnableTrig)):
-                trigDev[i].EnableTrig.set(EnableTrig[i])
-                # print(trigDev[i].EnableTrig.get())
-                
-    def softReset(self):
-        self.Init()
-
-    def hardReset(self):
-        self.Init()               
-                
-    def writeBlocks(self, **kwargs):
-        super().writeBlocks(**kwargs)
-                        
-        # Retire any in-flight transactions before continuing 
-        self._root.checkBlocks(recurse=True)
-        
-        # Perform the device init after loading the YAML files
-        self.Init()
-
-        # Retire any in-flight transactions before continuing
-        self.checkBlocks(recurse=True)
-        
