@@ -94,7 +94,7 @@ class Core(pr.Root):
                     # Check the VC enable mask
                     if ((enVcMask>>vc) & 0x1):
                         # PCIe DMA Interface
-                        self._dma[lane][vc] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+vc,True) # VC0
+                        self._dma[lane][vc] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+vc,True)
             else:
                 # PCIe DMA Interface
                 self._dma[lane][0] = rogue.interfaces.stream.TcpClient('localhost',8002+(512*lane)+2*0) # VC0
