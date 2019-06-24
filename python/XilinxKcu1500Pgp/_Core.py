@@ -30,6 +30,7 @@ class Core(pr.Root):
             pollEn      = True,            # Enable automatic polling registers
             initRead    = True,            # Read all registers at start of the system            
             numLane     = 4,               # Number of PGP lanes
+            enVcMask    = 0xF,             # Enable lane mask
             **kwargs):
         super().__init__(name=name, description=description, **kwargs)
         
@@ -88,11 +89,12 @@ class Core(pr.Root):
         
             # Map the virtual channels 
             if (dev != 'sim'):
-                # PCIe DMA interface
-                self._dma[lane][0] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+0,True) # VC0
-                self._dma[lane][1] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+1,True) # VC1
-                self._dma[lane][2] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+2,True) # VC2
-                self._dma[lane][3] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+3,True) # VC3
+                # Loop through the Virtual channels
+                for vc in range(4):
+                    # Check the VC enable mask
+                    if ((enVcMask>>vc) & 0x1):
+                        # PCIe DMA Interface
+                        self._dma[lane][vc] = rogue.hardware.axi.AxiStreamDma(dev,(0x100*lane)+vc,True)
             else:
                 # PCIe DMA Interface
                 self._dma[lane][0] = rogue.interfaces.stream.TcpClient('localhost',8002+(512*lane)+2*0) # VC0
