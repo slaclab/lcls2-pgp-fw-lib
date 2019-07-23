@@ -30,7 +30,7 @@ class Core(pr.Root):
             pollEn      = True,            # Enable automatic polling registers
             initRead    = True,            # Read all registers at start of the system            
             numLane     = 4,               # Number of PGP lanes
-            enVcMask    = 0xF,             # Enable lane mask
+            enVcMask    = 0xD,             # Enable lane mask: Don't connect data stream (VC1) by default because intended for C++ process
             **kwargs):
         super().__init__(name=name, description=description, **kwargs)
         
@@ -47,6 +47,7 @@ class Core(pr.Root):
         self.HardReset.hidden     = True        
         self.CountReset.hidden    = True        
         self.ClearLog.hidden      = True        
+        self.numLane              = numLane        
         
         # Enable Init after config
         self.InitAfterConfig._default = True
