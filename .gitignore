@@ -18,6 +18,7 @@
 *.ld
 *.a
 *.save
+__pycache__*
 
 # OS files
 .DS_Store
