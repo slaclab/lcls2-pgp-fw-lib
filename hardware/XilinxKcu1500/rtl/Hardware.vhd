@@ -18,61 +18,85 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
+library unisim;
+use unisim.vcomponents.all;
+
+-- surf
 use work.StdRtlPkg.all;
 use work.AxiLitePkg.all;
 use work.AxiStreamPkg.all;
 
-library unisim;
-use unisim.vcomponents.all;
+-- timing-core
+use work.TimingPkg.all;
+
+-- l2si-core
+use work.L2SiPkg.all;
+
 
 entity Hardware is
    generic (
-      TPD_G                : time                        := 1 ns;
-      ROGUE_SIM_EN_G       : boolean                     := false;
-      ROGUE_SIM_PORT_NUM_G : natural range 1024 to 49151 := 7000;
-      DMA_AXIS_CONFIG_G    : AxiStreamConfigType;
-      PGP_TYPE_G           : boolean                     := false;  -- False: PGPv2b@3.125Gb/s, True: PGPv3@10.3125Gb/s, 
-      AXIL_CLK_FREQ_G      : real                        := 156.25E+6;  -- units of Hz
-      AXI_BASE_ADDR_G      : slv(31 downto 0)            := x"0080_0000");
+      TPD_G                          : time                        := 1 ns;
+      ROGUE_SIM_EN_G                 : boolean                     := false;
+      ROGUE_SIM_PORT_NUM_G           : natural range 1024 to 49151 := 7000;
+      DMA_AXIS_CONFIG_G              : AxiStreamConfigType;
+      PGP_TYPE_G                     : boolean                     := false;      -- False: PGPv2b@3.125Gb/s, True: PGPv3@10.3125Gb/s, 
+      AXIL_CLK_FREQ_G                : real                        := 156.25E+6;  -- units of Hz
+      AXI_BASE_ADDR_G                : slv(31 downto 0)            := x"0080_0000";
+      L1_CLK_IS_TIMING_TX_CLK_G      : boolean                     := false;
+      TRIGGER_CLK_IS_TIMING_RX_CLK_G : boolean                     := false;
+      EVENT_CLK_IS_TIMING_RX_CLK_G   : boolean                     := false);
    port (
       ------------------------      
       --  Top Level Interfaces
       ------------------------    
       -- Reference Clock and Reset
-      userClk25       : in  sl;
-      userRst25       : in  sl;
+      userClk25           : in  sl;
+      userRst25           : in  sl;
       -- AXI-Lite Interface
-      axilClk         : in  sl;
-      axilRst         : in  sl;
-      axilReadMaster  : in  AxiLiteReadMasterType;
-      axilReadSlave   : out AxiLiteReadSlaveType;
-      axilWriteMaster : in  AxiLiteWriteMasterType;
-      axilWriteSlave  : out AxiLiteWriteSlaveType;
+      axilClk             : in  sl;
+      axilRst             : in  sl;
+      axilReadMaster      : in  AxiLiteReadMasterType;
+      axilReadSlave       : out AxiLiteReadSlaveType;
+      axilWriteMaster     : in  AxiLiteWriteMasterType;
+      axilWriteSlave      : out AxiLiteWriteSlaveType;
       -- PGP Streams (axilClk domain)
-      pgpIbMasters    : in  AxiStreamMasterArray(3 downto 0);
-      pgpIbSlaves     : out AxiStreamSlaveArray(3 downto 0);
-      pgpObMasters    : out AxiStreamQuadMasterArray(3 downto 0);
-      pgpObSlaves     : in  AxiStreamQuadSlaveArray(3 downto 0);
-      -- Trigger Event streams (axilClk domain)
-      trigMasters     : out AxiStreamMasterArray(3 downto 0);
-      trigSlaves      : in  AxiStreamSlaveArray(3 downto 0);
+      pgpIbMasters        : in  AxiStreamMasterArray(3 downto 0);
+      pgpIbSlaves         : out AxiStreamSlaveArray(3 downto 0);
+      pgpObMasters        : out AxiStreamQuadMasterArray(3 downto 0);
+      pgpObSlaves         : in  AxiStreamQuadSlaveArray(3 downto 0);
+      -- Trigger Interface
+      triggerClk          : in  sl;
+      triggerRst          : in  sl;
+      triggerData         : out ExperimentEventDataArray(3 downto 0);
+      -- L1 trigger feedback (optional)
+      l1Clk               : in  sl                                    := '0';
+      l1Rst               : in  sl                                    := '0';
+      l1Feedbacks         : in  ExperimentL1FeedbackArray(3 downto 0) := (others => EXPERIMENT_L1_FEEDBACK_INIT_C);
+      l1Acks              : out slv(3 downto 0);
+      -- Event streams
+      eventClk            : in  sl;
+      eventRst            : in  sl;
+      eventTimingMessages : out TimingMessageArray(3 downto 0);
+      eventAxisMasters    : out AxiStreamMasterArray(3 downto 0);
+      eventAxisSlaves     : in  AxiStreamSlaveArray(3 downto 0);
+      eventAxisCtrl       : in  AxiStreamCtrlArray(3 downto 0);
       ---------------------
       --  Hardware Ports
       ---------------------    
       -- QSFP[0] Ports
-      qsfp0RefClkP    : in  slv(1 downto 0);
-      qsfp0RefClkN    : in  slv(1 downto 0);
-      qsfp0RxP        : in  slv(3 downto 0);
-      qsfp0RxN        : in  slv(3 downto 0);
-      qsfp0TxP        : out slv(3 downto 0);
-      qsfp0TxN        : out slv(3 downto 0);
+      qsfp0RefClkP        : in  slv(1 downto 0);
+      qsfp0RefClkN        : in  slv(1 downto 0);
+      qsfp0RxP            : in  slv(3 downto 0);
+      qsfp0RxN            : in  slv(3 downto 0);
+      qsfp0TxP            : out slv(3 downto 0);
+      qsfp0TxN            : out slv(3 downto 0);
       -- QSFP[1] Ports
-      qsfp1RefClkP    : in  slv(1 downto 0);
-      qsfp1RefClkN    : in  slv(1 downto 0);
-      qsfp1RxP        : in  slv(3 downto 0);
-      qsfp1RxN        : in  slv(3 downto 0);
-      qsfp1TxP        : out slv(3 downto 0);
-      qsfp1TxN        : out slv(3 downto 0));
+      qsfp1RefClkP        : in  slv(1 downto 0);
+      qsfp1RefClkN        : in  slv(1 downto 0);
+      qsfp1RxP            : in  slv(3 downto 0);
+      qsfp1RxN            : in  slv(3 downto 0);
+      qsfp1TxP            : out slv(3 downto 0);
+      qsfp1TxN            : out slv(3 downto 0));
 end Hardware;
 
 architecture mapping of Hardware is
@@ -117,6 +141,7 @@ architecture mapping of Hardware is
    signal refClk    : slv(3 downto 0);
    signal refClkDiv : slv(3 downto 0);
 
+   signal iTriggerData    : ExperimentEventDataArray(3 downto 0);
    signal remoteTriggers : slv(3 downto 0);
 
    attribute dont_touch              : string;
@@ -275,31 +300,51 @@ begin
    ------------------
    U_TimingRx : entity work.Kcu1500TimingRx
       generic map (
-         TPD_G             => TPD_G,
-         SIMULATION_G      => ROGUE_SIM_EN_G,
-         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
-         AXIL_CLK_FREQ_G   => AXIL_CLK_FREQ_G,
-         AXI_BASE_ADDR_G   => AXIL_CONFIG_C(TIMING_INDEX_C).baseAddr)
+         TPD_G                          => TPD_G,
+         SIMULATION_G                   => ROGUE_SIM_EN_G,
+         DMA_AXIS_CONFIG_G              => DMA_AXIS_CONFIG_G,
+         AXIL_CLK_FREQ_G                => AXIL_CLK_FREQ_G,
+         AXI_BASE_ADDR_G                => AXIL_CONFIG_C(TIMING_INDEX_C).baseAddr,
+         NUM_DETECTORS_G                => 4,
+         L1_CLK_IS_TIMING_TX_CLK_G      => L1_CLK_IS_TIMING_TX_CLK_G,
+         TRIGGER_CLK_IS_TIMING_RX_CLK_G => TRIGGER_CLK_IS_TIMING_RX_CLK_G,
+         EVENT_CLK_IS_TIMING_RX_CLK_G   => EVENT_CLK_IS_TIMING_RX_CLK_G)
       port map (
-         -- Trigger Event streams (axilClk domain)
-         remoteTriggers   => remoteTriggers,
-         localTrigMasters => trigMasters,
-         localTrigSlaves  => trigSlaves,
          -- Reference Clock and Reset
-         userClk25        => userClk25,
-         userRst25        => userRst25,
+         userClk25           => userClk25,
+         userRst25           => userRst25,
+         -- Trigger / event interfaces
+         triggerClk          => triggerClk,           -- [in]
+         triggerRst          => triggerRst,           -- [in]
+         triggerData         => iTriggerData,         -- [out]
+         l1Clk               => l1Clk,                -- [in]
+         l1Rst               => l1Rst,                -- [in]  
+         l1Feedbacks         => l1Feedbacks,          -- [in]  
+         l1Acks              => l1Acks,               -- [out] 
+         eventClk            => eventClk,             -- [in]
+         eventRst            => eventRst,             -- [in]
+         eventTimingMessages => eventTimingMessages,  -- [out]
+         eventAxisMasters    => eventAxisMasters,     -- [out]
+         eventAxisSlaves     => eventAxisSlaves,      -- [in]
+         eventAxisCtrl       => eventAxisCtrl,        -- [in]
          -- AXI-Lite Interface (axilClk domain)
-         axilClk          => axilClk,
-         axilRst          => axilRst,
-         axilReadMaster   => axilReadMasters(TIMING_INDEX_C),
-         axilReadSlave    => axilReadSlaves(TIMING_INDEX_C),
-         axilWriteMaster  => axilWriteMasters(TIMING_INDEX_C),
-         axilWriteSlave   => axilWriteSlaves(TIMING_INDEX_C),
+         axilClk             => axilClk,
+         axilRst             => axilRst,
+         axilReadMaster      => axilReadMasters(TIMING_INDEX_C),
+         axilReadSlave       => axilReadSlaves(TIMING_INDEX_C),
+         axilWriteMaster     => axilWriteMasters(TIMING_INDEX_C),
+         axilWriteSlave      => axilWriteSlaves(TIMING_INDEX_C),
          -- GT Serial Ports
-         timingRxP        => qsfp1RxP(1 downto 0),
-         timingRxN        => qsfp1RxN(1 downto 0),
-         timingTxP        => qsfp1TxP(1 downto 0),
-         timingTxN        => qsfp1TxN(1 downto 0));
+         timingRxP           => qsfp1RxP(1 downto 0),
+         timingRxN           => qsfp1RxN(1 downto 0),
+         timingTxP           => qsfp1TxP(1 downto 0),
+         timingTxN           => qsfp1TxN(1 downto 0));
+
+   -- Feed l0 triggers directly to PGP
+   TRIGGER_GEN : for i in 3 downto 0 generate
+      remoteTriggers(i) <= iTriggerData(i).valid and iTriggerData(i).l0Accept;
+   end generate TRIGGER_GEN;
+   triggerData <= iTriggerData;
 
    --------------------
    -- Unused QSFP Links
