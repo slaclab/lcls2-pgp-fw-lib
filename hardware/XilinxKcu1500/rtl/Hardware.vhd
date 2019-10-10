@@ -305,10 +305,7 @@ begin
          DMA_AXIS_CONFIG_G              => DMA_AXIS_CONFIG_G,
          AXIL_CLK_FREQ_G                => AXIL_CLK_FREQ_G,
          AXI_BASE_ADDR_G                => AXIL_CONFIG_C(TIMING_INDEX_C).baseAddr,
-         NUM_DETECTORS_G                => 4,
-         L1_CLK_IS_TIMING_TX_CLK_G      => L1_CLK_IS_TIMING_TX_CLK_G,
-         TRIGGER_CLK_IS_TIMING_RX_CLK_G => TRIGGER_CLK_IS_TIMING_RX_CLK_G,
-         EVENT_CLK_IS_TIMING_RX_CLK_G   => EVENT_CLK_IS_TIMING_RX_CLK_G)
+         NUM_DETECTORS_G                => 4)
       port map (
          -- Reference Clock and Reset
          userClk25           => userClk25,

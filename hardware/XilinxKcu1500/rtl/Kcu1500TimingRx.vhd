@@ -38,10 +38,7 @@ entity Kcu1500TimingRx is
       AXIL_CLK_FREQ_G                : real    := 156.25E+6;  -- units of Hz
       DMA_AXIS_CONFIG_G              : AxiStreamConfigType;
       AXI_BASE_ADDR_G                : slv(31 downto 0);
-      NUM_DETECTORS_G                : integer range 1 to 4;
-      L1_CLK_IS_TIMING_TX_CLK_G      : boolean := false;
-      TRIGGER_CLK_IS_TIMING_RX_CLK_G : boolean := false;
-      EVENT_CLK_IS_TIMING_RX_CLK_G   : boolean := false);
+      NUM_DETECTORS_G                : integer range 1 to 4);
    port (
       -- Reference Clock and Reset
       userClk25           : in  sl;
@@ -468,6 +465,8 @@ begin
 
    ---------------------
    -- Timing PHY Monitor
+   -- This is mostly unused now. Trigger monitoring is done in the TriggerEventManager
+   -- Still need the useMiniTpg register
    ---------------------
    U_Monitor : entity work.TimingPhyMonitor
       generic map (
@@ -501,16 +500,16 @@ begin
 
 
    ---------------------------------------------------------------
-   -- EventHeaderCache goes here
+   -- Decode events and buffer them for the application
    ---------------------------------------------------------------
-   U_EventHeaderCacheWrapper2_1 : entity work.EventHeaderCacheWrapper2
+   U_TriggerEventManager_1 : entity work.TriggerEventManager
       generic map (
          TPD_G                          => TPD_G,
          NUM_DETECTORS_G                => 4,                   -- ???
          AXIL_BASE_ADDR_G               => AXIL_CONFIG_C(EHC_INDEX_C).baseAddr,
-         L1_CLK_IS_TIMING_TX_CLK_G      => L1_CLK_IS_TIMING_TX_CLK_G,
-         TRIGGER_CLK_IS_TIMING_RX_CLK_G => TRIGGER_CLK_IS_TIMING_RX_CLK_G,
-         EVENT_CLK_IS_TIMING_RX_CLK_G   => EVENT_CLK_IS_TIMING_RX_CLK_G)
+         L1_CLK_IS_TIMING_TX_CLK_G      => false,
+         TRIGGER_CLK_IS_TIMING_RX_CLK_G => false,
+         EVENT_CLK_IS_TIMING_RX_CLK_G   => false)
       port map (
          timingRxClk         => timingRxClk,                    -- [in]
          timingRxRst         => timingRxRst,                    -- [in]
