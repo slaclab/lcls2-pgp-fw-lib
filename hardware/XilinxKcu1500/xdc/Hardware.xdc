@@ -28,8 +28,8 @@ create_clock -name timingRxClk1    -period 5.384 [get_pins {U_Hardware/U_TimingR
 create_clock -name timingTxOutClk1 -period 5.384 [get_pins {U_Hardware/U_TimingRx/GEN_VEC[1].REAL_PCIE.U_GTH/LOCREF_G.U_TimingGthCore/inst/gen_gtwizard_gthe3_top.TimingGth_fixedlat_gtwizard_gthe3_inst/gen_gtwizard_gthe3.gen_channel_container[0].gen_enabled_channel.gthe3_channel_wrapper_inst/channel_inst/gthe3_channel_gen.gen_gthe3_channel_inst[0].GTHE3_CHANNEL_PRIM_INST/TXOUTCLK}]
 create_generated_clock -name timingTxClk1        [get_pins {U_Hardware/U_TimingRx/GEN_VEC[1].REAL_PCIE.U_GTH/LOCREF_G.TIMING_TXCLK_BUFG_GT/O}]
 
-set_case_analysis 1 [get_pins {U_Hardware/U_TimingRx/GEN_VEC[0].REAL_PCIE.U_RXCLK/S}]
-set_case_analysis 1 [get_pins {U_Hardware/U_TimingRx/GEN_VEC[1].REAL_PCIE.U_RXCLK/S}]
+set_case_analysis 1 [get_pins {U_Hardware/U_TimingRx/GEN_VEC[0].U_RXCLK/S}]
+set_case_analysis 1 [get_pins {U_Hardware/U_TimingRx/GEN_VEC[1].U_RXCLK/S}]
 set_case_analysis 1 [get_pins {U_Hardware/U_TimingRx/U_RXCLK/S}]
 set_case_analysis 1 [get_pins {U_Hardware/U_TimingRx/U_TXCLK/S}]
 
@@ -37,3 +37,4 @@ set_clock_groups -asynchronous -group [get_clocks {clk156}] -group [get_clocks {
 set_clock_groups -asynchronous -group [get_clocks {clk156}] -group [get_clocks {timingRxClk1}]  -group [get_clocks {timingTxClk1}] -group [get_clocks {timingRxClk}] -group [get_clocks {timingTxClk}]
 
 set_clock_groups -asynchronous -group [get_clocks {clk156}]  -group [get_clocks {clk238}]  -group [get_clocks {clk371}] -group [get_clocks {dmaClk}]
+
