@@ -42,6 +42,7 @@ entity Hardware is
       PGP_TYPE_G                     : boolean                     := false;      -- False: PGPv2b@3.125Gb/s, True: PGPv3@10.3125Gb/s, 
       AXIL_CLK_FREQ_G                : real                        := 156.25E+6;  -- units of Hz
       AXI_BASE_ADDR_G                : slv(31 downto 0)            := x"0080_0000";
+      NUM_PGP_LANES_G                : integer range 1 to 4        := 4;
       L1_CLK_IS_TIMING_TX_CLK_G      : boolean                     := false;
       TRIGGER_CLK_IS_TIMING_RX_CLK_G : boolean                     := false;
       EVENT_CLK_IS_TIMING_RX_CLK_G   : boolean                     := false);
@@ -60,26 +61,26 @@ entity Hardware is
       axilWriteMaster     : in  AxiLiteWriteMasterType;
       axilWriteSlave      : out AxiLiteWriteSlaveType;
       -- PGP Streams (axilClk domain)
-      pgpIbMasters        : in  AxiStreamMasterArray(3 downto 0);
-      pgpIbSlaves         : out AxiStreamSlaveArray(3 downto 0);
-      pgpObMasters        : out AxiStreamQuadMasterArray(3 downto 0);
-      pgpObSlaves         : in  AxiStreamQuadSlaveArray(3 downto 0);
+      pgpIbMasters        : in  AxiStreamMasterArray(NUM_PGP_LANES_G-1 downto 0);
+      pgpIbSlaves         : out AxiStreamSlaveArray(NUM_PGP_LANES_G-1 downto 0);
+      pgpObMasters        : out AxiStreamQuadMasterArray(NUM_PGP_LANES_G-1 downto 0);
+      pgpObSlaves         : in  AxiStreamQuadSlaveArray(NUM_PGP_LANES_G-1 downto 0);
       -- Trigger Interface
       triggerClk          : in  sl;
       triggerRst          : in  sl;
-      triggerData         : out ExperimentEventDataArray(3 downto 0);
+      triggerData         : out ExperimentEventDataArray(NUM_PGP_LANES_G-1 downto 0);
       -- L1 trigger feedback (optional)
       l1Clk               : in  sl                                    := '0';
       l1Rst               : in  sl                                    := '0';
-      l1Feedbacks         : in  ExperimentL1FeedbackArray(3 downto 0) := (others => EXPERIMENT_L1_FEEDBACK_INIT_C);
-      l1Acks              : out slv(3 downto 0);
+      l1Feedbacks         : in  ExperimentL1FeedbackArray(NUM_PGP_LANES_G-1 downto 0) := (others => EXPERIMENT_L1_FEEDBACK_INIT_C);
+      l1Acks              : out slv(NUM_PGP_LANES_G-1 downto 0);
       -- Event streams
       eventClk            : in  sl;
       eventRst            : in  sl;
-      eventTimingMessages : out TimingMessageArray(3 downto 0);
-      eventAxisMasters    : out AxiStreamMasterArray(3 downto 0);
-      eventAxisSlaves     : in  AxiStreamSlaveArray(3 downto 0);
-      eventAxisCtrl       : in  AxiStreamCtrlArray(3 downto 0);
+      eventTimingMessages : out TimingMessageArray(NUM_PGP_LANES_G-1 downto 0);
+      eventAxisMasters    : out AxiStreamMasterArray(NUM_PGP_LANES_G-1 downto 0);
+      eventAxisSlaves     : in  AxiStreamSlaveArray(NUM_PGP_LANES_G-1 downto 0);
+      eventAxisCtrl       : in  AxiStreamCtrlArray(NUM_PGP_LANES_G-1 downto 0);
       ---------------------
       --  Hardware Ports
       ---------------------    
@@ -129,9 +130,9 @@ architecture mapping of Hardware is
          connectivity => x"FFFF"));
 
    signal axilWriteMasters : AxiLiteWriteMasterArray(NUM_AXIL_MASTERS_C-1 downto 0);
-   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXIL_MASTERS_C-1 downto 0);
+   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXIL_MASTERS_C-1 downto 0) := (others => AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C);
    signal axilReadMasters  : AxiLiteReadMasterArray(NUM_AXIL_MASTERS_C-1 downto 0);
-   signal axilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXIL_MASTERS_C-1 downto 0);
+   signal axilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXIL_MASTERS_C-1 downto 0)  := (others => AXI_LITE_READ_SLAVE_EMPTY_DECERR_C);
 
    signal qpllLock   : Slv2Array(3 downto 0);
    signal qpllClk    : Slv2Array(3 downto 0);
@@ -141,8 +142,8 @@ architecture mapping of Hardware is
    signal refClk    : slv(3 downto 0);
    signal refClkDiv : slv(3 downto 0);
 
-   signal iTriggerData    : ExperimentEventDataArray(3 downto 0);
-   signal remoteTriggers : slv(3 downto 0);
+   signal iTriggerData   : ExperimentEventDataArray(NUM_PGP_LANES_G-1 downto 0);
+   signal remoteTriggers : slv(NUM_PGP_LANES_G-1 downto 0);
 
    attribute dont_touch              : string;
    attribute dont_touch of refClk    : signal is "TRUE";
@@ -223,7 +224,7 @@ begin
    -- PGP Modules
    --------------
    GEN_LANE :
-   for i in 3 downto 0 generate
+   for i in NUM_PGP_LANES_G-1 downto 0 generate
 
       GEN_PGP3 : if (PGP_TYPE_G = true) generate
          U_Lane : entity work.Kcu1500Pgp3Lane
@@ -295,17 +296,30 @@ begin
 
    end generate GEN_LANE;
 
+   GEN_DUMMY : if (NUM_PGP_LANES_G < 4) generate
+      U_QSFP1 : entity work.Gthe3ChannelDummy
+         generic map (
+            TPD_G   => TPD_G,
+            WIDTH_G => 4-NUM_PGP_LANES_G)
+         port map (
+            refClk => axilClk,
+            gtRxP  => qsfp0RxP(3 downto NUM_PGP_LANES_G),
+            gtRxN  => qsfp0RxN(3 downto NUM_PGP_LANES_G),
+            gtTxP  => qsfp0TxP(3 downto NUM_PGP_LANES_G),
+            gtTxN  => qsfp0TxN(3 downto NUM_PGP_LANES_G));
+   end generate GEN_DUMMY;
+
    ------------------
    -- Timing Receiver
    ------------------
    U_TimingRx : entity work.Kcu1500TimingRx
       generic map (
-         TPD_G                          => TPD_G,
-         SIMULATION_G                   => ROGUE_SIM_EN_G,
-         DMA_AXIS_CONFIG_G              => DMA_AXIS_CONFIG_G,
-         AXIL_CLK_FREQ_G                => AXIL_CLK_FREQ_G,
-         AXI_BASE_ADDR_G                => AXIL_CONFIG_C(TIMING_INDEX_C).baseAddr,
-         NUM_DETECTORS_G                => 4)
+         TPD_G             => TPD_G,
+         SIMULATION_G      => ROGUE_SIM_EN_G,
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
+         AXIL_CLK_FREQ_G   => AXIL_CLK_FREQ_G,
+         AXI_BASE_ADDR_G   => AXIL_CONFIG_C(TIMING_INDEX_C).baseAddr,
+         NUM_DETECTORS_G   => NUM_PGP_LANES_G)
       port map (
          -- Reference Clock and Reset
          userClk25           => userClk25,
@@ -338,7 +352,7 @@ begin
          timingTxN           => qsfp1TxN(1 downto 0));
 
    -- Feed l0 triggers directly to PGP
-   TRIGGER_GEN : for i in 3 downto 0 generate
+   TRIGGER_GEN : for i in NUM_PGP_LANES_G-1 downto 0 generate
       remoteTriggers(i) <= iTriggerData(i).valid and iTriggerData(i).l0Accept;
    end generate TRIGGER_GEN;
    triggerData <= iTriggerData;

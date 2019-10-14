@@ -505,7 +505,7 @@ begin
    U_TriggerEventManager_1 : entity work.TriggerEventManager
       generic map (
          TPD_G                          => TPD_G,
-         NUM_DETECTORS_G                => 4,                   -- ???
+         NUM_DETECTORS_G                => NUM_DETECTORS_G,                   -- ???
          AXIL_BASE_ADDR_G               => AXIL_CONFIG_C(EHC_INDEX_C).baseAddr,
          L1_CLK_IS_TIMING_TX_CLK_G      => false,
          TRIGGER_CLK_IS_TIMING_RX_CLK_G => false,
