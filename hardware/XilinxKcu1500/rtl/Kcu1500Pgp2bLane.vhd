@@ -16,6 +16,8 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
+library unisim;
+use unisim.vcomponents.all;
 
 library surf;
 use surf.StdRtlPkg.all;
@@ -23,8 +25,8 @@ use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 use surf.Pgp2bPkg.all;
 
-library unisim;
-use unisim.vcomponents.all;
+library lcls2_pgp_fw_lib;
+
 
 entity Kcu1500Pgp2bLane is
    generic (

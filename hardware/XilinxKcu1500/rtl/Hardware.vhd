@@ -21,19 +21,13 @@ use ieee.std_logic_unsigned.all;
 library unisim;
 use unisim.vcomponents.all;
 
--- surf
-
 library surf;
 use surf.StdRtlPkg.all;
 use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 
--- timing-core
-
 library lcls_timing_core;
 use lcls_timing_core.TimingPkg.all;
-
--- l2si-core
 
 library l2si_core;
 use l2si_core.L2SiPkg.all;

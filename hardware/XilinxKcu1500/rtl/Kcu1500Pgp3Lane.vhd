@@ -16,12 +16,13 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
-
 library surf;
 use surf.StdRtlPkg.all;
 use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 use surf.Pgp3Pkg.all;
+
+library lcls2_pgp_fw_lib;
 
 entity Kcu1500Pgp3Lane is
    generic (

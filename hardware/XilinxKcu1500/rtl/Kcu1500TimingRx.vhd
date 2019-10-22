@@ -16,7 +16,8 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
 
--- surf
+library unisim;
+use unisim.vcomponents.all;
 
 library surf;
 use surf.StdRtlPkg.all;
@@ -24,18 +25,13 @@ use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 use surf.SsiPkg.all;
 
--- timing-core
-
 library lcls_timing_core;
 use lcls_timing_core.TimingPkg.all;
-
--- l2si-core
 
 library l2si_core;
 use l2si_core.L2SiPkg.all;
 
-library unisim;
-use unisim.vcomponents.all;
+library lcls2_pgp_fw_lib;
 
 entity Kcu1500TimingRx is
    generic (
