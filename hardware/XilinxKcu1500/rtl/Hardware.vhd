@@ -32,6 +32,9 @@ use work.TimingPkg.all;
 -- l2si-core
 use work.L2SiPkg.all;
 
+-- Library that this module belongs to
+library lcls2_pgp_fw_lib;
+
 
 entity Hardware is
    generic (
