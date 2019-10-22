@@ -20,4 +20,4 @@ if { [info exists ::env(OVERRIDE_SUBMODULE_LOCKS)] != 1 || $::env(OVERRIDE_SUBMO
 }
 
 # Load local source Code 
-loadSource -dir "$::DIR_PATH/rtl"
+loadSource -lib lcls2_pgp_fw_lib -dir "$::DIR_PATH/rtl"

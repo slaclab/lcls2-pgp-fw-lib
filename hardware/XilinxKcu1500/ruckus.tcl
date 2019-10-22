@@ -2,7 +2,7 @@
 source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
 
 # Load local source Code 
-loadSource      -dir  "$::DIR_PATH/rtl"
+loadSource      -lib lcls2_pgp_fw_lib -dir  "$::DIR_PATH/rtl"
 loadConstraints -path "$::DIR_PATH/xdc/Hardware.xdc"
 
 # Case the timing on communication protocol

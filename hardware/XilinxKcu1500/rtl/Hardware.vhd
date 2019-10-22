@@ -227,7 +227,7 @@ begin
    for i in NUM_PGP_LANES_G-1 downto 0 generate
 
       GEN_PGP3 : if (PGP_TYPE_G = true) generate
-         U_Lane : entity work.Kcu1500Pgp3Lane
+         U_Lane : entity lcls2_pgp_fw_lib.Kcu1500Pgp3Lane
             generic map (
                TPD_G                => TPD_G,
                ROGUE_SIM_EN_G       => ROGUE_SIM_EN_G,
@@ -263,7 +263,7 @@ begin
       end generate;
 
       GEN_PGP2b : if (PGP_TYPE_G = false) generate
-         U_Lane : entity work.Kcu1500Pgp2bLane
+         U_Lane : entity lcls2_pgp_fw_lib.Kcu1500Pgp2bLane
             generic map (
                TPD_G                => TPD_G,
                ROGUE_SIM_EN_G       => ROGUE_SIM_EN_G,
@@ -312,7 +312,7 @@ begin
    ------------------
    -- Timing Receiver
    ------------------
-   U_TimingRx : entity work.Kcu1500TimingRx
+   U_TimingRx : entity lcls2_pgp_fw_lib.Kcu1500TimingRx
       generic map (
          TPD_G             => TPD_G,
          SIMULATION_G      => ROGUE_SIM_EN_G,

@@ -233,7 +233,7 @@ begin
    -------------------------------------------------------
    -- Power Up Initialization of the KCU1500 Timing RX PHY
    -------------------------------------------------------
-   U_TimingPhyInit : entity work.TimingPhyInit
+   U_TimingPhyInit : entity lcls2_pgp_fw_lib.TimingPhyInit
       generic map (
          TPD_G              => TPD_G,
          SIMULATION_G       => SIMULATION_G,
@@ -468,7 +468,7 @@ begin
    -- This is mostly unused now. Trigger monitoring is done in the TriggerEventManager
    -- Still need the useMiniTpg register
    ---------------------
-   U_Monitor : entity work.TimingPhyMonitor
+   U_Monitor : entity lcls2_pgp_fw_lib.TimingPhyMonitor
       generic map (
          TPD_G           => TPD_G,
          SIMULATION_G    => SIMULATION_G,

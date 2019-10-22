@@ -271,7 +271,7 @@ begin
    --------------
    -- PGP TX Path
    --------------
-   U_Tx : entity work.PgpLaneTx
+   U_Tx : entity lcls2_pgp_fw_lib.PgpLaneTx
       generic map (
          TPD_G            => TPD_G,
          APP_AXI_CONFIG_G => DMA_AXIS_CONFIG_G,
@@ -293,7 +293,7 @@ begin
    --------------
    -- PGP RX Path
    --------------
-   U_Rx : entity work.PgpLaneRx
+   U_Rx : entity lcls2_pgp_fw_lib.PgpLaneRx
       generic map (
          TPD_G            => TPD_G,
          ROGUE_SIM_EN_G   => ROGUE_SIM_EN_G,
