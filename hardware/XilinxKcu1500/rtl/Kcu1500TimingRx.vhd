@@ -17,13 +17,17 @@ use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
 
 -- surf
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
-use work.SsiPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
+use surf.SsiPkg.all;
 
 -- timing-core
-use work.TimingPkg.all;
+
+library lcls_timing_core;
+use lcls_timing_core.TimingPkg.all;
 
 -- l2si-core
 use work.L2SiPkg.all;
@@ -175,7 +179,7 @@ begin
    -------------------------   
    -- Reference LCLS-I Clock
    -------------------------   
-   U_238MHz : entity work.ClockManagerUltraScale
+   U_238MHz : entity surf.ClockManagerUltraScale
       generic map(
          TPD_G              => TPD_G,
          SIMULATION_G       => SIMULATION_G,
@@ -204,7 +208,7 @@ begin
    --------------------------   
    -- Reference LCLS-II Clock
    --------------------------           
-   U_371MHz : entity work.ClockManagerUltraScale
+   U_371MHz : entity surf.ClockManagerUltraScale
       generic map(
          TPD_G              => TPD_G,
          SIMULATION_G       => SIMULATION_G,
@@ -252,7 +256,7 @@ begin
    ---------------------
    -- AXI-Lite Crossbar
    ---------------------
-   U_XBAR : entity work.AxiLiteCrossbar
+   U_XBAR : entity surf.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
          NUM_SLAVE_SLOTS_G  => 2,
@@ -288,7 +292,7 @@ begin
             CLR => '0',
             O   => refClkDiv2(i));
 
-      U_refRstDiv2 : entity work.RstSync
+      U_refRstDiv2 : entity surf.RstSync
          generic map (
             TPD_G => TPD_G)
          port map (
@@ -306,7 +310,7 @@ begin
             S  => useMiniTpg);          -- 1-bit input: Clock select      
 
       REAL_PCIE : if (not SIMULATION_G) generate
-         U_GTH : entity work.TimingGtCoreWrapper
+         U_GTH : entity lcls_timing_core.TimingGtCoreWrapper
             generic map (
                TPD_G            => TPD_G,
                EXTREF_G         => false,
@@ -430,7 +434,7 @@ begin
    --------------
    -- Timing Core
    --------------
-   U_TimingCore : entity work.TimingCore
+   U_TimingCore : entity lcls_timing_core.TimingCore
       generic map (
          TPD_G             => TPD_G,
          DEFAULT_CLK_SEL_G => '0',      -- '0': default LCLS-I, '1': default LCLS-II

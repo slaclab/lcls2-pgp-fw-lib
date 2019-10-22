@@ -22,12 +22,16 @@ library unisim;
 use unisim.vcomponents.all;
 
 -- surf
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
 
 -- timing-core
-use work.TimingPkg.all;
+
+library lcls_timing_core;
+use lcls_timing_core.TimingPkg.all;
 
 -- l2si-core
 use work.L2SiPkg.all;
@@ -157,7 +161,7 @@ begin
    ---------------------
    -- AXI-Lite Crossbar
    ---------------------
-   U_XBAR : entity work.AxiLiteCrossbar
+   U_XBAR : entity surf.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
          NUM_SLAVE_SLOTS_G  => 1,
@@ -208,7 +212,7 @@ begin
    end generate GEN_REFCLK;
 
    GEN_PGP3_QPLL : if (PGP_TYPE_G = true) generate
-      U_QPLL : entity work.Pgp3GthUsQpll
+      U_QPLL : entity surf.Pgp3GthUsQpll
          generic map (
             TPD_G => TPD_G)
          port map (
@@ -300,7 +304,7 @@ begin
    end generate GEN_LANE;
 
    GEN_DUMMY : if (NUM_PGP_LANES_G < 4) generate
-      U_QSFP1 : entity work.Gthe3ChannelDummy
+      U_QSFP1 : entity surf.Gthe3ChannelDummy
          generic map (
             TPD_G   => TPD_G,
             WIDTH_G => 4-NUM_PGP_LANES_G)
@@ -363,7 +367,7 @@ begin
    --------------------
    -- Unused QSFP Links
    --------------------
-   U_QSFP1 : entity work.Gthe3ChannelDummy
+   U_QSFP1 : entity surf.Gthe3ChannelDummy
       generic map (
          TPD_G   => TPD_G,
          WIDTH_G => 2)
