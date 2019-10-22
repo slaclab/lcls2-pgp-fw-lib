@@ -68,11 +68,11 @@ entity Hardware is
       -- Trigger Interface
       triggerClk          : in  sl;
       triggerRst          : in  sl;
-      triggerData         : out ExperimentEventDataArray(NUM_PGP_LANES_G-1 downto 0);
+      triggerData         : out TriggerEventDataArray(NUM_PGP_LANES_G-1 downto 0);
       -- L1 trigger feedback (optional)
       l1Clk               : in  sl                                    := '0';
       l1Rst               : in  sl                                    := '0';
-      l1Feedbacks         : in  ExperimentL1FeedbackArray(NUM_PGP_LANES_G-1 downto 0) := (others => EXPERIMENT_L1_FEEDBACK_INIT_C);
+      l1Feedbacks         : in  TriggerL1FeedbackArray(NUM_PGP_LANES_G-1 downto 0) := (others => TRIGGER_L1_FEEDBACK_INIT_C);
       l1Acks              : out slv(NUM_PGP_LANES_G-1 downto 0);
       -- Event streams
       eventClk            : in  sl;
@@ -142,7 +142,7 @@ architecture mapping of Hardware is
    signal refClk    : slv(3 downto 0);
    signal refClkDiv : slv(3 downto 0);
 
-   signal iTriggerData   : ExperimentEventDataArray(NUM_PGP_LANES_G-1 downto 0);
+   signal iTriggerData   : TriggerEventDataArray(NUM_PGP_LANES_G-1 downto 0);
    signal remoteTriggers : slv(NUM_PGP_LANES_G-1 downto 0);
 
    attribute dont_touch              : string;

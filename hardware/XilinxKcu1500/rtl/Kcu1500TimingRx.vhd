@@ -46,11 +46,11 @@ entity Kcu1500TimingRx is
       -- Trigger Interface
       triggerClk          : in  sl;
       triggerRst          : in  sl;
-      triggerData         : out ExperimentEventDataArray(NUM_DETECTORS_G-1 downto 0);
+      triggerData         : out TriggerEventDataArray(NUM_DETECTORS_G-1 downto 0);
       -- L1 trigger feedback (optional)
       l1Clk               : in  sl                                                    := '0';
       l1Rst               : in  sl                                                    := '0';
-      l1Feedbacks         : in  ExperimentL1FeedbackArray(NUM_DETECTORS_G-1 downto 0) := (others => EXPERIMENT_L1_FEEDBACK_INIT_C);
+      l1Feedbacks         : in  TriggerL1FeedbackArray(NUM_DETECTORS_G-1 downto 0) := (others => TRIGGER_L1_FEEDBACK_INIT_C);
       l1Acks              : out slv(NUM_DETECTORS_G-1 downto 0);
       -- Event streams
       eventClk            : in  sl;
