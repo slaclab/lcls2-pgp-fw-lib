@@ -30,7 +30,9 @@ library lcls_timing_core;
 use lcls_timing_core.TimingPkg.all;
 
 -- l2si-core
-use work.L2SiPkg.all;
+
+library l2si_core;
+use l2si_core.L2SiPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
@@ -506,7 +508,7 @@ begin
    ---------------------------------------------------------------
    -- Decode events and buffer them for the application
    ---------------------------------------------------------------
-   U_TriggerEventManager_1 : entity work.TriggerEventManager
+   U_TriggerEventManager_1 : entity l2si_core.TriggerEventManager
       generic map (
          TPD_G                          => TPD_G,
          NUM_DETECTORS_G                => NUM_DETECTORS_G,                   -- ???
