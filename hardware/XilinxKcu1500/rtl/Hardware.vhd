@@ -4,6 +4,16 @@
 -------------------------------------------------------------------------------
 -- Description: Hardware File
 -------------------------------------------------------------------------------
+-- Fiber Mapping to Hardware:
+--    QSFP[0][0] = PGP.Lane[0].VC[3:0]
+--    QSFP[0][1] = PGP.Lane[1].VC[3:0]
+--    QSFP[0][2] = PGP.Lane[2].VC[3:0]
+--    QSFP[0][3] = PGP.Lane[3].VC[3:0]
+--    QSFP[1][0] = LCLS-I  Timing Receiver
+--    QSFP[1][1] = LCLS-II Timing Receiver
+--    QSFP[1][2] = Unused QSFP Link
+--    QSFP[1][3] = Unused QSFP Link
+-------------------------------------------------------------------------------
 -- This file is part of 'Camera link gateway'.
 -- It is subject to the license terms in the LICENSE.txt file found in the 
 -- top-level directory of this distribution and at: 
@@ -34,7 +44,6 @@ use l2si_core.L2SiPkg.all;
 
 -- Library that this module belongs to
 library lcls2_pgp_fw_lib;
-
 
 entity Hardware is
    generic (
