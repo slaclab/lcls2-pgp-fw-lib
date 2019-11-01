@@ -16,8 +16,10 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
 
 entity TimingPhyMonitor is
    generic (
@@ -103,7 +105,7 @@ begin
    GEN_TRIG_FREQ :
    for i in 3 downto 0 generate
 
-      U_remTrigFreq : entity work.SyncTrigRate
+      U_remTrigFreq : entity surf.SyncTrigRate
          generic map (
             TPD_G          => TPD_G,
             COMMON_CLK_G   => true,
@@ -118,7 +120,7 @@ begin
             locClk      => axilClk,
             refClk      => axilClk);
 
-      U_remTrigDropFreq : entity work.SyncTrigRate
+      U_remTrigDropFreq : entity surf.SyncTrigRate
          generic map (
             TPD_G          => TPD_G,
             COMMON_CLK_G   => true,
@@ -133,7 +135,7 @@ begin
             locClk      => axilClk,
             refClk      => axilClk);
 
-      U_locTrigFreq : entity work.SyncTrigRate
+      U_locTrigFreq : entity surf.SyncTrigRate
          generic map (
             TPD_G          => TPD_G,
             COMMON_CLK_G   => true,
@@ -148,7 +150,7 @@ begin
             locClk      => axilClk,
             refClk      => axilClk);
 
-      U_locTrigDropFreq : entity work.SyncTrigRate
+      U_locTrigDropFreq : entity surf.SyncTrigRate
          generic map (
             TPD_G          => TPD_G,
             COMMON_CLK_G   => true,
@@ -167,7 +169,7 @@ begin
 
    GEN_REFCLK_FREQ :
    for i in 1 downto 0 generate
-      U_refClk : entity work.SyncClockFreq
+      U_refClk : entity surf.SyncClockFreq
          generic map (
             TPD_G          => TPD_G,
             REF_CLK_FREQ_G => AXIL_CLK_FREQ_G,
@@ -182,7 +184,7 @@ begin
             refClk  => axilClk);
    end generate GEN_REFCLK_FREQ;
 
-   Sync_txRst : entity work.Synchronizer
+   Sync_txRst : entity surf.Synchronizer
       generic map (
          TPD_G => TPD_G)
       port map (
@@ -190,7 +192,7 @@ begin
          dataIn  => txRst,
          dataOut => txReset);
 
-   U_txClkFreq : entity work.SyncClockFreq
+   U_txClkFreq : entity surf.SyncClockFreq
       generic map (
          TPD_G          => TPD_G,
          REF_CLK_FREQ_G => AXIL_CLK_FREQ_G,
@@ -204,7 +206,7 @@ begin
          locClk  => axilClk,
          refClk  => axilClk);
 
-   Sync_rxRst : entity work.Synchronizer
+   Sync_rxRst : entity surf.Synchronizer
       generic map (
          TPD_G => TPD_G)
       port map (
@@ -212,7 +214,7 @@ begin
          dataIn  => rxRst,
          dataOut => rxReset);
 
-   U_rxClkFreq : entity work.SyncClockFreq
+   U_rxClkFreq : entity surf.SyncClockFreq
       generic map (
          TPD_G          => TPD_G,
          REF_CLK_FREQ_G => AXIL_CLK_FREQ_G,
@@ -358,7 +360,7 @@ begin
       end if;
    end process seq;
 
-   U_mmcmRst : entity work.PwrUpRst
+   U_mmcmRst : entity surf.PwrUpRst
       generic map (
          TPD_G         => TPD_G,
          SIM_SPEEDUP_G => SIMULATION_G,
@@ -368,7 +370,7 @@ begin
          clk    => axilClk,
          rstOut => mmcmRst);
 
-   U_rxUserRst : entity work.PwrUpRst
+   U_rxUserRst : entity surf.PwrUpRst
       generic map (
          TPD_G         => TPD_G,
          SIM_SPEEDUP_G => SIMULATION_G,
@@ -378,7 +380,7 @@ begin
          clk    => axilClk,
          rstOut => rxUserRst);
 
-   U_txUserRst : entity work.PwrUpRst
+   U_txUserRst : entity surf.PwrUpRst
       generic map (
          TPD_G         => TPD_G,
          SIM_SPEEDUP_G => SIMULATION_G,

@@ -16,13 +16,17 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
-use work.Pgp2bPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
+use surf.Pgp2bPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
+
+library lcls2_pgp_fw_lib; 
 
 entity Kcu1500Pgp2bLane is
    generic (
@@ -90,7 +94,7 @@ architecture mapping of Kcu1500Pgp2bLane is
 
 begin
 
-   U_Trig : entity work.SynchronizerOneShot
+   U_Trig : entity surf.SynchronizerOneShot
       generic map (
          TPD_G => TPD_G)
       port map (
@@ -98,7 +102,7 @@ begin
          dataIn  => trigger,
          dataOut => locTxIn.opCodeEn);
 
-   U_Wtd : entity work.WatchDogRst
+   U_Wtd : entity surf.WatchDogRst
       generic map(
          TPD_G      => TPD_G,
          DURATION_G => getTimeRatio(AXIL_CLK_FREQ_G, 0.2))  -- 5 s timeout
@@ -107,7 +111,7 @@ begin
          monIn  => pgpRxOut.remLinkReady,
          rstOut => wdtRst);
 
-   U_PwrUpRst : entity work.PwrUpRst
+   U_PwrUpRst : entity surf.PwrUpRst
       generic map (
          TPD_G         => TPD_G,
          SIM_SPEEDUP_G => ROGUE_SIM_EN_G,
@@ -120,7 +124,7 @@ begin
    ---------------------
    -- AXI-Lite Crossbar
    ---------------------
-   U_XBAR : entity work.AxiLiteCrossbar
+   U_XBAR : entity surf.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
          NUM_SLAVE_SLOTS_G  => 1,
@@ -142,7 +146,7 @@ begin
    -- PGP Core
    -----------
    REAL_PGP : if (not ROGUE_SIM_EN_G) generate
-      U_Pgp : entity work.Pgp2bGthUltra
+      U_Pgp : entity surf.Pgp2bGthUltra
          generic map (
             TPD_G           => TPD_G,
             VC_INTERLEAVE_G => 1)       -- AxiStreamDmaV2 supports interleaving
@@ -214,7 +218,7 @@ begin
       pgpTxClk <= axilClk;
       pgpTxRst <= axilRst;
 
-      U_Rogue : entity work.RoguePgp2bSim
+      U_Rogue : entity surf.RoguePgp2bSim
          generic map(
             TPD_G      => TPD_G,
             PORT_NUM_G => ROGUE_SIM_PORT_NUM_G,
@@ -241,7 +245,7 @@ begin
    --------------         
    -- PGP Monitor
    --------------         
-   U_PgpMon : entity work.Pgp2bAxi
+   U_PgpMon : entity surf.Pgp2bAxi
       generic map (
          TPD_G              => TPD_G,
          COMMON_TX_CLK_G    => false,
@@ -274,7 +278,7 @@ begin
    -----------------------------
    -- Monitor the PGP TX streams
    -----------------------------
-   U_AXIS_TX_MON : entity work.AxiStreamMonAxiL
+   U_AXIS_TX_MON : entity surf.AxiStreamMonAxiL
       generic map(
          TPD_G            => TPD_G,
          COMMON_CLK_G     => false,
@@ -298,7 +302,7 @@ begin
    -----------------------------
    -- Monitor the PGP RX streams
    -----------------------------
-   U_AXIS_RX_MON : entity work.AxiStreamMonAxiL
+   U_AXIS_RX_MON : entity surf.AxiStreamMonAxiL
       generic map(
          TPD_G            => TPD_G,
          COMMON_CLK_G     => false,
@@ -322,7 +326,7 @@ begin
    --------------
    -- PGP TX Path
    --------------
-   U_Tx : entity work.PgpLaneTx
+   U_Tx : entity lcls2_pgp_fw_lib.PgpLaneTx
       generic map (
          TPD_G            => TPD_G,
          APP_AXI_CONFIG_G => DMA_AXIS_CONFIG_G,
@@ -344,7 +348,7 @@ begin
    --------------
    -- PGP RX Path
    --------------
-   U_Rx : entity work.PgpLaneRx
+   U_Rx : entity lcls2_pgp_fw_lib.PgpLaneRx
       generic map (
          TPD_G            => TPD_G,
          ROGUE_SIM_EN_G   => ROGUE_SIM_EN_G,
