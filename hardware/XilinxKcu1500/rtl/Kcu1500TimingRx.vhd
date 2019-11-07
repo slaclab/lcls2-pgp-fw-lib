@@ -35,12 +35,12 @@ library lcls2_pgp_fw_lib;
 
 entity Kcu1500TimingRx is
    generic (
-      TPD_G                          : time    := 1 ns;
-      SIMULATION_G                   : boolean := false;
-      AXIL_CLK_FREQ_G                : real    := 156.25E+6;  -- units of Hz
-      DMA_AXIS_CONFIG_G              : AxiStreamConfigType;
-      AXI_BASE_ADDR_G                : slv(31 downto 0);
-      NUM_DETECTORS_G                : integer range 1 to 4);
+      TPD_G             : time    := 1 ns;
+      SIMULATION_G      : boolean := false;
+      AXIL_CLK_FREQ_G   : real    := 156.25E+6;  -- units of Hz
+      DMA_AXIS_CONFIG_G : AxiStreamConfigType;
+      AXI_BASE_ADDR_G   : slv(31 downto 0);
+      NUM_DETECTORS_G   : integer range 1 to 4);
    port (
       -- Reference Clock and Reset
       userClk25           : in  sl;
@@ -50,8 +50,8 @@ entity Kcu1500TimingRx is
       triggerRst          : in  sl;
       triggerData         : out TriggerEventDataArray(NUM_DETECTORS_G-1 downto 0);
       -- L1 trigger feedback (optional)
-      l1Clk               : in  sl                                                    := '0';
-      l1Rst               : in  sl                                                    := '0';
+      l1Clk               : in  sl                                                 := '0';
+      l1Rst               : in  sl                                                 := '0';
       l1Feedbacks         : in  TriggerL1FeedbackArray(NUM_DETECTORS_G-1 downto 0) := (others => TRIGGER_L1_FEEDBACK_INIT_C);
       l1Acks              : out slv(NUM_DETECTORS_G-1 downto 0);
       -- Event streams
@@ -77,40 +77,45 @@ end Kcu1500TimingRx;
 
 architecture mapping of Kcu1500TimingRx is
 
-   constant NUM_AXIL_MASTERS_C : positive := 6;
+   constant NUM_AXIL_MASTERS_C : positive := 7;
 
-   constant RX_PHY0_INDEX_C : natural := 0;
-   constant RX_PHY1_INDEX_C : natural := 1;
-   constant MON_INDEX_C     : natural := 2;
-   constant TRIG_INDEX_C    : natural := 3;
-   constant TIMING_INDEX_C  : natural := 4;
-   constant EHC_INDEX_C     : natural := 5;
+   constant RX_PHY0_INDEX_C  : natural := 0;
+   constant RX_PHY1_INDEX_C  : natural := 1;
+   constant MON_INDEX_C      : natural := 2;
+   constant TRIG_INDEX_C     : natural := 3;
+   constant TIMING_INDEX_C   : natural := 4;
+   constant XPM_MINI_INDEX_C : natural := 5;
+   constant TEM_INDEX_C      : natural := 6;
 
    constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL_MASTERS_C-1 downto 0) := (
-      RX_PHY0_INDEX_C => (
-         baseAddr     => (AXI_BASE_ADDR_G+x"0000_0000"),
-         addrBits     => 16,
-         connectivity => x"FFFF"),
-      RX_PHY1_INDEX_C => (
-         baseAddr     => (AXI_BASE_ADDR_G+x"0001_0000"),
-         addrBits     => 16,
-         connectivity => x"FFFF"),
-      MON_INDEX_C     => (
-         baseAddr     => (AXI_BASE_ADDR_G+x"0002_0000"),
-         addrBits     => 16,
-         connectivity => x"FFFF"),
-      TRIG_INDEX_C    => (
-         baseAddr     => (AXI_BASE_ADDR_G+x"0003_0000"),
-         addrBits     => 16,
-         connectivity => x"FFFF"),
-      TIMING_INDEX_C  => (
-         baseAddr     => (AXI_BASE_ADDR_G+x"0008_0000"),
-         addrBits     => 18,
-         connectivity => x"FFFF"),
-      EHC_INDEX_C     => (
-         baseAddr     => (AXI_BASE_ADDR_G+x"0009_0000"),
-         addrBits     => 12,
-         connectivity => x"FFFF"));
+      RX_PHY0_INDEX_C  => (
+         baseAddr      => (AXI_BASE_ADDR_G+x"0000_0000"),
+         addrBits      => 16,
+         connectivity  => x"FFFF"),
+      RX_PHY1_INDEX_C  => (
+         baseAddr      => (AXI_BASE_ADDR_G+x"0001_0000"),
+         addrBits      => 16,
+         connectivity  => x"FFFF"),
+      MON_INDEX_C      => (
+         baseAddr      => (AXI_BASE_ADDR_G+x"0002_0000"),
+         addrBits      => 16,
+         connectivity  => x"FFFF"),
+      TRIG_INDEX_C     => (
+         baseAddr      => (AXI_BASE_ADDR_G+x"0003_0000"),
+         addrBits      => 16,
+         connectivity  => x"FFFF"),
+      TIMING_INDEX_C   => (
+         baseAddr      => (AXI_BASE_ADDR_G+x"0008_0000"),
+         addrBits      => 18,
+         connectivity  => x"FFFF"),
+      XPM_MINI_INDEX_C => (
+         baseAddr      => (AXI_BASE_ADDR_G+X"0009_0000"),
+         addrBits      => 16,
+         connectivity  => X"FFFF"),
+      TEM_INDEX_C      => (
+         baseAddr      => (AXI_BASE_ADDR_G+x"000A_0000"),
+         addrBits      => 12,
+         connectivity  => x"FFFF"));
 
    signal axilWriteMasters : AxiLiteWriteMasterArray(NUM_AXIL_MASTERS_C-1 downto 0);
    signal axilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXIL_MASTERS_C-1 downto 0);
@@ -160,13 +165,14 @@ architecture mapping of Kcu1500TimingRx is
    signal gtTxStatus  : TimingPhyStatusArray(1 downto 0);
 
    signal tpgMiniTimingPhy : TimingPhyType;
+   signal xpmMiniTimingPhy : TimingPhyType;
    signal appTimingBus     : TimingBusType;
    signal appTimingMode    : sl;
 
    -----------------------------------------------
    -- Event Header Cache signals
    -----------------------------------------------
-   signal ehcTimingTxPhy : TimingPhyType;
+   signal temTimingTxPhy : TimingPhyType;
 
 
 begin
@@ -174,9 +180,9 @@ begin
    timingTxRst <= txUserRst;
    timingRxRst <= rxUserRst;
 
-   -------------------------   
+   -------------------------
    -- Reference LCLS-I Clock
-   -------------------------   
+   -------------------------
    U_238MHz : entity surf.ClockManagerUltraScale
       generic map(
          TPD_G              => TPD_G,
@@ -203,9 +209,9 @@ begin
          -- Locked Status
          locked    => mmcmLocked(0));
 
-   --------------------------   
+   --------------------------
    -- Reference LCLS-II Clock
-   --------------------------           
+   --------------------------
    U_371MHz : entity surf.ClockManagerUltraScale
       generic map(
          TPD_G              => TPD_G,
@@ -343,12 +349,12 @@ begin
                rxDecErr        => gtRxDecErr(i),
                rxOutClk        => gtRxOutClk(i),
                -- Tx Ports
-               txControl       => ehcTimingTxPhy.control,
+               txControl       => temTimingTxPhy.control,
                txStatus        => gtTxStatus(i),
                txUsrClk        => timingTxClk,
                txUsrClkActive  => mmcmLocked(i),
-               txData          => ehcTimingTxPhy.data,
-               txDataK         => ehcTimingTxPhy.dataK,
+               txData          => temTimingTxPhy.data,
+               txDataK         => temTimingTxPhy.dataK,
                txOutClk        => gtTxOutClk(i),
                -- Misc.
                loopback        => loopback);
@@ -365,8 +371,8 @@ begin
 
          gtTxStatus(i)  <= TIMING_PHY_STATUS_FORCE_C;
          gtRxStatus(i)  <= TIMING_PHY_STATUS_FORCE_C;
-         gtRxData(i)    <= ehcTimingTxPhy.data;
-         gtRxDataK(i)   <= ehcTimingTxPhy.dataK;
+         gtRxData(i)    <= temTimingTxPhy.data;
+         gtRxDataK(i)   <= temTimingTxPhy.dataK;
          gtRxDispErr(i) <= "00";
          gtRxDecErr(i)  <= "00";
 
@@ -380,8 +386,8 @@ begin
          if (useMiniTpg = '1') then
 --            txStatus  <= TIMING_PHY_STATUS_FORCE_C after TPD_G;
             rxStatus  <= TIMING_PHY_STATUS_FORCE_C after TPD_G;
-            rxData    <= tpgMiniTimingPhy.data     after TPD_G;
-            rxDataK   <= tpgMiniTimingPhy.dataK    after TPD_G;
+            rxData    <= xpmMiniTimingPhy.data     after TPD_G;
+            rxDataK   <= xpmMiniTimingPhy.dataK    after TPD_G;
             rxDispErr <= "00"                      after TPD_G;
             rxDecErr  <= "00"                      after TPD_G;
          elsif (timingClkSel = '1') then
@@ -409,7 +415,7 @@ begin
          O  => timingRxClk,             -- 1-bit output: Clock output
          I0 => gtRxClk(0),              -- 1-bit input: Clock input (S=0)
          I1 => gtRxClk(1),              -- 1-bit input: Clock input (S=1)
-         S  => timingClkSel);           -- 1-bit input: Clock select         
+         S  => timingClkSel);           -- 1-bit input: Clock select
 
    U_TXCLK : BUFGMUX
       generic map (
@@ -418,7 +424,7 @@ begin
          O  => timingTxClk,             -- 1-bit output: Clock output
          I0 => refClkDiv2(0),           -- 1-bit input: Clock input (S=0)
          I1 => refClkDiv2(1),           -- 1-bit input: Clock input (S=1)
-         S  => timingClkSel);           -- 1-bit input: Clock select         
+         S  => timingClkSel);           -- 1-bit input: Clock select
 
    -----------------------
    -- Insert user RX reset
@@ -436,6 +442,7 @@ begin
       generic map (
          TPD_G             => TPD_G,
          DEFAULT_CLK_SEL_G => '0',      -- '0': default LCLS-I, '1': default LCLS-II
+         TPGEN_G           => false,
          AXIL_RINGB_G      => false,
          ASYNC_G           => false,
          AXIL_BASE_ADDR_G  => AXIL_CONFIG_C(TIMING_INDEX_C).baseAddr)
@@ -464,6 +471,30 @@ begin
          axilReadSlave    => axilReadSlaves(TIMING_INDEX_C),
          axilWriteMaster  => axilWriteMasters(TIMING_INDEX_C),
          axilWriteSlave   => axilWriteSlaves(TIMING_INDEX_C));
+
+   ---------------------
+   -- XPM Mini Wrapper
+   -- Simulates a timing/xpm stream
+   ---------------------
+   U_XpmMiniWrapper_1 : entity l2si_core.XpmMiniWrapper
+      generic map (
+         TPD_G           => TPD_G,
+         NUM_DS_LINKS_G  => 1,
+         AXIL_BASEADDR_G => AXIL_CONFIG_C(XPM_MINI_INDEX_C).baseAddr)
+      port map (
+         timingClk       => timingRxClk,                         -- [in]
+         timingRst       => timingRxRst,                         -- [in]
+         dsRxClk(0)      => timingTxClk,                         -- [in] --check this
+         dsRxRst(0)      => timingTxRst,                         -- [in] --check this
+         dsRx            => (others => TIMING_RX_INIT_C),        -- [in] --check this
+         dsTx(0)         => xpmMiniTimingPhy,                    -- [out]
+         axilClk         => axilClk,                             -- [in]
+         axilRst         => axilRst,                             -- [in]
+         axilReadMaster  => axilReadMasters(XPM_MINI_INDEX_C),   -- [in]
+         axilReadSlave   => axilReadSlaves(XPM_MINI_INDEX_C),    -- [out]
+         axilWriteMaster => axilWriteMasters(XPM_MINI_INDEX_C),  -- [in]
+         axilWriteSlave  => axilWriteSlaves(XPM_MINI_INDEX_C));  -- [out]
+
 
    ---------------------
    -- Timing PHY Monitor
@@ -501,14 +532,16 @@ begin
          axilWriteSlave  => axilWriteSlaves(MON_INDEX_C));
 
 
+
+
    ---------------------------------------------------------------
    -- Decode events and buffer them for the application
    ---------------------------------------------------------------
    U_TriggerEventManager_1 : entity l2si_core.TriggerEventManager
       generic map (
          TPD_G                          => TPD_G,
-         NUM_DETECTORS_G                => NUM_DETECTORS_G,                   -- ???
-         AXIL_BASE_ADDR_G               => AXIL_CONFIG_C(EHC_INDEX_C).baseAddr,
+         NUM_DETECTORS_G                => NUM_DETECTORS_G,     -- ???
+         AXIL_BASE_ADDR_G               => AXIL_CONFIG_C(TEM_INDEX_C).baseAddr,
          L1_CLK_IS_TIMING_TX_CLK_G      => false,
          TRIGGER_CLK_IS_TIMING_RX_CLK_G => false,
          EVENT_CLK_IS_TIMING_RX_CLK_G   => false)
@@ -518,7 +551,7 @@ begin
          timingBus           => appTimingBus,                   -- [in]
          timingTxClk         => timingTxClk,                    -- [in]
          timingTxRst         => timingTxRst,                    -- [in]
-         timingTxPhy         => ehcTimingTxPhy,                 -- [out]
+         timingTxPhy         => temTimingTxPhy,                 -- [out]
          triggerClk          => triggerClk,                     -- [in]
          triggerRst          => triggerRst,                     -- [in]
          triggerData         => triggerData,                    -- [out]
@@ -534,9 +567,9 @@ begin
          eventAxisCtrl       => eventAxisCtrl,                  -- [in]
          axilClk             => axilClk,                        -- [in]
          axilRst             => axilRst,                        -- [in]
-         axilReadMaster      => axilReadMasters(EHC_INDEX_C),   -- [in]
-         axilReadSlave       => axilReadSlaves(EHC_INDEX_C),    -- [out]
-         axilWriteMaster     => axilWriteMasters(EHC_INDEX_C),  -- [in]
-         axilWriteSlave      => axilWriteSlaves(EHC_INDEX_C));  -- [out]
+         axilReadMaster      => axilReadMasters(TEM_INDEX_C),   -- [in]
+         axilReadSlave       => axilReadSlaves(TEM_INDEX_C),    -- [out]
+         axilWriteMaster     => axilWriteMasters(TEM_INDEX_C),  -- [in]
+         axilWriteSlave      => axilWriteSlaves(TEM_INDEX_C));  -- [out]
 
 end mapping;
