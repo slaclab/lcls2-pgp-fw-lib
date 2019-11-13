@@ -1,10 +1,10 @@
 -------------------------------------------------------------------------------
--- File       : Hardware.vhd
+-- File       : Kcu1500Hsio.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -------------------------------------------------------------------------------
--- Description: Hardware File
+-- Description: Kcu1500Hsio File
 -------------------------------------------------------------------------------
--- Fiber Mapping to Hardware:
+-- Fiber Mapping to Kcu1500Hsio:
 --    QSFP[0][0] = PGP.Lane[0].VC[3:0]
 --    QSFP[0][1] = PGP.Lane[1].VC[3:0]
 --    QSFP[0][2] = PGP.Lane[2].VC[3:0]
@@ -45,7 +45,7 @@ use l2si_core.L2SiPkg.all;
 -- Library that this module belongs to
 library lcls2_pgp_fw_lib;
 
-entity Hardware is
+entity Kcu1500Hsio is
    generic (
       TPD_G                          : time                        := 1 ns;
       ROGUE_SIM_EN_G                 : boolean                     := false;
@@ -94,7 +94,7 @@ entity Hardware is
       eventAxisSlaves     : in  AxiStreamSlaveArray(NUM_PGP_LANES_G-1 downto 0);
       eventAxisCtrl       : in  AxiStreamCtrlArray(NUM_PGP_LANES_G-1 downto 0);
       ---------------------
-      --  Hardware Ports
+      --  Kcu1500Hsio Ports
       ---------------------    
       -- QSFP[0] Ports
       qsfp0RefClkP        : in  slv(1 downto 0);
@@ -110,9 +110,9 @@ entity Hardware is
       qsfp1RxN            : in  slv(3 downto 0);
       qsfp1TxP            : out slv(3 downto 0);
       qsfp1TxN            : out slv(3 downto 0));
-end Hardware;
+end Kcu1500Hsio;
 
-architecture mapping of Hardware is
+architecture mapping of Kcu1500Hsio is
 
    constant NUM_AXIL_MASTERS_C : positive := 5;
 
