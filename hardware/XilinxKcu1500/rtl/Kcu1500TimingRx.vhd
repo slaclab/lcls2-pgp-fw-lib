@@ -77,15 +77,14 @@ end Kcu1500TimingRx;
 
 architecture mapping of Kcu1500TimingRx is
 
-   constant NUM_AXIL_MASTERS_C : positive := 7;
+   constant NUM_AXIL_MASTERS_C : positive := 6;
 
    constant RX_PHY0_INDEX_C  : natural := 0;
    constant RX_PHY1_INDEX_C  : natural := 1;
    constant MON_INDEX_C      : natural := 2;
-   constant TRIG_INDEX_C     : natural := 3;
-   constant TIMING_INDEX_C   : natural := 4;
-   constant XPM_MINI_INDEX_C : natural := 5;
-   constant TEM_INDEX_C      : natural := 6;
+   constant TIMING_INDEX_C   : natural := 3;
+   constant XPM_MINI_INDEX_C : natural := 4;
+   constant TEM_INDEX_C      : natural := 5;
 
    constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL_MASTERS_C-1 downto 0) := (
       RX_PHY0_INDEX_C  => (
@@ -98,10 +97,6 @@ architecture mapping of Kcu1500TimingRx is
          connectivity  => x"FFFF"),
       MON_INDEX_C      => (
          baseAddr      => (AXI_BASE_ADDR_G+x"0002_0000"),
-         addrBits      => 16,
-         connectivity  => x"FFFF"),
-      TRIG_INDEX_C     => (
-         baseAddr      => (AXI_BASE_ADDR_G+x"0003_0000"),
          addrBits      => 16,
          connectivity  => x"FFFF"),
       TIMING_INDEX_C   => (
