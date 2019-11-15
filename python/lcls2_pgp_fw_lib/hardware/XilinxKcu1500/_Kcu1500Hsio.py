@@ -11,66 +11,58 @@
 
 import pyrogue as pr
 
-import axipcie as pcie
-import surf.protocols.pgp as pgp
-import surf.axi           as axi
+import lcls2_pgp_fw_lib.hardware.XilinxKcu1500
 
-import XilinxKcu1500Pgp
+import surf.protocols.pgp 
+import surf.axi
 
-class Hardware(pr.Device):
-    def __init__(   self,       
-            name        = "Hardware",
-            description = "Container for PCIe Hardware Registers",
-            numLane     = 4,
-            version3    = False,
-            **kwargs):
-        super().__init__(name=name, description=description, **kwargs)
+
+class Kcu1500Hsio(pr.Device):
+    def __init__(self,       
+                 numLanes = 4,
+                 pgp3     = False,
+                 **kwargs):
         
-        # Add axi-pcie-core 
-        self.add(pcie.AxiPcieCore(            
-            offset      = 0x00000000,
-            numDmaLanes = numLane,
-            expand      = False,
-        ))  
+        super().__init__(**kwargs)
 
         # Add PGP Core 
-        for i in range(numLane):
+        for i in range(numLanes):
         
-            if (version3):
-                self.add(pgp.Pgp3AxiL(            
+            if (pgp3):
+                self.add(surf.protocols.pgp.Pgp3AxiL(            
                     name    = (f'PgpMon[{i}]'), 
-                    offset  = (0x00800000 + i*0x00010000 + 0*0x2000), 
+                    offset  = (i*0x00010000), 
                     numVc   = 4,
                     writeEn = True,
                     expand  = False,
                 ))
                 
             else:
-                self.add(pgp.Pgp2bAxi(            
+                self.add(surf.protocols.pgp.Pgp2bAxi(            
                     name    = (f'PgpMon[{i}]'), 
-                    offset  = (0x00800000 + i*0x00010000), 
+                    offset  = (i*0x00010000), 
                     writeEn = True,
                     expand  = False,
                 ))
         
-            self.add(axi.AxiStreamMonitoring(            
+            self.add(surf.axi.AxiStreamMonitoring(            
                 name        = (f'PgpTxAxisMon[{i}]'), 
-                offset      = (0x00800000 + i*0x00010000 + 1*0x2000), 
+                offset      = (i*0x00010000 + 1*0x2000), 
                 numberLanes = 4,
                 expand      = False,
             ))        
 
-            self.add(axi.AxiStreamMonitoring(            
+            self.add(surf.axi.AxiStreamMonitoring(            
                 name        = (f'PgpRxAxisMon[{i}]'), 
-                offset      = (0x00800000 + i*0x00010000 + 2*0x2000), 
+                offset      = (i*0x00010000 + 2*0x2000), 
                 numberLanes = 4,
                 expand      = False,
             ))           
             
         # Add Timing Core
-        self.add(XilinxKcu1500Pgp.Timing(
-            offset  = 0x00900000,
-            numLane = numLane,
+        self.add(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Kcu1500TimingRx(
+            offset  = 0x0010_0000,
+            numLanes = numLanes,
             expand  = False,
         ))
         

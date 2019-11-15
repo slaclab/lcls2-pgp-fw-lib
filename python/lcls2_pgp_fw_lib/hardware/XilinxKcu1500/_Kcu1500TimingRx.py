@@ -8,54 +8,55 @@
 ## may be copied, modified, propagated, or distributed except according to 
 ## the terms contained in the LICENSE.txt file.
 ##############################################################################
-
-import pyrogue as pr
 import time
 
-import LclsTimingCore as timingCore
+import pyrogue as pr
 
-import XilinxKcu1500Pgp
+import LclsTimingCore 
+
 import l2si_core
+
+import lcls2_pgp_fw_lib.hardware.XilinxKcu1500 as XilinxKcu1500Pgp
 
         
 class Kcu1500TimingRx(pr.Device):
     def __init__(self, numLanes = 4, **kwargs):
         super().__init__(**kwargs)
         
-        self.add(timingCore.GthRxAlignCheck(
+        self.add(LclsTimingCore.GthRxAlignCheck(
             name   = "GthRxAlignCheck[0]",
-            offset = 0x00000000,
+            offset = 0x0000_0000,
             expand = False,
             hidden = True, 
         ))   
 
-        self.add(timingCore.GthRxAlignCheck(
+        self.add(LclsTimingCore.GthRxAlignCheck(
             name   = "GthRxAlignCheck[1]",
-            offset = 0x00010000,
+            offset = 0x0001_0000,
             expand = False,
             hidden = True, 
         ))   
 
         self.add(XilinxKcu1500Pgp.TimingPhyMonitor(
-            offset  = 0x00020000,
+            offset  = 0x0002_0000,
             numLanes = numLanes,
             expand  = False,
         ))
         
         # TimingCore
-        self.add(timingCore.TimingFrameRx(
-            offset = 0x00080000,
+        self.add(LclsTimingCore.TimingFrameRx(
+            offset = 0x0008_0000,
             expand = False,
         ))
 
         # XPM Mini Core
         self.add(l2si_core.XpmMiniCore(
-            offset = 0x00090000,
+            offset = 0x0009_0000,
             expand = False,
         ))
         
         self.add(l2si_core.TriggerEventManager(
-            offset  = 0x000A0000,
+            offset  = 0x000A_0000,
             numLanes = numLanes,
             expand  = False,
         ))             
