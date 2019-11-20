@@ -16,8 +16,10 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
 
 entity TimingPhyInit is
    generic (
@@ -65,7 +67,7 @@ architecture rtl of TimingPhyInit is
 
 begin
 
-   U_AxiLiteMaster : entity work.AxiLiteMaster
+   U_AxiLiteMaster : entity surf.AxiLiteMaster
       generic map (
          TPD_G => TPD_G)
       port map (
