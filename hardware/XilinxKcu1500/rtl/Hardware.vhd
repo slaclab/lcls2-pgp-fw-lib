@@ -4,6 +4,16 @@
 -------------------------------------------------------------------------------
 -- Description: Hardware File
 -------------------------------------------------------------------------------
+-- Fiber Mapping to Hardware:
+--    QSFP[0][0] = PGP.Lane[0].VC[3:0]
+--    QSFP[0][1] = PGP.Lane[1].VC[3:0]
+--    QSFP[0][2] = PGP.Lane[2].VC[3:0]
+--    QSFP[0][3] = PGP.Lane[3].VC[3:0]
+--    QSFP[1][0] = LCLS-I  Timing Receiver
+--    QSFP[1][1] = LCLS-II Timing Receiver
+--    QSFP[1][2] = Unused QSFP Link
+--    QSFP[1][3] = Unused QSFP Link
+-------------------------------------------------------------------------------
 -- This file is part of 'Camera link gateway'.
 -- It is subject to the license terms in the LICENSE.txt file found in the 
 -- top-level directory of this distribution and at: 
@@ -18,12 +28,16 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
+
+library lcls2_pgp_fw_lib; 
 
 entity Hardware is
    generic (
@@ -128,7 +142,7 @@ begin
    ---------------------
    -- AXI-Lite Crossbar
    ---------------------
-   U_XBAR : entity work.AxiLiteCrossbar
+   U_XBAR : entity surf.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
          NUM_SLAVE_SLOTS_G  => 1,
@@ -179,7 +193,7 @@ begin
    end generate GEN_REFCLK;
 
    GEN_PGP3_QPLL : if (PGP_TYPE_G = true) generate
-      U_QPLL : entity work.Pgp3GthUsQpll
+      U_QPLL : entity surf.Pgp3GthUsQpll
          generic map (
             TPD_G => TPD_G)
          port map (
@@ -201,7 +215,7 @@ begin
    for i in 3 downto 0 generate
 
       GEN_PGP3 : if (PGP_TYPE_G = true) generate
-         U_Lane : entity work.Kcu1500Pgp3Lane
+         U_Lane : entity lcls2_pgp_fw_lib.Kcu1500Pgp3Lane
             generic map (
                TPD_G                => TPD_G,
                ROGUE_SIM_EN_G       => ROGUE_SIM_EN_G,
@@ -237,7 +251,7 @@ begin
       end generate;
 
       GEN_PGP2b : if (PGP_TYPE_G = false) generate
-         U_Lane : entity work.Kcu1500Pgp2bLane
+         U_Lane : entity lcls2_pgp_fw_lib.Kcu1500Pgp2bLane
             generic map (
                TPD_G                => TPD_G,
                ROGUE_SIM_EN_G       => ROGUE_SIM_EN_G,
@@ -273,7 +287,7 @@ begin
    ------------------
    -- Timing Receiver
    ------------------
-   U_TimingRx : entity work.Kcu1500TimingRx
+   U_TimingRx : entity lcls2_pgp_fw_lib.Kcu1500TimingRx
       generic map (
          TPD_G             => TPD_G,
          SIMULATION_G      => ROGUE_SIM_EN_G,
@@ -304,7 +318,7 @@ begin
    --------------------
    -- Unused QSFP Links
    --------------------
-   U_QSFP1 : entity work.Gthe3ChannelDummy
+   U_QSFP1 : entity surf.Gthe3ChannelDummy
       generic map (
          TPD_G   => TPD_G,
          WIDTH_G => 2)

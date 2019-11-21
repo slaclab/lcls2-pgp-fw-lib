@@ -16,14 +16,20 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.std_logic_arith.all;
 
-use work.StdRtlPkg.all;
-use work.AxiLitePkg.all;
-use work.AxiStreamPkg.all;
-use work.SsiPkg.all;
-use work.TimingPkg.all;
+
+library surf;
+use surf.StdRtlPkg.all;
+use surf.AxiLitePkg.all;
+use surf.AxiStreamPkg.all;
+use surf.SsiPkg.all;
+
+library lcls_timing_core;
+use lcls_timing_core.TimingPkg.all;
 
 library unisim;
 use unisim.vcomponents.all;
+
+library lcls2_pgp_fw_lib;
 
 entity Kcu1500TimingRx is
    generic (
@@ -159,7 +165,7 @@ begin
    -------------------------   
    -- Reference LCLS-I Clock
    -------------------------   
-   U_238MHz : entity work.ClockManagerUltraScale
+   U_238MHz : entity surf.ClockManagerUltraScale
       generic map(
          TPD_G              => TPD_G,
          SIMULATION_G       => SIMULATION_G,
@@ -188,7 +194,7 @@ begin
    --------------------------   
    -- Reference LCLS-II Clock
    --------------------------           
-   U_371MHz : entity work.ClockManagerUltraScale
+   U_371MHz : entity surf.ClockManagerUltraScale
       generic map(
          TPD_G              => TPD_G,
          SIMULATION_G       => SIMULATION_G,
@@ -217,7 +223,7 @@ begin
    -------------------------------------------------------
    -- Power Up Initialization of the KCU1500 Timing RX PHY
    -------------------------------------------------------
-   U_TimingPhyInit : entity work.TimingPhyInit
+   U_TimingPhyInit : entity lcls2_pgp_fw_lib.TimingPhyInit
       generic map (
          TPD_G              => TPD_G,
          SIMULATION_G       => SIMULATION_G,
@@ -236,7 +242,7 @@ begin
    ---------------------
    -- AXI-Lite Crossbar
    ---------------------
-   U_XBAR : entity work.AxiLiteCrossbar
+   U_XBAR : entity surf.AxiLiteCrossbar
       generic map (
          TPD_G              => TPD_G,
          NUM_SLAVE_SLOTS_G  => 2,
@@ -264,7 +270,7 @@ begin
    GEN_VEC : for i in 1 downto 0 generate
 
       REAL_PCIE : if (not SIMULATION_G) generate
-         U_GTH : entity work.TimingGtCoreWrapper
+         U_GTH : entity lcls_timing_core.TimingGtCoreWrapper
             generic map (
                TPD_G            => TPD_G,
                EXTREF_G         => false,
@@ -329,7 +335,7 @@ begin
             CLR => '0',
             O   => refClkDiv2(i));
 
-      U_refRstDiv2 : entity work.RstSync
+      U_refRstDiv2 : entity surf.RstSync
          generic map (
             TPD_G => TPD_G)
          port map (
@@ -415,10 +421,10 @@ begin
    --------------
    -- Timing Core
    --------------
-   U_TimingCore : entity work.TimingCore
+   U_TimingCore : entity lcls_timing_core.TimingCore
       generic map (
          TPD_G             => TPD_G,
-         DEFAULT_CLK_SEL_G => '0',  -- '0': default LCLS-I, '1': default LCLS-II
+         DEFAULT_CLK_SEL_G => '0',      -- '0': default LCLS-I, '1': default LCLS-II
          AXIL_RINGB_G      => false,
          ASYNC_G           => true,
          AXIL_BASE_ADDR_G  => AXIL_CONFIG_C(TIMING_INDEX_C).baseAddr)
@@ -451,7 +457,7 @@ begin
    ---------------------
    -- Timing PHY Monitor
    ---------------------
-   U_Monitor : entity work.TimingPhyMonitor
+   U_Monitor : entity lcls2_pgp_fw_lib.TimingPhyMonitor
       generic map (
          TPD_G           => TPD_G,
          SIMULATION_G    => SIMULATION_G,
@@ -484,7 +490,7 @@ begin
    ---------------------
    -- Timing PHY Monitor
    ---------------------         
-   U_Trig : entity work.EvrV2CoreTriggers
+   U_Trig : entity lcls_timing_core.EvrV2CoreTriggers
       generic map (
          TPD_G           => TPD_G,
          NCHANNELS_G     => 8,
@@ -527,13 +533,13 @@ begin
       appTrigMasters(i).tLast                 <= '1';  -- EOF
       appTrigMasters(i).tUser(SSI_SOF_C)      <= '1';  -- SOF
 
-      U_Trig_Info_Fifo : entity work.AxiStreamFifoV2
+      U_Trig_Info_Fifo : entity surf.AxiStreamFifoV2
          generic map (
             -- General Configurations
             TPD_G               => TPD_G,
             SLAVE_READY_EN_G    => false,
             -- FIFO configurations
-            BRAM_EN_G           => false,
+            MEMORY_TYPE_G       => "distributed",
             GEN_SYNC_FIFO_G     => true,
             FIFO_ADDR_WIDTH_G   => 4,
             FIFO_FIXED_THRESH_G => true,
@@ -556,7 +562,7 @@ begin
       ---------------------------------
       -- Resize the Outbound AXI Stream
       --------------------------------- 
-      U_TxResize : entity work.AxiStreamResize
+      U_TxResize : entity surf.AxiStreamResize
          generic map (
             -- General Configurations
             TPD_G               => TPD_G,
