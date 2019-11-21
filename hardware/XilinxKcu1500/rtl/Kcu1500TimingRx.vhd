@@ -29,7 +29,7 @@ use lcls_timing_core.TimingPkg.all;
 library unisim;
 use unisim.vcomponents.all;
 
-library lcls2_pgp_fw_lib; 
+library lcls2_pgp_fw_lib;
 
 entity Kcu1500TimingRx is
    generic (
@@ -424,7 +424,7 @@ begin
    U_TimingCore : entity lcls_timing_core.TimingCore
       generic map (
          TPD_G             => TPD_G,
-         DEFAULT_CLK_SEL_G => '0',  -- '0': default LCLS-I, '1': default LCLS-II
+         DEFAULT_CLK_SEL_G => '0',      -- '0': default LCLS-I, '1': default LCLS-II
          AXIL_RINGB_G      => false,
          ASYNC_G           => true,
          AXIL_BASE_ADDR_G  => AXIL_CONFIG_C(TIMING_INDEX_C).baseAddr)
@@ -539,7 +539,7 @@ begin
             TPD_G               => TPD_G,
             SLAVE_READY_EN_G    => false,
             -- FIFO configurations
-            BRAM_EN_G           => false,
+            MEMORY_TYPE_G       => "distributed",
             GEN_SYNC_FIFO_G     => true,
             FIFO_ADDR_WIDTH_G   => 4,
             FIFO_FIXED_THRESH_G => true,
