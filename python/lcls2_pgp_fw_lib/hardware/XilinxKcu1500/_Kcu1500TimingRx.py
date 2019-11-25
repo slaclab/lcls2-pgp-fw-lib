@@ -50,14 +50,14 @@ class Kcu1500TimingRx(pr.Device):
         ))
 
         # XPM Mini Core
-        self.add(l2si_core.XpmMiniCore(
+        self.add(l2si_core.XpmMini(
             offset = 0x0009_0000,
             expand = False,
         ))
         
         self.add(l2si_core.TriggerEventManager(
             offset  = 0x000A_0000,
-            numLanes = numLanes,
+            numDetectors = numLanes,
             expand  = False,
         ))             
 
