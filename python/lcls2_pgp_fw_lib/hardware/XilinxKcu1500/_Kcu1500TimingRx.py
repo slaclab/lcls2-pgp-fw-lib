@@ -37,12 +37,6 @@ class Kcu1500TimingRx(pr.Device):
             hidden = True, 
         ))   
 
-        self.add(XilinxKcu1500Pgp.TimingPhyMonitor(
-            offset  = 0x0002_0000,
-            numLanes = numLanes,
-            expand  = False,
-        ))
-        
         # TimingCore
         self.add(LclsTimingCore.TimingFrameRx(
             offset = 0x0008_0000,
@@ -50,16 +44,23 @@ class Kcu1500TimingRx(pr.Device):
         ))
 
         # XPM Mini Core
-        self.add(l2si_core.XpmMini(
-            offset = 0x0009_0000,
+        self.add(l2si_core.XpmMiniWrapper(
+            offset = 0x0003_0000,
             expand = False,
         ))
         
         self.add(l2si_core.TriggerEventManager(
-            offset  = 0x000A_0000,
+            offset  = 0x0004_0000,
             numDetectors = numLanes,
             expand  = False,
-        ))             
+        ))
+
+        self.add(XilinxKcu1500Pgp.TimingPhyMonitor(
+            offset  = 0x0002_0000,
+            numLanes = numLanes,
+            expand  = False,
+        ))
+        
 
         @self.command(description="Configure for LCLS-I Timing (119 MHz based)")
         def ConfigLclsTimingV1():
@@ -85,3 +86,15 @@ class Kcu1500TimingRx(pr.Device):
             time.sleep(0.1)
             self.TimingFrameRx.RxDown.set(0) # Reset the latching register
             
+
+        @self.command()
+        def ConfigureXpmMiniSim():
+            self.readBlocks()
+            self.TimingPhyMonitor.UseMiniTpg.set(True)
+            self.XpmMiniWrapper.XpmMini.HwEnable.set(True)
+            self.XpmMiniWrapper.XpmMini.Link.set(0)
+            self.XpmMiniWrapper.XpmMini.Pipeline_Depth_Fids.set(70)
+            self.XpmMiniWrapper.XpmMini.Config_L0Select_RateSel.set(2)
+            self.XpmMiniWrapper.XpmMini.Config_L0Select_Enabled.set(0x1)
+            self.TriggerEventManager.TriggerEventBuffer[0].MasterEnable.set(True)
+            self.TriggerEventManager.TriggerEventBuffer[0].EventBufferEnable.set(True)

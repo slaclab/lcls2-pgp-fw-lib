@@ -99,17 +99,17 @@ architecture mapping of Kcu1500TimingRx is
          baseAddr      => (AXI_BASE_ADDR_G+x"0002_0000"),
          addrBits      => 16,
          connectivity  => x"FFFF"),
-      TIMING_INDEX_C   => (
-         baseAddr      => (AXI_BASE_ADDR_G+x"0008_0000"),
-         addrBits      => 18,
-         connectivity  => x"FFFF"),
       XPM_MINI_INDEX_C => (
-         baseAddr      => (AXI_BASE_ADDR_G+X"0009_0000"),
+         baseAddr      => (AXI_BASE_ADDR_G+X"0003_0000"),
          addrBits      => 16,
          connectivity  => X"FFFF"),
       TEM_INDEX_C      => (
-         baseAddr      => (AXI_BASE_ADDR_G+x"000A_0000"),
+         baseAddr      => (AXI_BASE_ADDR_G+x"0004_0000"),
          addrBits      => 12,
+         connectivity  => x"FFFF"),
+      TIMING_INDEX_C   => (
+         baseAddr      => (AXI_BASE_ADDR_G+x"0008_0000"),
+         addrBits      => 18,
          connectivity  => x"FFFF"));
 
    signal axilWriteMasters : AxiLiteWriteMasterArray(NUM_AXIL_MASTERS_C-1 downto 0);
@@ -366,8 +366,8 @@ begin
 
          gtTxStatus(i)  <= TIMING_PHY_STATUS_FORCE_C;
          gtRxStatus(i)  <= TIMING_PHY_STATUS_FORCE_C;
-         gtRxData(i)    <= temTimingTxPhy.data;
-         gtRxDataK(i)   <= temTimingTxPhy.dataK;
+         gtRxData(i)    <= (others => '0');  --temTimingTxPhy.data;
+         gtRxDataK(i)   <= (others => '0');  --temTimingTxPhy.dataK;
          gtRxDispErr(i) <= "00";
          gtRxDecErr(i)  <= "00";
 
@@ -436,10 +436,10 @@ begin
    U_TimingCore : entity lcls_timing_core.TimingCore
       generic map (
          TPD_G             => TPD_G,
-         DEFAULT_CLK_SEL_G => '0',      -- '0': default LCLS-I, '1': default LCLS-II
+         DEFAULT_CLK_SEL_G => '1',      -- '0': default LCLS-I, '1': default LCLS-II
          TPGEN_G           => false,
          AXIL_RINGB_G      => false,
-         ASYNC_G           => false,
+         ASYNC_G           => true,
          AXIL_BASE_ADDR_G  => AXIL_CONFIG_C(TIMING_INDEX_C).baseAddr)
       port map (
          -- GT Interface
@@ -477,14 +477,17 @@ begin
          NUM_DS_LINKS_G  => 1,
          AXIL_BASEADDR_G => AXIL_CONFIG_C(XPM_MINI_INDEX_C).baseAddr)
       port map (
-         timingClk       => timingRxClk,                         -- [in]
-         timingRst       => timingRxRst,                         -- [in]
-         dsRxClk(0)      => timingTxClk,                         -- [in] --check this
-         dsRxRst(0)      => timingTxRst,                         -- [in] --check this
-         dsRx            => (others => TIMING_RX_INIT_C),        -- [in] --check this
+         timingClk       => timingRxClk,      -- [in]
+         timingRst       => timingRxRst,      -- [in]
+         dsRxClk(0)      => timingTxClk,      -- [in] --check this
+         dsRxRst(0)      => timingTxRst,      -- [in] --check this
+         dsRx(0).data    => temTimingTxPhy.data,                 -- [in] --check this
+         dsRx(0).dataK   => temTimingTxPhy.dataK,                -- [in] --check this
+         dsRx(0).decErr  => (others => '0'),  -- [in] --check this
+         dsRx(0).dspErr  => (others => '0'),  -- [in] --check this                                                                 -- 
          dsTx(0)         => xpmMiniTimingPhy,                    -- [out]
-         axilClk         => axilClk,                             -- [in]
-         axilRst         => axilRst,                             -- [in]
+         axilClk         => axilClk,    -- [in]
+         axilRst         => axilRst,    -- [in]
          axilReadMaster  => axilReadMasters(XPM_MINI_INDEX_C),   -- [in]
          axilReadSlave   => axilReadSlaves(XPM_MINI_INDEX_C),    -- [out]
          axilWriteMaster => axilWriteMasters(XPM_MINI_INDEX_C),  -- [in]

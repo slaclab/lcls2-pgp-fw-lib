@@ -51,7 +51,7 @@ entity Kcu1500Hsio is
       ROGUE_SIM_EN_G                 : boolean                     := false;
       ROGUE_SIM_PORT_NUM_G           : natural range 1024 to 49151 := 7000;
       DMA_AXIS_CONFIG_G              : AxiStreamConfigType;
-      PGP_TYPE_G                     : boolean                     := false;      -- False: PGPv2b@3.125Gb/s, True: PGPv3@10.3125Gb/s, 
+      PGP_TYPE_G                     : boolean                     := false;  -- False: PGPv2b@3.125Gb/s, True: PGPv3@10.3125Gb/s, 
       AXIL_CLK_FREQ_G                : real                        := 156.25E+6;  -- units of Hz
       AXI_BASE_ADDR_G                : slv(31 downto 0)            := x"0080_0000";
       NUM_PGP_LANES_G                : integer range 1 to 4        := 4;
@@ -82,8 +82,8 @@ entity Kcu1500Hsio is
       triggerRst          : in  sl;
       triggerData         : out TriggerEventDataArray(NUM_PGP_LANES_G-1 downto 0);
       -- L1 trigger feedback (optional)
-      l1Clk               : in  sl                                    := '0';
-      l1Rst               : in  sl                                    := '0';
+      l1Clk               : in  sl                                                 := '0';
+      l1Rst               : in  sl                                                 := '0';
       l1Feedbacks         : in  TriggerL1FeedbackArray(NUM_PGP_LANES_G-1 downto 0) := (others => TRIGGER_L1_FEEDBACK_INIT_C);
       l1Acks              : out slv(NUM_PGP_LANES_G-1 downto 0);
       -- Event streams
@@ -97,19 +97,19 @@ entity Kcu1500Hsio is
       --  Kcu1500Hsio Ports
       ---------------------    
       -- QSFP[0] Ports
-      qsfp0RefClkP        : in  slv(1 downto 0);
-      qsfp0RefClkN        : in  slv(1 downto 0);
-      qsfp0RxP            : in  slv(3 downto 0);
-      qsfp0RxN            : in  slv(3 downto 0);
-      qsfp0TxP            : out slv(3 downto 0);
-      qsfp0TxN            : out slv(3 downto 0);
+      qsfp0RefClkP        : in  slv(1 downto 0) := (others => '0');
+      qsfp0RefClkN        : in  slv(1 downto 0) := (others => '0');
+      qsfp0RxP            : in  slv(3 downto 0) := (others => '0');
+      qsfp0RxN            : in  slv(3 downto 0) := (others => '0');
+      qsfp0TxP            : out slv(3 downto 0) := (others => '0');
+      qsfp0TxN            : out slv(3 downto 0) := (others => '0');
       -- QSFP[1] Ports
-      qsfp1RefClkP        : in  slv(1 downto 0);
-      qsfp1RefClkN        : in  slv(1 downto 0);
-      qsfp1RxP            : in  slv(3 downto 0);
-      qsfp1RxN            : in  slv(3 downto 0);
-      qsfp1TxP            : out slv(3 downto 0);
-      qsfp1TxN            : out slv(3 downto 0));
+      qsfp1RefClkP        : in  slv(1 downto 0) := (others => '0');
+      qsfp1RefClkN        : in  slv(1 downto 0) := (others => '0');
+      qsfp1RxP            : in  slv(3 downto 0) := (others => '0');
+      qsfp1RxN            : in  slv(3 downto 0) := (others => '0');
+      qsfp1TxP            : out slv(3 downto 0) := (others => '0');
+      qsfp1TxN            : out slv(3 downto 0) := (others => '0'));
 end Kcu1500Hsio;
 
 architecture mapping of Kcu1500Hsio is
@@ -119,6 +119,7 @@ architecture mapping of Kcu1500Hsio is
    constant PGP_INDEX_C    : natural := 0;
    constant TIMING_INDEX_C : natural := 4;
 
+   -- 22 Bits available
    constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL_MASTERS_C-1 downto 0) := (
       PGP_INDEX_C+0   => (
          baseAddr     => (AXI_BASE_ADDR_G+x"0000_0000"),
@@ -308,19 +309,20 @@ begin
 
    end generate GEN_LANE;
 
-   GEN_DUMMY : if (NUM_PGP_LANES_G < 4) generate
-      U_QSFP1 : entity surf.Gthe3ChannelDummy
-         generic map (
-            TPD_G   => TPD_G,
-            WIDTH_G => 4-NUM_PGP_LANES_G)
-         port map (
-            refClk => axilClk,
-            gtRxP  => qsfp0RxP(3 downto NUM_PGP_LANES_G),
-            gtRxN  => qsfp0RxN(3 downto NUM_PGP_LANES_G),
-            gtTxP  => qsfp0TxP(3 downto NUM_PGP_LANES_G),
-            gtTxN  => qsfp0TxN(3 downto NUM_PGP_LANES_G));
-   end generate GEN_DUMMY;
-
+--   SIM_GUARD_0 : if (not ROGUE_SIM_EN_G) generate
+      GEN_DUMMY : if (NUM_PGP_LANES_G < 4) generate
+         U_QSFP1 : entity surf.Gthe3ChannelDummy
+            generic map (
+               TPD_G   => TPD_G,
+               WIDTH_G => 4-NUM_PGP_LANES_G)
+            port map (
+               refClk => axilClk,
+               gtRxP  => qsfp0RxP(3 downto NUM_PGP_LANES_G),
+               gtRxN  => qsfp0RxN(3 downto NUM_PGP_LANES_G),
+               gtTxP  => qsfp0TxP(3 downto NUM_PGP_LANES_G),
+               gtTxN  => qsfp0TxN(3 downto NUM_PGP_LANES_G));
+      end generate GEN_DUMMY;
+--   end generate SIM_GUARD_0;
    ------------------
    -- Timing Receiver
    ------------------
@@ -372,15 +374,17 @@ begin
    --------------------
    -- Unused QSFP Links
    --------------------
-   U_QSFP1 : entity surf.Gthe3ChannelDummy
-      generic map (
-         TPD_G   => TPD_G,
-         WIDTH_G => 2)
-      port map (
-         refClk => axilClk,
-         gtRxP  => qsfp1RxP(3 downto 2),
-         gtRxN  => qsfp1RxN(3 downto 2),
-         gtTxP  => qsfp1TxP(3 downto 2),
-         gtTxN  => qsfp1TxN(3 downto 2));
+--   SIM_GUARD : if (not ROGUE_SIM_EN_G) generate
+      U_QSFP1 : entity surf.Gthe3ChannelDummy
+         generic map (
+            TPD_G   => TPD_G,
+            WIDTH_G => 2)
+         port map (
+            refClk => axilClk,
+            gtRxP  => qsfp1RxP(3 downto 2),
+            gtRxN  => qsfp1RxN(3 downto 2),
+            gtTxP  => qsfp1TxP(3 downto 2),
+            gtTxN  => qsfp1TxN(3 downto 2));
+--   end generate SIM_GUARD;
 
 end mapping;
