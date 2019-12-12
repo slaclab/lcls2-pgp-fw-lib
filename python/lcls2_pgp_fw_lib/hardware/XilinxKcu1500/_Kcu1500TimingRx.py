@@ -95,6 +95,6 @@ class Kcu1500TimingRx(pr.Device):
             self.XpmMiniWrapper.XpmMini.Link.set(0)
             self.XpmMiniWrapper.XpmMini.Pipeline_Depth_Fids.set(70)
             self.XpmMiniWrapper.XpmMini.Config_L0Select_RateSel.set(2)
-            self.XpmMiniWrapper.XpmMini.Config_L0Select_Enabled.set(0x1)
+            self.XpmMiniWrapper.XpmMini.Config_L0Select_Enabled.set(0x0)
             self.TriggerEventManager.TriggerEventBuffer[0].MasterEnable.set(True)
             self.TriggerEventManager.TriggerEventBuffer[0].EventBufferEnable.set(True)

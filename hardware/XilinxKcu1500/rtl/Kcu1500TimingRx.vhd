@@ -540,6 +540,7 @@ begin
          TPD_G                          => TPD_G,
          NUM_DETECTORS_G                => NUM_DETECTORS_G,     -- ???
          AXIL_BASE_ADDR_G               => AXIL_CONFIG_C(TEM_INDEX_C).baseAddr,
+         EVENT_AXIS_CONFIG_G            => DMA_AXIS_CONFIG_G,
          L1_CLK_IS_TIMING_TX_CLK_G      => false,
          TRIGGER_CLK_IS_TIMING_RX_CLK_G => false,
          EVENT_CLK_IS_TIMING_RX_CLK_G   => false)
