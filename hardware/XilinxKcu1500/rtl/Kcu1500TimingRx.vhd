@@ -477,17 +477,19 @@ begin
          NUM_DS_LINKS_G  => 1,
          AXIL_BASEADDR_G => AXIL_CONFIG_C(XPM_MINI_INDEX_C).baseAddr)
       port map (
-         timingClk       => timingRxClk,      -- [in]
-         timingRst       => timingRxRst,      -- [in]
-         dsRxClk(0)      => timingTxClk,      -- [in] --check this
-         dsRxRst(0)      => timingTxRst,      -- [in] --check this
-         dsRx(0).data    => temTimingTxPhy.data,                 -- [in] --check this
-         dsRx(0).dataK   => temTimingTxPhy.dataK,                -- [in] --check this
-         dsRx(0).decErr  => (others => '0'),  -- [in] --check this
-         dsRx(0).dspErr  => (others => '0'),  -- [in] --check this                                                                 -- 
-         dsTx(0)         => xpmMiniTimingPhy,                    -- [out]
-         axilClk         => axilClk,    -- [in]
-         axilRst         => axilRst,    -- [in]
+         timingClk => timingRxClk,       -- [in]
+         timingRst => timingRxRst,       -- [in]
+         dsTx(0)   => xpmMiniTimingPhy,  -- [out]
+
+         dsRxClk(0)     => timingTxClk,           -- [in] 
+         dsRxRst(0)     => timingTxRst,           -- [in] 
+         dsRx(0).data   => temTimingTxPhy.data,   -- [in] 
+         dsRx(0).dataK  => temTimingTxPhy.dataK,  -- [in] 
+         dsRx(0).decErr => (others => '0'),       -- [in] 
+         dsRx(0).dspErr => (others => '0'),       -- [in] 
+
+         axilClk         => axilClk,                             -- [in]
+         axilRst         => axilRst,                             -- [in]
          axilReadMaster  => axilReadMasters(XPM_MINI_INDEX_C),   -- [in]
          axilReadSlave   => axilReadSlaves(XPM_MINI_INDEX_C),    -- [out]
          axilWriteMaster => axilWriteMasters(XPM_MINI_INDEX_C),  -- [in]
