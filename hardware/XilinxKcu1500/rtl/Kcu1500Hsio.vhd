@@ -93,23 +93,24 @@ entity Kcu1500Hsio is
       eventAxisMasters    : out AxiStreamMasterArray(NUM_PGP_LANES_G-1 downto 0);
       eventAxisSlaves     : in  AxiStreamSlaveArray(NUM_PGP_LANES_G-1 downto 0);
       eventAxisCtrl       : in  AxiStreamCtrlArray(NUM_PGP_LANES_G-1 downto 0);
+
       ---------------------
       --  Kcu1500Hsio Ports
       ---------------------    
       -- QSFP[0] Ports
-      qsfp0RefClkP        : in  slv(1 downto 0) := (others => '0');
-      qsfp0RefClkN        : in  slv(1 downto 0) := (others => '0');
-      qsfp0RxP            : in  slv(3 downto 0) := (others => '0');
-      qsfp0RxN            : in  slv(3 downto 0) := (others => '0');
-      qsfp0TxP            : out slv(3 downto 0) := (others => '0');
-      qsfp0TxN            : out slv(3 downto 0) := (others => '0');
+      qsfp0RefClkP : in  slv(1 downto 0) := (others => '0');
+      qsfp0RefClkN : in  slv(1 downto 0) := (others => '0');
+      qsfp0RxP     : in  slv(3 downto 0) := (others => '0');
+      qsfp0RxN     : in  slv(3 downto 0) := (others => '0');
+      qsfp0TxP     : out slv(3 downto 0) := (others => '0');
+      qsfp0TxN     : out slv(3 downto 0) := (others => '0');
       -- QSFP[1] Ports
-      qsfp1RefClkP        : in  slv(1 downto 0) := (others => '0');
-      qsfp1RefClkN        : in  slv(1 downto 0) := (others => '0');
-      qsfp1RxP            : in  slv(3 downto 0) := (others => '0');
-      qsfp1RxN            : in  slv(3 downto 0) := (others => '0');
-      qsfp1TxP            : out slv(3 downto 0) := (others => '0');
-      qsfp1TxN            : out slv(3 downto 0) := (others => '0'));
+      qsfp1RefClkP : in  slv(1 downto 0) := (others => '0');
+      qsfp1RefClkN : in  slv(1 downto 0) := (others => '0');
+      qsfp1RxP     : in  slv(3 downto 0) := (others => '0');
+      qsfp1RxN     : in  slv(3 downto 0) := (others => '0');
+      qsfp1TxP     : out slv(3 downto 0) := (others => '0');
+      qsfp1TxN     : out slv(3 downto 0) := (others => '0'));
 end Kcu1500Hsio;
 
 architecture mapping of Kcu1500Hsio is
