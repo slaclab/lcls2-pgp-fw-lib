@@ -152,6 +152,7 @@ architecture mapping of Kcu1500TimingRx is
 
    signal txUserRst   : sl;
    signal gtTxOutClk  : slv(1 downto 0);
+   signal gtTxClk     : slv(1 downto 0);   
    signal timingTxClk : sl;
    signal timingTxRst : sl;
    signal txData      : slv(15 downto 0);
@@ -194,14 +195,10 @@ begin
          CLKFBOUT_MULT_F_G  => 29.750,  -- 743.75 MHz = 25 MHz x 29.75
          CLKOUT0_DIVIDE_F_G => 3.125)   -- 238 MHz = 743.75 MHz/3.125
       port map(
-         -- Clock Input
          clkIn     => userClk25,
          rstIn     => mmcmRst,
-         -- Clock Outputs
          clkOut(0) => refClk(0),
-         -- Reset Outputs
          rstOut(0) => refRst(0),
-         -- Locked Status
          locked    => mmcmLocked(0));
 
    --------------------------
@@ -223,14 +220,10 @@ begin
          CLKFBOUT_MULT_F_G  => 52.000,  -- 1.3 GHz = 25 MHz x 52
          CLKOUT0_DIVIDE_F_G => 3.500)   -- 371.429 MHz = 1.3 GHz/3.5
       port map(
-         -- Clock Input
          clkIn     => userClk25,
          rstIn     => mmcmRst,
-         -- Clock Outputs
          clkOut(0) => refClk(1),
-         -- Reset Outputs
          rstOut(0) => refRst(1),
-         -- Locked Status
          locked    => mmcmLocked(1));
 
    -------------------------------------------------------
@@ -306,7 +299,17 @@ begin
             O  => gtRxClk(i),           -- 1-bit output: Clock output
             I0 => gtRxOutClk(i),        -- 1-bit input: Clock input (S=0)
             I1 => refClkDiv2(i),        -- 1-bit input: Clock input (S=1)
+            S  => useMiniTpg);          -- 1-bit input: Clock select
+      --
+      U_TXCLK : BUFGMUX
+         generic map (
+            CLK_SEL_TYPE => "ASYNC")    -- ASYNC, SYNC
+         port map (
+            O  => gtTxClk(i),           -- 1-bit output: Clock output
+            I0 => gtTxOutClk(i),        -- 1-bit input: Clock input (S=0)
+            I1 => refClkDiv2(i),        -- 1-bit input: Clock input (S=1)
             S  => useMiniTpg);          -- 1-bit input: Clock select      
+      --
 
       REAL_PCIE : if (not SIMULATION_G) generate
          U_GTH : entity lcls_timing_core.TimingGtCoreWrapper
@@ -337,7 +340,7 @@ begin
                rxControl       => rxControl,
                rxStatus        => gtRxStatus(i),
                rxUsrClkActive  => mmcmLocked(i),
-               rxUsrClk        => timingRxClk,
+               rxUsrClk        => gtRxOutClk(i),
                rxData          => gtRxData(i),
                rxDataK         => gtRxDataK(i),
                rxDispErr       => gtRxDispErr(i),
@@ -346,7 +349,7 @@ begin
                -- Tx Ports
                txControl       => temTimingTxPhy.control,
                txStatus        => gtTxStatus(i),
-               txUsrClk        => timingTxClk,
+               txUsrClk        => gtTxOutClk(i),
                txUsrClkActive  => mmcmLocked(i),
                txData          => temTimingTxPhy.data,
                txDataK         => temTimingTxPhy.dataK,
@@ -412,13 +415,15 @@ begin
          I1 => gtRxClk(1),              -- 1-bit input: Clock input (S=1)
          S  => timingClkSel);           -- 1-bit input: Clock select
 
+   -- NEED to do the same thing as RX!!!!
+   -- NEED TXOUTCLKs switched in here
    U_TXCLK : BUFGMUX
       generic map (
          CLK_SEL_TYPE => "ASYNC")       -- ASYNC, SYNC
       port map (
          O  => timingTxClk,             -- 1-bit output: Clock output
-         I0 => refClkDiv2(0),           -- 1-bit input: Clock input (S=0)
-         I1 => refClkDiv2(1),           -- 1-bit input: Clock input (S=1)
+         I0 => gtTxClk(0),              -- 1-bit input: Clock input (S=0)
+         I1 => gtTxClk(1),              -- 1-bit input: Clock input (S=1)
          S  => timingClkSel);           -- 1-bit input: Clock select
 
    -----------------------
