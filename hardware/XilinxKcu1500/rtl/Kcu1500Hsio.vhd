@@ -51,7 +51,7 @@ entity Kcu1500Hsio is
       ROGUE_SIM_EN_G                 : boolean                     := false;
       ROGUE_SIM_PORT_NUM_G           : natural range 1024 to 49151 := 7000;
       DMA_AXIS_CONFIG_G              : AxiStreamConfigType;
-      PGP_TYPE_G                     : boolean                     := false;  -- False: PGPv2b@3.125Gb/s, True: PGPv3@10.3125Gb/s, 
+      PGP_TYPE_G                     : string                      := "PGP2b";  -- PGP2b@3.125Gb/s, PGP3@10.3125Gb/s
       AXIL_CLK_FREQ_G                : real                        := 156.25E+6;  -- units of Hz
       AXI_BASE_ADDR_G                : slv(31 downto 0)            := x"0080_0000";
       NUM_PGP_LANES_G                : integer range 1 to 4        := 4;
@@ -217,7 +217,7 @@ begin
 
    end generate GEN_REFCLK;
 
-   GEN_PGP3_QPLL : if (PGP_TYPE_G = true) generate
+   GEN_PGP3_QPLL : if (PGP_TYPE_G = "PGP3") generate
       U_QPLL : entity surf.Pgp3GthUsQpll
          generic map (
             TPD_G => TPD_G)
@@ -239,7 +239,7 @@ begin
    GEN_LANE :
    for i in NUM_PGP_LANES_G-1 downto 0 generate
 
-      GEN_PGP3 : if (PGP_TYPE_G = true) generate
+      GEN_PGP3 : if (PGP_TYPE_G = "PGP3") generate
          U_Lane : entity lcls2_pgp_fw_lib.Kcu1500Pgp3Lane
             generic map (
                TPD_G                => TPD_G,
@@ -275,7 +275,7 @@ begin
                axilWriteSlave  => axilWriteSlaves(i));
       end generate;
 
-      GEN_PGP2b : if (PGP_TYPE_G = false) generate
+      GEN_PGP2b : if (PGP_TYPE_G = "PGP2b") generate
          U_Lane : entity lcls2_pgp_fw_lib.Kcu1500Pgp2bLane
             generic map (
                TPD_G                => TPD_G,
@@ -310,18 +310,18 @@ begin
    end generate GEN_LANE;
 
 --   SIM_GUARD_0 : if (not ROGUE_SIM_EN_G) generate
-      GEN_DUMMY : if (NUM_PGP_LANES_G < 4) generate
-         U_QSFP1 : entity surf.Gthe3ChannelDummy
-            generic map (
-               TPD_G   => TPD_G,
-               WIDTH_G => 4-NUM_PGP_LANES_G)
-            port map (
-               refClk => axilClk,
-               gtRxP  => qsfp0RxP(3 downto NUM_PGP_LANES_G),
-               gtRxN  => qsfp0RxN(3 downto NUM_PGP_LANES_G),
-               gtTxP  => qsfp0TxP(3 downto NUM_PGP_LANES_G),
-               gtTxN  => qsfp0TxN(3 downto NUM_PGP_LANES_G));
-      end generate GEN_DUMMY;
+   GEN_DUMMY : if (NUM_PGP_LANES_G < 4) generate
+      U_QSFP1 : entity surf.Gthe3ChannelDummy
+         generic map (
+            TPD_G   => TPD_G,
+            WIDTH_G => 4-NUM_PGP_LANES_G)
+         port map (
+            refClk => axilClk,
+            gtRxP  => qsfp0RxP(3 downto NUM_PGP_LANES_G),
+            gtRxN  => qsfp0RxN(3 downto NUM_PGP_LANES_G),
+            gtTxP  => qsfp0TxP(3 downto NUM_PGP_LANES_G),
+            gtTxN  => qsfp0TxN(3 downto NUM_PGP_LANES_G));
+   end generate GEN_DUMMY;
 --   end generate SIM_GUARD_0;
    ------------------
    -- Timing Receiver
@@ -375,16 +375,16 @@ begin
    -- Unused QSFP Links
    --------------------
 --   SIM_GUARD : if (not ROGUE_SIM_EN_G) generate
-      U_QSFP1 : entity surf.Gthe3ChannelDummy
-         generic map (
-            TPD_G   => TPD_G,
-            WIDTH_G => 2)
-         port map (
-            refClk => axilClk,
-            gtRxP  => qsfp1RxP(3 downto 2),
-            gtRxN  => qsfp1RxN(3 downto 2),
-            gtTxP  => qsfp1TxP(3 downto 2),
-            gtTxN  => qsfp1TxN(3 downto 2));
+   U_QSFP1 : entity surf.Gthe3ChannelDummy
+      generic map (
+         TPD_G   => TPD_G,
+         WIDTH_G => 2)
+      port map (
+         refClk => axilClk,
+         gtRxP  => qsfp1RxP(3 downto 2),
+         gtRxN  => qsfp1RxN(3 downto 2),
+         gtTxP  => qsfp1TxP(3 downto 2),
+         gtTxN  => qsfp1TxN(3 downto 2));
 --   end generate SIM_GUARD;
 
 end mapping;
