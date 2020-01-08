@@ -25,7 +25,7 @@ class TimingPhyMonitor(pr.Device):
             bitOffset    = 0,
             mode         = "RO",
             pollInterval = 1,
-            hidden       = True, 
+            hidden       = False, 
         ))   
 
         self.add(pr.RemoteVariable( 
@@ -36,7 +36,7 @@ class TimingPhyMonitor(pr.Device):
             bitOffset    = 0,
             mode         = "RO",
             pollInterval = 1,
-            hidden       = True, 
+            hidden       = False, 
         ))           
         
         self.add(pr.RemoteVariable(
@@ -91,7 +91,7 @@ class TimingPhyMonitor(pr.Device):
             bitOffset    = 0,
             mode         = "RO",
             pollInterval = 1,
-            hidden       = True, 
+            hidden       = False, 
         )) 
 
         self.add(pr.RemoteVariable( 
@@ -102,7 +102,7 @@ class TimingPhyMonitor(pr.Device):
             bitOffset    = 0,
             mode         = "RO",
             pollInterval = 1,
-            hidden       = True, 
+            hidden       = False, 
         )) 
         
         self.addRemoteVariables(   
