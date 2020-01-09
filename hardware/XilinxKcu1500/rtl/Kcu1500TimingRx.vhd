@@ -152,7 +152,7 @@ architecture mapping of Kcu1500TimingRx is
 
    signal txUserRst   : sl;
    signal gtTxOutClk  : slv(1 downto 0);
-   signal gtTxClk     : slv(1 downto 0);   
+   signal gtTxClk     : slv(1 downto 0);
    signal timingTxClk : sl;
    signal timingTxRst : sl;
    signal txData      : slv(15 downto 0);
@@ -340,7 +340,7 @@ begin
                rxControl       => rxControl,
                rxStatus        => gtRxStatus(i),
                rxUsrClkActive  => mmcmLocked(i),
-               rxUsrClk        => gtRxOutClk(i),
+               rxUsrClk        => timingRxClk,
                rxData          => gtRxData(i),
                rxDataK         => gtRxDataK(i),
                rxDispErr       => gtRxDispErr(i),
