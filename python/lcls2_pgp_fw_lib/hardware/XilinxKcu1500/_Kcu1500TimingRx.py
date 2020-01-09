@@ -89,7 +89,7 @@ class Kcu1500TimingRx(pr.Device):
 
         @self.command()
         def ConfigureXpmMiniSim():
-            self.readBlocks()
+            #self.readBlocks()
             self.TimingPhyMonitor.UseMiniTpg.set(True)
             self.XpmMiniWrapper.XpmMini.HwEnable.set(True)
             self.XpmMiniWrapper.XpmMini.Link.set(0)
