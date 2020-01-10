@@ -79,7 +79,7 @@ architecture rtl of TimingPhyMonitor is
       mmcmRst        => '0',
       rxUserRst      => '0',
       txUserRst      => '0',
-      useMiniTpg     => '0',
+      useMiniTpg     => '1',
       axilReadSlave  => AXI_LITE_READ_SLAVE_INIT_C,
       axilWriteSlave => AXI_LITE_WRITE_SLAVE_INIT_C);
 
