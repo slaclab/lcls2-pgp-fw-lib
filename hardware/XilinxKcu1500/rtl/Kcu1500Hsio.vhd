@@ -156,8 +156,9 @@ architecture mapping of Kcu1500Hsio is
    signal refClk    : slv(3 downto 0);
    signal refClkDiv : slv(3 downto 0);
 
-   signal iTriggerData   : TriggerEventDataArray(NUM_PGP_LANES_G-1 downto 0);
-   signal remoteTriggers : slv(NUM_PGP_LANES_G-1 downto 0);
+   signal iTriggerData       : TriggerEventDataArray(NUM_PGP_LANES_G-1 downto 0);
+   signal remoteTriggersComb : slv(NUM_PGP_LANES_G-1 downto 0);
+   signal remoteTriggers     : slv(NUM_PGP_LANES_G-1 downto 0);
 
    attribute dont_touch              : string;
    attribute dont_touch of refClk    : signal is "TRUE";
@@ -368,8 +369,18 @@ begin
 
    -- Feed l0 triggers directly to PGP
    TRIGGER_GEN : for i in NUM_PGP_LANES_G-1 downto 0 generate
-      remoteTriggers(i) <= iTriggerData(i).valid and iTriggerData(i).l0Accept;
+      remoteTriggersComb(i) <= iTriggerData(i).valid and iTriggerData(i).l0Accept;
    end generate TRIGGER_GEN;
+   U_RegisterVector_1 : entity surf.RegisterVector
+      generic map (
+         TPD_G   => TPD_G,
+         WIDTH_G => NUM_PGP_LANES_G)
+      port map (
+         clk   => triggerClk,           -- [in]
+         sig_i => remoteTriggersComb,   -- [in]
+         reg_o => remoteTriggers);      -- [out]
+
+
    triggerData <= iTriggerData;
 
    --------------------
