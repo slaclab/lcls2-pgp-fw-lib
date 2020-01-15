@@ -30,10 +30,19 @@ class Core(pr.Root):
             pollEn      = True,            # Enable automatic polling registers
             initRead    = True,            # Read all registers at start of the system            
             numLane     = 4,               # Number of PGP lanes
+            serverPort  = None,            # Zeromq server port.  Specify a port number to start a zeromq server.
+            timeout     = 1.0,             # Communication timeout in seconds
             enVcMask    = 0xD,             # Enable lane mask: Don't connect data stream (VC1) by default because intended for C++ process
             **kwargs):
-        super().__init__(name=name, description=description, **kwargs)
-        
+        super().__init__(
+            name        = name,
+            description = description,
+            initRead    = initRead,
+            pollEn      = pollEn,
+            serverPort  = serverPort,
+            timeout     = timeout,
+            **kwargs)
+
         # Simplify the Command Tab
         self.WriteAll.hidden      = True        
         self.ReadAll.hidden       = True        
