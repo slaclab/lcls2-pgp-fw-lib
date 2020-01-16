@@ -45,14 +45,14 @@ class Kcu1500Hsio(pr.Device):
                     expand  = False,
                 ))
         
-            self.add(surf.axi.AxiStreamMonitoring(            
+            self.add(surf.axi.AxiStreamMonAxiL(            
                 name        = (f'PgpTxAxisMon[{i}]'), 
                 offset      = (i*0x00010000 + 1*0x2000), 
                 numberLanes = 4,
                 expand      = False,
             ))        
 
-            self.add(surf.axi.AxiStreamMonitoring(            
+            self.add(surf.axi.AxiStreamMonAxiL(            
                 name        = (f'PgpRxAxisMon[{i}]'), 
                 offset      = (i*0x00010000 + 2*0x2000), 
                 numberLanes = 4,
