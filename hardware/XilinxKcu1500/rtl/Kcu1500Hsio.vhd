@@ -166,6 +166,9 @@ architecture mapping of Kcu1500Hsio is
 
 begin
 
+   assert ((PGP_TYPE_G = "PGP2b") or (PGP_TYPE_G = "PGP3"))
+      report "PGP_TYPE_G must be either PGP2b or PGP3" severity failure;
+
    ---------------------
    -- AXI-Lite Crossbar
    ---------------------
