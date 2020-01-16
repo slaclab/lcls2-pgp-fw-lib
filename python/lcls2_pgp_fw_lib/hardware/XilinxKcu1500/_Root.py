@@ -16,12 +16,12 @@ import rogue
 class Root(pr.Root):
     """ A generic Root class that sets up all of the common sub-devices and hardware connections that a KCU1500 PGP project would have."""
     def __init__(self,
-                 driverPath  = '/dev/datadev_0',# path to PCIe device
-                 pollEn      = True,            # Enable automatic polling registers
-                 initRead    = True,            # Read all registers at start of the system            
-                 numLanes     = 4,               # Number of PGP lanes
-                 enVcMask    = 0xD,             # Enable lane mask: Don't connect data stream (VC1) by default because intended for C++ process
-                 pgp3        = False,           # Not used here but capture so it doesn't go into super call
+                 dev      = '/dev/datadev_0',# path to PCIe device
+                 pollEn   = True,            # Enable automatic polling registers
+                 initRead = True,            # Read all registers at start of the system            
+                 numLanes = 4,               # Number of PGP lanes
+                 enVcMask = 0xD,             # Enable lane mask: Don't connect data stream (VC1) by default because intended for C++ process
+                 pgp3     = False,           # Not used here but capture so it doesn't go into super call
                  **kwargs):
         
         super().__init__(**kwargs)
@@ -45,7 +45,7 @@ class Root(pr.Root):
         self.InitAfterConfig._default = True
           
         # Create PCIE memory mapped interface
-        if (driverPath != 'sim'):
+        if (dev != 'sim'):
             # Set the timeout
             self._timeout = 1.0 # 1.0 default
             # Start up flags
