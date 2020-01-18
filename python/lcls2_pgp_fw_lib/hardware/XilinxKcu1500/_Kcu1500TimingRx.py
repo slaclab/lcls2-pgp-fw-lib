@@ -46,13 +46,13 @@ class Kcu1500TimingRx(pr.Device):
         # XPM Mini Core
         self.add(l2si_core.XpmMiniWrapper(
             offset = 0x0003_0000,
-            expand = False,
+            expand = True,
         ))
         
         self.add(l2si_core.TriggerEventManager(
             offset  = 0x0004_0000,
             numDetectors = numLanes,
-            expand  = False,
+            expand  = True,
         ))
 
         self.add(XilinxKcu1500Pgp.TimingPhyMonitor(

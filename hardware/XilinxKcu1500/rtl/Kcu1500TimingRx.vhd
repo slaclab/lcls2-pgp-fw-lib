@@ -155,8 +155,6 @@ architecture mapping of Kcu1500TimingRx is
    signal gtTxClk     : slv(1 downto 0);
    signal timingTxClk : sl;
    signal timingTxRst : sl;
-   signal txData      : slv(15 downto 0);
-   signal txDataK     : slv(1 downto 0);
 --   signal txStatus   : TimingPhyStatusType := TIMING_PHY_STATUS_FORCE_C;
    signal gtTxStatus  : TimingPhyStatusArray(1 downto 0);
 
