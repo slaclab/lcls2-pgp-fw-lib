@@ -11,15 +11,14 @@
 
 import pyrogue as pr
 
-import lcls2_pgp_fw_lib.hardware.XilinxKcu1500
+import lcls2_pgp_fw_lib.hardware.shared as shared
 
-import surf.protocols.pgp 
-import surf.axi
+import surf.protocols.pgp as pgp
+import surf.axi           as axi
 
-
-class Kcu1500Hsio(pr.Device):
+class Hsio(pr.Device):
     def __init__(self,       
-                 numLanes = 4,
+                 numLanes = 8,
                  pgp3     = False,
                  **kwargs):
         
@@ -29,40 +28,36 @@ class Kcu1500Hsio(pr.Device):
         for i in range(numLanes):
         
             if (pgp3):
-                self.add(surf.protocols.pgp.Pgp3AxiL(            
+                self.add(pgp.Pgp3AxiL(            
                     name    = (f'PgpMon[{i}]'), 
                     offset  = (i*0x00010000), 
                     numVc   = 4,
                     writeEn = True,
-                    expand  = False,
                 ))
                 
             else:
-                self.add(surf.protocols.pgp.Pgp2bAxi(            
+                self.add(pgp.Pgp2bAxi(            
                     name    = (f'PgpMon[{i}]'), 
                     offset  = (i*0x00010000), 
                     writeEn = True,
-                    expand  = False,
                 ))
         
-            self.add(surf.axi.AxiStreamMonAxiL(            
+            self.add(axi.AxiStreamMonAxiL(            
                 name        = (f'PgpTxAxisMon[{i}]'), 
                 offset      = (i*0x00010000 + 1*0x2000), 
                 numberLanes = 4,
-                expand      = False,
             ))        
 
-            self.add(surf.axi.AxiStreamMonAxiL(            
+            self.add(axi.AxiStreamMonAxiL(            
                 name        = (f'PgpRxAxisMon[{i}]'), 
                 offset      = (i*0x00010000 + 2*0x2000), 
                 numberLanes = 4,
-                expand      = False,
             ))           
             
         # Add Timing Core
-        self.add(lcls2_pgp_fw_lib.hardware.XilinxKcu1500.Kcu1500TimingRx(
-            offset  = 0x0010_0000,
+        self.add(shared.TimingRx(
+            offset   = 0x0010_0000,
             numLanes = numLanes,
-            expand  = True,
+            dualGTH  = False, # single SFP for both timing networks
         ))
         

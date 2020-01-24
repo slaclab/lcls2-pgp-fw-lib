@@ -16,11 +16,13 @@ import LclsTimingCore
 
 import l2si_core
 
-import lcls2_pgp_fw_lib.hardware.XilinxKcu1500 as XilinxKcu1500Pgp
-
-        
-class Kcu1500TimingRx(pr.Device):
-    def __init__(self, numLanes = 4, **kwargs):
+import lcls2_pgp_fw_lib.hardware.shared as shared
+  
+class TimingRx(pr.Device):
+    def __init__(self, 
+        numLanes = 4, 
+        dualGTH  = True, 
+        **kwargs):
         super().__init__(**kwargs)
         
         self.add(LclsTimingCore.GthRxAlignCheck(
@@ -30,12 +32,13 @@ class Kcu1500TimingRx(pr.Device):
             hidden = True, 
         ))   
 
-        self.add(LclsTimingCore.GthRxAlignCheck(
-            name   = "GthRxAlignCheck[1]",
-            offset = 0x0001_0000,
-            expand = False,
-            hidden = True, 
-        ))   
+        if dualGTH:
+            self.add(LclsTimingCore.GthRxAlignCheck(
+                name   = "GthRxAlignCheck[1]",
+                offset = 0x0001_0000,
+                expand = False,
+                hidden = True, 
+            ))   
 
         # TimingCore
         self.add(LclsTimingCore.TimingFrameRx(
@@ -55,13 +58,12 @@ class Kcu1500TimingRx(pr.Device):
             expand  = True,
         ))
 
-        self.add(XilinxKcu1500Pgp.TimingPhyMonitor(
+        self.add(shared.TimingPhyMonitor(
             offset  = 0x0002_0000,
             numLanes = numLanes,
             expand  = False,
         ))
         
-
         @self.command(description="Configure for LCLS-I Timing (119 MHz based)")
         def ConfigLclsTimingV1():
             print ( 'ConfigLclsTimingV1()' ) 
@@ -85,7 +87,6 @@ class Kcu1500TimingRx(pr.Device):
             self.TimingFrameRx.RxReset.set(0)     
             time.sleep(0.1)
             self.TimingFrameRx.RxDown.set(0) # Reset the latching register
-            
 
         @self.command()
         def ConfigureXpmMiniSim():

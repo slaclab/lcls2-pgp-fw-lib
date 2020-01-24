@@ -245,7 +245,7 @@ begin
    for i in NUM_PGP_LANES_G-1 downto 0 generate
 
       GEN_PGP3 : if (PGP_TYPE_G = "PGP3") generate
-         U_Lane : entity lcls2_pgp_fw_lib.Kcu1500Pgp3Lane
+         U_Lane : entity lcls2_pgp_fw_lib.Pgp3Lane
             generic map (
                TPD_G                => TPD_G,
                ROGUE_SIM_EN_G       => ROGUE_SIM_EN_G,
@@ -281,7 +281,7 @@ begin
       end generate;
 
       GEN_PGP2b : if (PGP_TYPE_G = "PGP2b") generate
-         U_Lane : entity lcls2_pgp_fw_lib.Kcu1500Pgp2bLane
+         U_Lane : entity lcls2_pgp_fw_lib.Pgp2bLane
             generic map (
                TPD_G                => TPD_G,
                ROGUE_SIM_EN_G       => ROGUE_SIM_EN_G,
