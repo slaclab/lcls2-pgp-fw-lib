@@ -8,21 +8,17 @@
 ## the terms contained in the LICENSE.txt file.
 ##############################################################################
 
-
 #### Base Clocks 
 create_generated_clock -name clk156 [get_pins {U_axilClk/PllGen.U_Pll/CLKOUT0}] 
-
-create_generated_clock -name clk238 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_REFCLK[0].U_BUFG_GT/O}] 
-create_generated_clock -name clk371 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_REFCLK[1].U_BUFG_GT/O}] 
 
 create_generated_clock -name clk119 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_REFCLK[0].U_refClkDiv2/O}] 
 create_generated_clock -name clk186 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_REFCLK[1].U_refClkDiv2/O}] 
 
 #### GT Out Clocks
-create_clock -name timingGtRxOutClk  -period 5.384 \
+create_clock -name timingGtRxOutClk  -period 5.382 \
     [get_pins -hier -filter {name =~ */U_TimingRx/REAL_PCIE.U_GTH/*/RXOUTCLK}]
 
-create_generated_clock -name timingGtTxOutClk \
+create_clock -name timingGtTxOutClk  -period 5.382 \
     [get_pins -hier -filter {name =~ */U_TimingRx/REAL_PCIE.U_GTH/*/TXOUTCLK}]
 
 create_generated_clock -name timingTxOutClk \
@@ -39,12 +35,9 @@ create_generated_clock -name muxTimingGtRxOutClk \
     -source [get_pins -hier -filter {name =~ */U_TimingRx/U_RXCLK/I0}] \
     [get_pins -hier -filter {name =~ */U_TimingRx/U_RXCLK/O}]
 
-set_clock_groups -physically_exclusive -group muxTimingGtRxOutClk -group muxRxClk186
+set_clock_groups -physically_exclusive -group [get_clocks timingGtRxOutClk] -group [get_clocks muxRxClk186]
+set_clock_groups -physically_exclusive -group [get_clocks muxRxClk186] -group [get_clocks muxTimingGtRxOutClk]
 set_false_path -to [get_pins -hier -filter {name =~ */U_TimingRx/U_RXCLK/CE*}]
-
-set_clock_groups -physically_exclusive \
-    -group muxRxClk186 \
-    -group muxTimingGtRxOutClk
 
 ##### Cascaded clock muxing - TX mux
 create_generated_clock -name muxTxClk186 \
@@ -57,17 +50,21 @@ create_generated_clock -name muxTimingTxOutClk \
     -source [get_pins -hier -filter {name =~ */U_TimingRx/U_TXCLK/I0}] \
     [get_pins -hier -filter {name =~ */U_TimingRx/U_TXCLK/O}]
 
-set_clock_groups -physically_exclusive -group muxTimingTxOutClk -group muxTxClk186
+set_clock_groups -physically_exclusive -group [get_clocks muxTimingTxOutClk] -group [get_clocks muxTxClk186]
+set_clock_groups -physically_exclusive -group [get_clocks muxTxClk186] -group [get_clocks -of_objects [get_pins U_HSIO/U_TimingRx/REAL_PCIE.U_GTH/LOCREF_G.TIMING_TXCLK_BUFG_GT/O]]
 set_false_path -to [get_pins -hier -filter {name =~ */U_TimingRx/U_TXCLK/CE*}]
 
-set_clock_groups -physically_exclusive \
-    -group muxTxClk186 \
-    -group muxTimingTxOutClk
+set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins U_axilClk/PllGen.U_Pll/CLKOUT0]] -group [get_clocks muxTxClk186]
+set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins U_axilClk/PllGen.U_Pll/CLKOUT0]] -group [get_clocks muxRxClk186]
+set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins U_axilClk/PllGen.U_Pll/CLKOUT0]] -group [get_clocks muxTimingGtRxOutClk]
+set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins U_axilClk/PllGen.U_Pll/CLKOUT0]] -group [get_clocks muxTimingTxOutClk]
+set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins U_axilClk/PllGen.U_Pll/CLKOUT0]] -group [get_clocks timingGtRxOutClk]
+set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins U_axilClk/PllGen.U_Pll/CLKOUT0]] -group [get_clocks -of_objects [get_pins U_HSIO/U_TimingRx/REAL_PCIE.U_GTH/LOCREF_G.TIMING_TXCLK_BUFG_GT/O]]
+set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins U_axilClk/PllGen.U_Pll/CLKOUT0]] -group [get_clocks -of_objects [get_pins U_Core/REAL_PCIE.U_AxiPciePhy/U_AxiPcie/inst/pcie3_ip_i/U0/gt_top_i/phy_clk_i/bufg_gt_userclk/O]]
 
-set_clock_groups -asynchronous \
-    -group [get_clocks -include_generated_clocks {clk156}] \
-    -group [get_clocks -include_generated_clocks {timingGtRxOutClk}] \    
-    -group [get_clocks -include_generated_clocks {timingGtTxOutClk}] \
-    -group [get_clocks -include_generated_clocks {clk238}]  \
-    -group [get_clocks -include_generated_clocks {clk371}] \
-    -group [get_clocks -include_generated_clocks {dmaClk}] 
+set_clock_groups -asynchronous -group [get_clocks sfpRefClkP0] -group [get_clocks -of_objects [get_pins {U_HSIO/U_TimingRx/GEN_REFCLK[0].U_refClkDiv2/O}]]
+set_clock_groups -asynchronous -group [get_clocks sfpRefClkP1] -group [get_clocks -of_objects [get_pins {U_HSIO/U_TimingRx/GEN_REFCLK[1].U_refClkDiv2/O}]]
+
+set_clock_groups -asynchronous -group [get_clocks muxRxClk186] -group [get_clocks muxTimingTxOutClk]
+set_clock_groups -asynchronous -group [get_clocks muxTimingGtRxOutClk] -group [get_clocks muxTimingTxOutClk]
+set_clock_groups -asynchronous -group [get_clocks muxTimingGtRxOutClk] -group [get_clocks muxTxClk186]
