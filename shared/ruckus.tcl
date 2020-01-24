@@ -11,7 +11,7 @@ if { [info exists ::env(OVERRIDE_SUBMODULE_LOCKS)] != 1 || $::env(OVERRIDE_SUBMO
    if { [SubmoduleCheck {axi-pcie-core}    {3.1.1}  ] < 0 } {exit -1}
    if { [SubmoduleCheck {l2si-core}        {2.0.0}  ] < 0 } {exit -1}
    if { [SubmoduleCheck {lcls-timing-core} {3.0.0}  ] < 0 } {exit -1}
-   if { [SubmoduleCheck {ruckus}           {2.0.4}  ] < 0 } {exit -1}
+   if { [SubmoduleCheck {ruckus}           {2.1.0}  ] < 0 } {exit -1}
    if { [SubmoduleCheck {surf}             {2.0.4}  ] < 0 } {exit -1}
 } else {
    puts "\n\n*********************************************************"
