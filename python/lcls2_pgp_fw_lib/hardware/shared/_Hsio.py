@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 #-----------------------------------------------------------------------------
 # This file is part of the 'Camera link gateway'. It is subject to 
 # the license terms in the LICENSE.txt file found in the top-level directory 
@@ -17,8 +16,9 @@ import surf.protocols.pgp as pgp
 import surf.axi           as axi
 
 class Hsio(pr.Device):
-    def __init__(self,       
-                 numLanes = 8,
+    def __init__(self,
+                 timingRxCls,                 
+                 numLanes = 4,
                  pgp3     = False,
                  **kwargs):
         
@@ -55,9 +55,8 @@ class Hsio(pr.Device):
             ))           
             
         # Add Timing Core
-        self.add(shared.TimingRx(
+        self.add(timingRxCls(
             offset   = 0x0010_0000,
             numLanes = numLanes,
-            dualGTH  = False, # single SFP for both timing networks
         ))
         

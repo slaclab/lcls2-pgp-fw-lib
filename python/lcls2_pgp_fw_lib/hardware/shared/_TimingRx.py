@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 ##############################################################################
 ## This file is part of 'camera-link-gen1'.
 ## It is subject to the license terms in the LICENSE.txt file found in the 
@@ -24,7 +23,7 @@ class TimingRx(pr.Device):
         dualGTH  = True, 
         **kwargs):
         super().__init__(**kwargs)
-        
+         
         self.add(LclsTimingCore.GthRxAlignCheck(
             name   = "GthRxAlignCheck[0]",
             offset = 0x0000_0000,
