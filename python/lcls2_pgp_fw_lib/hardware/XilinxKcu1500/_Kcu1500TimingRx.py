@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 ##############################################################################
 ## This file is part of 'camera-link-gen1'.
 ## It is subject to the license terms in the LICENSE.txt file found in the 
@@ -10,8 +9,6 @@
 ##############################################################################
 
 from lcls2_pgp_fw_lib.hardware.shared import TimingRx
-
-
         
 class Kcu1500TimingRx(TimingRx): 
     def __init__(self, numLanes = 4, **kwargs):
