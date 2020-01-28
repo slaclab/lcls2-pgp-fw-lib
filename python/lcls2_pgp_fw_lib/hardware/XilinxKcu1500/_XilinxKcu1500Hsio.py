@@ -15,7 +15,7 @@ import lcls2_pgp_fw_lib.hardware.shared as shared
 import surf.protocols.pgp as pgp
 import surf.axi           as axi
 
-class Hsio(pr.Device):
+class XilinxKcu1500Hsio(pr.Device):
     def __init__(self,       
                  numLanes = 4,
                  pgp3     = False,
