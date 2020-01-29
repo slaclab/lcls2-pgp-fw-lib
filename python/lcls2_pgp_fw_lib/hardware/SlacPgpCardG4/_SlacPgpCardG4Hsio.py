@@ -11,17 +11,15 @@
 import pyrogue as pr
 
 from lcls2_pgp_fw_lib.hardware.shared import Hsio
-from lcls2_pgp_fw_lib.hardware.XilinxKcu1500 import Kcu1500TimingRx
+from lcls2_pgp_fw_lib.hardware.SlacPgpCardG4 import SlacPgpCardG4TimingRx
 
-
-class Kcu1500Hsio(Hsio):
-    def __init__(self,
-                 numLanes = 4,
+class SlacPgpCardG4Hsio(Hsio):
+    def __init__(self,       
+                 numLanes = 8,
                  pgp3     = False,
                  **kwargs):
         
-        super().__init__(timingRxCls=Kcu1500TimingRx,
+        super().__init__(timingRxCls=SlacPgpCardG4TimingRx,
                          numLanes=numLanes,
                          pgp3=pgp3,
                          **kwargs)
-

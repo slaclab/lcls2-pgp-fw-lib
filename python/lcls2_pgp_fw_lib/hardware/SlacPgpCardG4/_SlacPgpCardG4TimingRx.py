@@ -8,9 +8,8 @@
 ## the terms contained in the LICENSE.txt file.
 ##############################################################################
 
-from lcls2_pgp_fw_lib.hardware.shared import TimingRx
-        
-class Kcu1500TimingRx(TimingRx): 
-    def __init__(self, numLanes = 4, **kwargs):
-        super().__init__(numLanes=numLanes, dualGTH=True, **kwargs)
-        
+import lcls2_pgp_fw_lib.hardware.shared as shared
+
+class SlacPgpCardG4TimingRx(shared._TimingRx):
+    def __init__(self, numLanes=4, **kwargs):
+        super().__init__(numLanes=numLanes, dualGTH=False, **kwargs)

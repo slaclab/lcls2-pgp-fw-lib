@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 #-----------------------------------------------------------------------------
 # This file is part of the 'Camera link gateway'. It is subject to 
 # the license terms in the LICENSE.txt file found in the top-level directory 
@@ -14,7 +13,7 @@ import pyrogue.interfaces.simulation
 import rogue
 
 class Root(pr.Root):
-    """ A generic Root class that sets up all of the common sub-devices and hardware connections that a KCU1500 PGP project would have."""
+    """ A generic Root class that sets up all of the common sub-devices and hardware connections that a PGP project would have."""
     def __init__(self,
                  dev      = '/dev/datadev_0',# path to PCIe device
                  pollEn   = True,            # Enable automatic polling registers
