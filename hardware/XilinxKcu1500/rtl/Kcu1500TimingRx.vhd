@@ -175,7 +175,7 @@ begin
    timingTxRst    <= txUserRst;
    timingRxRstTmp <= rxUserRst or not rxStatus.resetDone;
 
-   U_RstSync_1 : entity work.RstSync
+   U_RstSync_1 : entity surf.RstSync
       generic map (
          TPD_G => TPD_G)
       port map (
