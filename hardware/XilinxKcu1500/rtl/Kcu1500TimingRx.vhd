@@ -132,23 +132,24 @@ architecture mapping of Kcu1500TimingRx is
    signal useMiniTpg   : sl;
    signal loopback     : slv(2 downto 0);
 
-   signal rxUserRst   : sl;
-   signal gtRxOutClk  : slv(1 downto 0);
-   signal gtRxClk     : slv(1 downto 0);
-   signal timingRxClk : sl;
-   signal timingRxRst : sl;
-   signal gtRxData    : Slv16Array(1 downto 0);
-   signal rxData      : slv(15 downto 0);
-   signal gtRxDataK   : Slv2Array(1 downto 0);
-   signal rxDataK     : slv(1 downto 0);
-   signal gtRxDispErr : Slv2Array(1 downto 0);
-   signal rxDispErr   : slv(1 downto 0);
-   signal gtRxDecErr  : Slv2Array(1 downto 0);
-   signal rxDecErr    : slv(1 downto 0);
-   signal gtRxStatus  : TimingPhyStatusArray(1 downto 0);
-   signal rxStatus    : TimingPhyStatusType;
-   signal rxCtrl      : TimingPhyControlType;
-   signal rxControl   : TimingPhyControlType;
+   signal rxUserRst      : sl;
+   signal gtRxOutClk     : slv(1 downto 0);
+   signal gtRxClk        : slv(1 downto 0);
+   signal timingRxClk    : sl;
+   signal timingRxRst    : sl;
+   signal timingRxRstTmp : sl;
+   signal gtRxData       : Slv16Array(1 downto 0);
+   signal rxData         : slv(15 downto 0);
+   signal gtRxDataK      : Slv2Array(1 downto 0);
+   signal rxDataK        : slv(1 downto 0);
+   signal gtRxDispErr    : Slv2Array(1 downto 0);
+   signal rxDispErr      : slv(1 downto 0);
+   signal gtRxDecErr     : Slv2Array(1 downto 0);
+   signal rxDecErr       : slv(1 downto 0);
+   signal gtRxStatus     : TimingPhyStatusArray(1 downto 0);
+   signal rxStatus       : TimingPhyStatusType;
+   signal rxCtrl         : TimingPhyControlType;
+   signal rxControl      : TimingPhyControlType;
 
    signal txUserRst   : sl;
    signal gtTxOutClk  : slv(1 downto 0);
@@ -171,8 +172,16 @@ architecture mapping of Kcu1500TimingRx is
 
 begin
 
-   timingTxRst <= txUserRst;
-   timingRxRst <= rxUserRst;
+   timingTxRst    <= txUserRst;
+   timingRxRstTmp <= rxUserRst or not rxStatus.resetDone;
+
+   U_RstSync_1 : entity work.RstSync
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         clk      => timingRxClk,       -- [in]
+         asyncRst => timingRxRstTmp,    -- [in]
+         syncRst  => timingRxRst);      -- [out]
 
    -------------------------
    -- Reference LCLS-I Clock
@@ -432,6 +441,8 @@ begin
    rxControl.polarity    <= rxCtrl.polarity;
    rxControl.bufferByRst <= rxCtrl.bufferByRst;
    rxControl.pllReset    <= rxCtrl.pllReset or rxUserRst;
+
+
 
    --------------
    -- Timing Core
