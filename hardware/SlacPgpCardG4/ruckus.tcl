@@ -3,7 +3,7 @@ source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
 
 # Load local source Code 
 loadSource      -lib lcls2_pgp_fw_lib -dir  "$::DIR_PATH/rtl"
-loadConstraints -path "$::DIR_PATH/xdc/Kcu1500Hsio.xdc"
+loadConstraints -path "$::DIR_PATH/xdc/SlacPgpCardG4Hsio.xdc"
 
 # Case the timing on communication protocol
 if { [info exists ::env(INCLUDE_PGP3_10G)] != 1 || $::env(INCLUDE_PGP3_10G) == 0 } {

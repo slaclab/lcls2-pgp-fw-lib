@@ -1,26 +1,19 @@
-#!/usr/bin/env python
-##############################################################################
-## This file is part of 'camera-link-gen1'.
-## It is subject to the license terms in the LICENSE.txt file found in the 
-## top-level directory of this distribution and at: 
-##    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
-## No part of 'camera-link-gen1', including this file, 
-## may be copied, modified, propagated, or distributed except according to 
-## the terms contained in the LICENSE.txt file.
-##############################################################################
-
+#-----------------------------------------------------------------------------
+# This file is part of the 'Camera link gateway'. It is subject to 
+# the license terms in the LICENSE.txt file found in the top-level directory 
+# of this distribution and at: 
+#    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
+# No part of the 'Camera link gateway', including this file, may be 
+# copied, modified, propagated, or distributed except according to the terms 
+# contained in the LICENSE.txt file.
+#-----------------------------------------------------------------------------
 import pyrogue as pr
-import time
 
-import LclsTimingCore as timingCore
-
-import XilinxKcu1500Pgp
-
-class TimingDbgMon(pr.Device):
+class TimingPhyMonitor(pr.Device):
     def __init__(   self,       
-            name        = "TimingDbgMon",
+            name        = "TimingPhyMonitor",
             description = "Timing Debug Monitor Module",
-            numLane     = 4,
+            numLanes     = 4,
             **kwargs):
         super().__init__(name=name, description=description, **kwargs)
         
@@ -41,7 +34,7 @@ class TimingDbgMon(pr.Device):
             bitOffset    = 0,
             mode         = "RO",
             pollInterval = 1,
-            hidden       = True, 
+            hidden       = False, 
         ))   
 
         self.add(pr.RemoteVariable( 
@@ -52,7 +45,7 @@ class TimingDbgMon(pr.Device):
             bitOffset    = 0,
             mode         = "RO",
             pollInterval = 1,
-            hidden       = True, 
+            hidden       = False, 
         ))           
         
         self.add(pr.RemoteVariable(
@@ -107,7 +100,7 @@ class TimingDbgMon(pr.Device):
             bitOffset    = 0,
             mode         = "RO",
             pollInterval = 1,
-            hidden       = True, 
+            hidden       = False, 
         )) 
 
         self.add(pr.RemoteVariable( 
@@ -118,7 +111,7 @@ class TimingDbgMon(pr.Device):
             bitOffset    = 0,
             mode         = "RO",
             pollInterval = 1,
-            hidden       = True, 
+            hidden       = False, 
         )) 
         
         self.addRemoteVariables(   
@@ -169,7 +162,7 @@ class TimingDbgMon(pr.Device):
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
-            number       = numLane,
+            number       = numLanes,
             stride       = 4,
         ) 
 
@@ -183,7 +176,7 @@ class TimingDbgMon(pr.Device):
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
-            number       = numLane,
+            number       = numLanes,
             stride       = 4,
         ) 
 
@@ -198,7 +191,7 @@ class TimingDbgMon(pr.Device):
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
-            number       = numLane,
+            number       = numLanes,
             stride       = 4,
         ) 
 
@@ -212,7 +205,7 @@ class TimingDbgMon(pr.Device):
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
-            number       = numLane,
+            number       = numLanes,
             stride       = 4,
         )         
         
@@ -225,7 +218,7 @@ class TimingDbgMon(pr.Device):
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
-            number       = numLane,
+            number       = numLanes,
             stride       = 2,
         )  
         
@@ -238,7 +231,7 @@ class TimingDbgMon(pr.Device):
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
-            number       = numLane,
+            number       = numLanes,
             stride       = 2,
         )  
 
@@ -251,7 +244,7 @@ class TimingDbgMon(pr.Device):
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
-            number       = numLane,
+            number       = numLanes,
             stride       = 2,
         )  
         
@@ -264,7 +257,7 @@ class TimingDbgMon(pr.Device):
             disp         = '{:d}',
             mode         = "RO",
             pollInterval = 1,
-            number       = numLane,
+            number       = numLanes,
             stride       = 2,
         )          
 
@@ -284,76 +277,3 @@ class TimingDbgMon(pr.Device):
 
     def countReset(self):
         self.CntRst.set(0x1)        
-        
-class Timing(pr.Device):
-    def __init__(   self,       
-            name        = "Timing",
-            description = "Timing",
-            numLane     = 4,
-            **kwargs):
-        super().__init__(name=name, description=description, **kwargs)
-        
-        #############
-        # Add devices
-        #############
-        
-        self.add(timingCore.GthRxAlignCheck(
-            name   = "GthRxAlignCheck[0]",
-            offset = 0x00000000,
-            expand = False,
-            hidden = True, 
-        ))   
-
-        self.add(timingCore.GthRxAlignCheck(
-            name   = "GthRxAlignCheck[1]",
-            offset = 0x00010000,
-            expand = False,
-            hidden = True, 
-        ))   
-
-        self.add(TimingDbgMon(
-            offset  = 0x00020000,
-            numLane = numLane,
-            expand  = False,
-        ))
-        
-        self.add(XilinxKcu1500Pgp.Triggering(
-            offset  = 0x00030000,
-            numLane = numLane,
-            expand  = False,
-        ))             
-        
-        self.add(timingCore.TimingFrameRx(
-            offset = 0x00080000,
-            expand = False,
-        ))
-        
-        self.add(timingCore.TPGMiniCore(
-            offset = 0x000B0000,
-            expand = False,
-        ))
-
-        @self.command(description="Configure for LCLS-I Timing (119 MHz based)")
-        def ConfigLclsTimingV1():
-            print ( 'ConfigLclsTimingV1()' ) 
-            self.TimingFrameRx.RxPllReset.set(1)
-            time.sleep(1.0)
-            self.TimingFrameRx.RxPllReset.set(0)
-            self.TimingFrameRx.ClkSel.set(0x0)
-            self.TimingFrameRx.RxReset.set(1)
-            self.TimingFrameRx.RxReset.set(0)
-            time.sleep(0.1)
-            self.TimingFrameRx.RxDown.set(0) # Reset the latching register
-            
-        @self.command(description="Configure for LCLS-II Timing (186 MHz based)")
-        def ConfigLclsTimingV2():
-            print ( 'ConfigLclsTimingV2()' ) 
-            self.TimingFrameRx.RxPllReset.set(1)
-            time.sleep(1.0)
-            self.TimingFrameRx.RxPllReset.set(0)
-            self.TimingFrameRx.ClkSel.set(0x1)
-            self.TimingFrameRx.RxReset.set(1)
-            self.TimingFrameRx.RxReset.set(0)     
-            time.sleep(0.1)
-            self.TimingFrameRx.RxDown.set(0) # Reset the latching register
-            

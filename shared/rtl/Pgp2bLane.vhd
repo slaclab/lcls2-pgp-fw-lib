@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- File       : Kcu1500Pgp2bLane.vhd
+-- File       : Pgp2bLane.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -------------------------------------------------------------------------------
 -- This file is part of 'Camera link gateway'.
@@ -16,6 +16,8 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_arith.all;
 use ieee.std_logic_unsigned.all;
 
+library unisim;
+use unisim.vcomponents.all;
 
 library surf;
 use surf.StdRtlPkg.all;
@@ -23,12 +25,9 @@ use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 use surf.Pgp2bPkg.all;
 
-library unisim;
-use unisim.vcomponents.all;
+library lcls2_pgp_fw_lib;
 
-library lcls2_pgp_fw_lib; 
-
-entity Kcu1500Pgp2bLane is
+entity Pgp2bLane is
    generic (
       TPD_G                : time                        := 1 ns;
       ROGUE_SIM_EN_G       : boolean                     := false;
@@ -57,9 +56,9 @@ entity Kcu1500Pgp2bLane is
       axilReadSlave   : out AxiLiteReadSlaveType;
       axilWriteMaster : in  AxiLiteWriteMasterType;
       axilWriteSlave  : out AxiLiteWriteSlaveType);
-end Kcu1500Pgp2bLane;
+end Pgp2bLane;
 
-architecture mapping of Kcu1500Pgp2bLane is
+architecture mapping of Pgp2bLane is
 
    constant NUM_AXIL_MASTERS_C : natural := 3;
 

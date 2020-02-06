@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- File       : Kcu1500Pgp3Lane.vhd
+-- File       : Pgp3Lane.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -------------------------------------------------------------------------------
 -- This file is part of 'Camera link gateway'.
@@ -25,7 +25,7 @@ use surf.Pgp3Pkg.all;
 
 library lcls2_pgp_fw_lib; 
 
-entity Kcu1500Pgp3Lane is
+entity Pgp3Lane is
    generic (
       TPD_G                : time                        := 1 ns;
       ROGUE_SIM_EN_G       : boolean                     := false;
@@ -58,9 +58,9 @@ entity Kcu1500Pgp3Lane is
       axilReadSlave   : out AxiLiteReadSlaveType;
       axilWriteMaster : in  AxiLiteWriteMasterType;
       axilWriteSlave  : out AxiLiteWriteSlaveType);
-end Kcu1500Pgp3Lane;
+end Pgp3Lane;
 
-architecture mapping of Kcu1500Pgp3Lane is
+architecture mapping of Pgp3Lane is
 
    constant NUM_AXIL_MASTERS_C : natural := 3;
 
