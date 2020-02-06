@@ -69,7 +69,7 @@ entity SlacPgpCardG4TimingRx is
       refClkP             : in  slv(1 downto 0);
       refClkN             : in  slv(1 downto 0);
       timingRxP           : in  sl;
-      timingRxN           : in  sl;      
+      timingRxN           : in  sl;
       timingTxP           : out sl;
       timingTxN           : out sl);
 end SlacPgpCardG4TimingRx;
@@ -112,15 +112,15 @@ architecture mapping of SlacPgpCardG4TimingRx is
          connectivity  => x"FFFF"));
 
    signal axilWriteMasters : AxiLiteWriteMasterArray(NUM_AXIL_MASTERS_C-1 downto 0);
-   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXIL_MASTERS_C-1 downto 0) := (others=>AXI_LITE_WRITE_SLAVE_EMPTY_OK_C);
+   signal axilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXIL_MASTERS_C-1 downto 0) := (others => AXI_LITE_WRITE_SLAVE_EMPTY_OK_C);
    signal axilReadMasters  : AxiLiteReadMasterArray(NUM_AXIL_MASTERS_C-1 downto 0);
-   signal axilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXIL_MASTERS_C-1 downto 0) := (others=>AXI_LITE_READ_SLAVE_EMPTY_OK_C);
+   signal axilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXIL_MASTERS_C-1 downto 0)  := (others => AXI_LITE_READ_SLAVE_EMPTY_OK_C);
 
    signal initReadMaster  : AxiLiteReadMasterType;
    signal initReadSlave   : AxiLiteReadSlaveType;
    signal initWriteMaster : AxiLiteWriteMasterType;
    signal initWriteSlave  : AxiLiteWriteSlaveType;
-   
+
    signal mmcmRst      : sl;
    signal refClk       : slv(1 downto 0);
    signal gtediv2      : slv(1 downto 0);
@@ -129,28 +129,29 @@ architecture mapping of SlacPgpCardG4TimingRx is
    signal refRstDiv2   : slv(1 downto 0);
    signal mmcmLocked   : slv(1 downto 0);
    signal gtRefClk     : sl;
-   signal gtRefClkDiv2 : sl;   
+   signal gtRefClkDiv2 : sl;
    signal timingClkSel : sl;
    signal useMiniTpg   : sl;
    signal loopback     : slv(2 downto 0);
 
-   signal rxUserRst   : sl;
-   signal gtRxOutClk  : sl;
-   signal gtRxClk     : sl;
-   signal timingRxClk : sl;
-   signal timingRxRst : sl;
-   signal gtRxData    : slv(15 downto 0);
-   signal rxData      : slv(15 downto 0);
-   signal gtRxDataK   : slv(1 downto 0);
-   signal rxDataK     : slv(1 downto 0);
-   signal gtRxDispErr : slv(1 downto 0);
-   signal rxDispErr   : slv(1 downto 0);
-   signal gtRxDecErr  : slv(1 downto 0);
-   signal rxDecErr    : slv(1 downto 0);
-   signal gtRxStatus  : TimingPhyStatusType;
-   signal rxStatus    : TimingPhyStatusType;
-   signal rxCtrl      : TimingPhyControlType;
-   signal rxControl   : TimingPhyControlType;
+   signal rxUserRst      : sl;
+   signal gtRxOutClk     : sl;
+   signal gtRxClk        : sl;
+   signal timingRxClk    : sl;
+   signal timingRxRst    : sl;
+   signal timingRxRstTmp : sl;
+   signal gtRxData       : slv(15 downto 0);
+   signal rxData         : slv(15 downto 0);
+   signal gtRxDataK      : slv(1 downto 0);
+   signal rxDataK        : slv(1 downto 0);
+   signal gtRxDispErr    : slv(1 downto 0);
+   signal rxDispErr      : slv(1 downto 0);
+   signal gtRxDecErr     : slv(1 downto 0);
+   signal rxDecErr       : slv(1 downto 0);
+   signal gtRxStatus     : TimingPhyStatusType;
+   signal rxStatus       : TimingPhyStatusType;
+   signal rxCtrl         : TimingPhyControlType;
+   signal rxControl      : TimingPhyControlType;
 
    signal txUserRst   : sl;
    signal gtTxOutClk  : sl;
@@ -173,12 +174,20 @@ architecture mapping of SlacPgpCardG4TimingRx is
 
 begin
 
-   timingTxRst <= txUserRst;
-   timingRxRst <= rxUserRst;
+   timingTxRst    <= txUserRst;
+   timingRxRstTmp <= rxUserRst or not rxStatus.resetDone;
+
+   U_RstSync_1 : entity surf.RstSync
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         clk      => timingRxClk,       -- [in]
+         asyncRst => timingRxRstTmp,    -- [in]
+         syncRst  => timingRxRst);      -- [out]
 
    GEN_REFCLK :
-   for i in 1 downto 0 generate   
-   
+   for i in 1 downto 0 generate
+
       U_IBUFDS_GTE3 : IBUFDS_GTE3
          generic map (
             REFCLK_EN_TX_PATH  => '0',
@@ -198,19 +207,19 @@ begin
             CEMASK  => '1',
             CLR     => '0',
             CLRMASK => '1',
-            DIV     => "000",              -- Divide by 1
-            O       => refClk(i));   
-      
+            DIV     => "000",           -- Divide by 1
+            O       => refClk(i));
+
       U_RstSync : entity surf.RstSync
          generic map (
-            TPD_G           => TPD_G)
+            TPD_G => TPD_G)
          port map (
             clk      => refClk(i),
             asyncRst => mmcmRst,
-            syncRst  => refRst(i)); 
+            syncRst  => refRst(i));
 
       mmcmLocked(i) <= not(refRst(i));
-      
+
       U_refClkDiv2 : BUFGCE_DIV
          generic map (
             BUFGCE_DIVIDE => 2)
@@ -218,7 +227,7 @@ begin
             I   => refClk(i),
             CE  => '1',
             CLR => '0',
-            O   => refClkDiv2(i));  
+            O   => refClkDiv2(i));
 
       U_refRstDiv2 : entity surf.RstSync
          generic map (
@@ -226,27 +235,27 @@ begin
          port map (
             clk      => refClkDiv2(i),
             asyncRst => refRst(i),
-            syncRst  => refRstDiv2(i));      
-         
+            syncRst  => refRstDiv2(i));
+
    end generate GEN_REFCLK;
 
    U_gtRefClk : BUFGMUX
       generic map (
-         CLK_SEL_TYPE => "ASYNC")    -- ASYNC, SYNC
+         CLK_SEL_TYPE => "ASYNC")       -- ASYNC, SYNC
       port map (
-         O  => gtRefClk,           -- 1-bit output: Clock output
-         I0 => refClk(0),        -- 1-bit input: Clock input (S=0)
-         I1 => refClk(1),        -- 1-bit input: Clock input (S=1)
-         S  => timingClkSel);          -- 1-bit input: Clock select
+         O  => gtRefClk,                -- 1-bit output: Clock output
+         I0 => refClk(0),               -- 1-bit input: Clock input (S=0)
+         I1 => refClk(1),               -- 1-bit input: Clock input (S=1)
+         S  => timingClkSel);           -- 1-bit input: Clock select
 
    U_gtRefClkDiv2 : BUFGMUX
       generic map (
-         CLK_SEL_TYPE => "ASYNC")    -- ASYNC, SYNC
+         CLK_SEL_TYPE => "ASYNC")       -- ASYNC, SYNC
       port map (
-         O  => gtRefClkDiv2,           -- 1-bit output: Clock output
-         I0 => refClkDiv2(0),        -- 1-bit input: Clock input (S=0)
-         I1 => refClkDiv2(1),        -- 1-bit input: Clock input (S=1)
-         S  => timingClkSel);          -- 1-bit input: Clock select      
+         O  => gtRefClkDiv2,            -- 1-bit output: Clock output
+         I0 => refClkDiv2(0),           -- 1-bit input: Clock input (S=0)
+         I1 => refClkDiv2(1),           -- 1-bit input: Clock input (S=1)
+         S  => timingClkSel);           -- 1-bit input: Clock select      
 
    -----------------------------------------------
    -- Power Up Initialization of the Timing RX PHY
@@ -295,25 +304,25 @@ begin
    -------------
    -- GTH Module
    -------------
-   
+
    U_RXCLK : BUFGMUX
       generic map (
-         CLK_SEL_TYPE => "ASYNC")    -- ASYNC, SYNC
+         CLK_SEL_TYPE => "ASYNC")       -- ASYNC, SYNC
       port map (
-         O  => timingRxClk,           -- 1-bit output: Clock output
-         I0 => gtRxOutClk,        -- 1-bit input: Clock input (S=0)
-         I1 => gtRefClkDiv2,        -- 1-bit input: Clock input (S=1)
-         S  => useMiniTpg);          -- 1-bit input: Clock select
+         O  => timingRxClk,             -- 1-bit output: Clock output
+         I0 => gtRxOutClk,              -- 1-bit input: Clock input (S=0)
+         I1 => gtRefClkDiv2,            -- 1-bit input: Clock input (S=1)
+         S  => useMiniTpg);             -- 1-bit input: Clock select
 
    U_TXCLK : BUFGMUX
       generic map (
-         CLK_SEL_TYPE => "ASYNC")    -- ASYNC, SYNC
+         CLK_SEL_TYPE => "ASYNC")       -- ASYNC, SYNC
       port map (
-         O  => timingTxClk,           -- 1-bit output: Clock output
-         I0 => gtTxOutClk,        -- 1-bit input: Clock input (S=0)
-         I1 => gtRefClkDiv2,        -- 1-bit input: Clock input (S=1)
-         S  => useMiniTpg);          -- 1-bit input: Clock select      
-   
+         O  => timingTxClk,             -- 1-bit output: Clock output
+         I0 => gtTxOutClk,              -- 1-bit input: Clock input (S=0)
+         I1 => gtRefClkDiv2,            -- 1-bit input: Clock input (S=1)
+         S  => useMiniTpg);             -- 1-bit input: Clock select      
+
    REAL_PCIE : if (not SIMULATION_G) generate
       U_GTH : entity lcls_timing_core.TimingGtCoreWrapper
          generic map (
@@ -368,8 +377,8 @@ begin
 
       gtTxStatus  <= TIMING_PHY_STATUS_FORCE_C;
       gtRxStatus  <= TIMING_PHY_STATUS_FORCE_C;
-      gtRxData    <= (others => '0');  --temTimingTxPhy.data;
-      gtRxDataK   <= (others => '0');  --temTimingTxPhy.dataK;
+      gtRxData    <= (others => '0');   --temTimingTxPhy.data;
+      gtRxDataK   <= (others => '0');   --temTimingTxPhy.dataK;
       gtRxDispErr <= "00";
       gtRxDecErr  <= "00";
 
@@ -412,7 +421,7 @@ begin
    U_TimingCore : entity lcls_timing_core.TimingCore
       generic map (
          TPD_G             => TPD_G,
-         DEFAULT_CLK_SEL_G => '1',      -- '0': default LCLS-I, '1': default LCLS-II
+         DEFAULT_CLK_SEL_G => '1',  -- '0': default LCLS-I, '1': default LCLS-II
          TPGEN_G           => false,
          AXIL_RINGB_G      => false,
          ASYNC_G           => true,
