@@ -17,9 +17,9 @@ import surf.axi           as axi
 
 class Hsio(pr.Device):
     def __init__(self,
-                 timingRxCls,                 
-                 numLanes = 4,
-                 pgp3     = False,
+                 timingRxCls = None,
+                 numLanes    = 4,
+                 pgp3        = False,
                  **kwargs):
         
         super().__init__(**kwargs)
@@ -55,8 +55,9 @@ class Hsio(pr.Device):
             ))           
             
         # Add Timing Core
-        self.add(timingRxCls(
-            offset   = 0x0010_0000,
-            numLanes = numLanes,
-        ))
+        if timingRxCls is not None:
+            self.add(timingRxCls(
+                offset   = 0x0010_0000,
+                numLanes = numLanes,
+            ))
         

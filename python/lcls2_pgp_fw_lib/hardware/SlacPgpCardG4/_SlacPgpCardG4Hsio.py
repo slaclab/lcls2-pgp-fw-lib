@@ -13,6 +13,7 @@ import pyrogue as pr
 from lcls2_pgp_fw_lib.hardware.shared import Hsio
 from lcls2_pgp_fw_lib.hardware.SlacPgpCardG4 import SlacPgpCardG4TimingRx
 
+
 class SlacPgpCardG4Hsio(Hsio):
     def __init__(self,       
                  numLanes = 8,
