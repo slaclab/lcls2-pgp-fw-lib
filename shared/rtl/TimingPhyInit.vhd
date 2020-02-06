@@ -40,7 +40,7 @@ end TimingPhyInit;
 
 architecture rtl of TimingPhyInit is
 
-   constant TIMEOUT_1SEC_C : positive := ite(SIMULATION_G, 1, getTimeRatio(AXIL_CLK_FREQ_G, 1.0));
+   constant TIMEOUT_1SEC_C : positive := ite(SIMULATION_G, 100, getTimeRatio(AXIL_CLK_FREQ_G, 1.0));
 
    type StateType is (
       REQ_S,
@@ -48,17 +48,19 @@ architecture rtl of TimingPhyInit is
       DONE_S);
 
    type RegType is record
-      cnt   : natural range 0 to 3;
+      cnt   : natural range 0 to 4;
       timer : natural range 0 to TIMEOUT_1SEC_C;
       req   : AxiLiteReqType;
       state : StateType;
+      data  : slv(31 downto 0);
    end record;
 
    constant REG_INIT_C : RegType := (
       cnt   => 0,
-      timer => 0,
+      timer => TIMEOUT_1SEC_C,  -- Wait 1 us before doing anything at all, allowing clocks to settle
       req   => AXI_LITE_REQ_INIT_C,
-      state => REQ_S);
+      state => REQ_S,
+      data  => (others => '0'));
 
    signal r   : RegType := REG_INIT_C;
    signal rin : RegType;
@@ -106,29 +108,33 @@ begin
                v.req.request := '1';
                v.req.rnw     := '0';
 
-               -- self.TimingFrameRx.RxPllReset.set(1)
                if (r.cnt = 0) then
                   v.req.address := TIMING_BASE_ADDR_G + x"0000_0020";
-                  v.req.wrData  := x"0000_0080";
+                  v.req.rnw     := '1';
 
-               -- self.TimingFrameRx.RxPllReset.set(0)
+               -- self.TimingFrameRx.RxPllReset.set(1)
                elsif (r.cnt = 1) then
                   v.req.address := TIMING_BASE_ADDR_G + x"0000_0020";
-                  v.req.wrData  := x"0000_0000";
+                  v.req.wrData  := r.data or x"0000_0080";
 
-               -- self.TimingFrameRx.RxReset.set(1)
+               -- self.TimingFrameRx.RxPllReset.set(0)
                elsif (r.cnt = 2) then
                   v.req.address := TIMING_BASE_ADDR_G + x"0000_0020";
-                  v.req.wrData  := x"0000_0008";
+                  v.req.wrData  := r.data or x"0000_0000";
+
+               -- self.TimingFrameRx.RxReset.set(1)
+               elsif (r.cnt = 3) then
+                  v.req.address := TIMING_BASE_ADDR_G + x"0000_0020";
+                  v.req.wrData  := r.data or x"0000_0008";
 
 
                -- self.TimingFrameRx.RxReset.set(0)
                else
                   v.req.address := TIMING_BASE_ADDR_G + x"0000_0020";
-                  v.req.wrData  := x"0000_0000";
+                  v.req.wrData  := r.data or x"0000_0000";
 
                end if;
-               
+
                -- Next state
                v.state := ACK_S;
             end if;
@@ -139,14 +145,17 @@ begin
 
                -- Reset the flag
                v.req.request := '0';
+               if (r.req.rnw = '1') then
+                  v.data := ack.rdData;
+               end if;
 
                -- Check if using timer
-               if (r.cnt = 0) then
+               if (r.cnt = 1) then
                   -- Arm the timer
                   v.timer := TIMEOUT_1SEC_C;
                end if;
 
-               if (r.cnt /= 3) then
+               if (r.cnt /= 4) then
 
                   -- Increment the counter
                   v.cnt := r.cnt + 1;
