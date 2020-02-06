@@ -56,6 +56,7 @@ class Hsio(pr.Device):
             
         # Add Timing Core
         self.add(timingRxCls(
+            name     = 'TimingRx',
             offset   = 0x0010_0000,
             numLanes = numLanes,
         ))
