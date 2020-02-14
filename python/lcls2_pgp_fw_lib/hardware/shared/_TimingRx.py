@@ -65,7 +65,8 @@ class TimingRx(pr.Device):
         
         @self.command(description="Configure for LCLS-I Timing (119 MHz based)")
         def ConfigLclsTimingV1():
-            print ( 'ConfigLclsTimingV1()' ) 
+            print ( 'ConfigLclsTimingV1()' )
+            self.TimingPhyMonitor.UseMiniTpg.set(False)
             self.TimingFrameRx.RxPllReset.set(1)
             time.sleep(1.0)
             self.TimingFrameRx.RxPllReset.set(0)
@@ -77,7 +78,8 @@ class TimingRx(pr.Device):
             
         @self.command(description="Configure for LCLS-II Timing (186 MHz based)")
         def ConfigLclsTimingV2():
-            print ( 'ConfigLclsTimingV2()' ) 
+            print ( 'ConfigLclsTimingV2()' )
+            self.TimingPhyMonitor.UseMiniTpg.set(False)            
             self.TimingFrameRx.RxPllReset.set(1)
             time.sleep(1.0)
             self.TimingFrameRx.RxPllReset.set(0)
@@ -88,13 +90,10 @@ class TimingRx(pr.Device):
             self.TimingFrameRx.RxDown.set(0) # Reset the latching register
 
         @self.command()
-        def ConfigureXpmMiniSim():
+        def ConfigureXpmMini():
             #self.readBlocks()
             self.TimingPhyMonitor.UseMiniTpg.set(True)
             self.XpmMiniWrapper.XpmMini.HwEnable.set(True)
             self.XpmMiniWrapper.XpmMini.Link.set(0)
-            self.XpmMiniWrapper.XpmMini.Pipeline_Depth_Fids.set(70)
-            self.XpmMiniWrapper.XpmMini.Config_L0Select_RateSel.set(2)
+            self.XpmMiniWrapper.XpmMini.Config_L0Select_RateSel.set(7)
             self.XpmMiniWrapper.XpmMini.Config_L0Select_Enabled.set(0x0)
-            self.TriggerEventManager.TriggerEventBuffer[0].MasterEnable.set(True)
-            self.TriggerEventManager.TriggerEventBuffer[0].EventBufferEnable.set(True)
