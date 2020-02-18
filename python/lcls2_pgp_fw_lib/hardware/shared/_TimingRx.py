@@ -95,5 +95,5 @@ class TimingRx(pr.Device):
             self.TimingPhyMonitor.UseMiniTpg.set(True)
             self.XpmMiniWrapper.XpmMini.HwEnable.set(True)
             self.XpmMiniWrapper.XpmMini.Link.set(0)
-            self.XpmMiniWrapper.XpmMini.Config_L0Select_RateSel.set(7)
-            self.XpmMiniWrapper.XpmMini.Config_L0Select_Enabled.set(0x0)
+            self.XpmMiniWrapper.XpmMini.Config_L0Select_RateSel.set(5)
+            self.XpmMiniWrapper.XpmMini.Config_L0Select_Enabled.set(False)
