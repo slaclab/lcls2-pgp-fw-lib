@@ -97,9 +97,10 @@ begin
          dataIn  => trigger,
          dataOut => pgpTxIn.opCodeEn);
 
-   U_TrigCode : entity surf.Synchronizer
+   U_TrigCode : entity surf.SynchronizerVector
       generic map (
-         TPD_G => TPD_G)
+         TPD_G => TPD_G,
+         WIDTH_G => 8)
       port map (
          clk     => pgpClk,
          dataIn  => triggerCode,
