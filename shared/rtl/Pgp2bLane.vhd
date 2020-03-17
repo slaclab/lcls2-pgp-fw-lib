@@ -38,6 +38,7 @@ entity Pgp2bLane is
    port (
       -- Trigger Interface
       trigger         : in  sl;
+      triggerCode     : in  slv(7 downto 0) := (others => '0');
       -- PGP Serial Ports
       pgpTxP          : out sl;
       pgpTxN          : out sl;
@@ -100,6 +101,14 @@ begin
          clk     => pgpTxClk,
          dataIn  => trigger,
          dataOut => locTxIn.opCodeEn);
+   
+   U_TrigCode : entity surf.Synchronizer
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         clk     => pgpTxClk,
+         dataIn  => triggerCode,
+         dataOut => locTxIn.opCode);
 
    U_Wtd : entity surf.WatchDogRst
       generic map(

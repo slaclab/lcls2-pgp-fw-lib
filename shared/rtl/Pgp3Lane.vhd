@@ -23,7 +23,7 @@ use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 use surf.Pgp3Pkg.all;
 
-library lcls2_pgp_fw_lib; 
+library lcls2_pgp_fw_lib;
 
 entity Pgp3Lane is
    generic (
@@ -36,6 +36,7 @@ entity Pgp3Lane is
    port (
       -- Trigger Interface
       trigger         : in  sl;
+      triggerCode     : in  slv(7 downto 0);
       -- QPLL Interface
       qpllLock        : in  slv(1 downto 0);
       qpllClk         : in  slv(1 downto 0);
@@ -95,6 +96,14 @@ begin
          clk     => pgpClk,
          dataIn  => trigger,
          dataOut => pgpTxIn.opCodeEn);
+
+   U_TrigCode : entity surf.Synchronizer
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         clk     => pgpClk,
+         dataIn  => triggerCode,
+         dataOut => pgpTxIn.opCodeData(7 downto 0));
 
    U_Wtd : entity surf.WatchDogRst
       generic map(
