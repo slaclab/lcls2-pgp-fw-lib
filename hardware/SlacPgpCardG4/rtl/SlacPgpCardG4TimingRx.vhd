@@ -58,6 +58,7 @@ entity SlacPgpCardG4TimingRx is
       eventAxisMasters    : out AxiStreamMasterArray(NUM_DETECTORS_G-1 downto 0);
       eventAxisSlaves     : in  AxiStreamSlaveArray(NUM_DETECTORS_G-1 downto 0);
       eventAxisCtrl       : in  AxiStreamCtrlArray(NUM_DETECTORS_G-1 downto 0);
+      clearReadout        : out slv(NUM_DETECTORS_G-1 downto 0);
       -- AXI-Lite Interface
       axilClk             : in  sl;
       axilRst             : in  sl;
@@ -541,6 +542,7 @@ begin
          triggerClk          => triggerClk,                     -- [in]
          triggerRst          => triggerRst,                     -- [in]
          triggerData         => triggerData,                    -- [out]
+         clearReadout        => clearReadout,                   -- [out]
          l1Clk               => l1Clk,                          -- [in]
          l1Rst               => l1Rst,                          -- [in]  
          l1Feedbacks         => l1Feedbacks,                    -- [in]  
