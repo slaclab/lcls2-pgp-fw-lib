@@ -43,12 +43,13 @@ entity Kcu1500TimingRx is
       NUM_DETECTORS_G   : integer range 1 to 4);
    port (
       -- Reference Clock and Reset
-      userClk25           : in  sl;
-      userRst25           : in  sl;
+      userClk25   : in  sl;
+      userRst25   : in  sl;
       -- Trigger Interface
-      triggerClk          : in  sl;
-      triggerRst          : in  sl;
-      triggerData         : out TriggerEventDataArray(NUM_DETECTORS_G-1 downto 0);
+      triggerClk  : in  sl;
+      triggerRst  : in  sl;
+      triggerData : out TriggerEventDataArray(NUM_DETECTORS_G-1 downto 0);
+
       -- L1 trigger feedback (optional)
       l1Clk               : in  sl                                                 := '0';
       l1Rst               : in  sl                                                 := '0';
@@ -61,6 +62,7 @@ entity Kcu1500TimingRx is
       eventAxisMasters    : out AxiStreamMasterArray(NUM_DETECTORS_G-1 downto 0);
       eventAxisSlaves     : in  AxiStreamSlaveArray(NUM_DETECTORS_G-1 downto 0);
       eventAxisCtrl       : in  AxiStreamCtrlArray(NUM_DETECTORS_G-1 downto 0);
+      clearReadout        : out slv(NUM_DETECTORS_G-1 downto 0);
       -- AXI-Lite Interface
       axilClk             : in  sl;
       axilRst             : in  sl;
@@ -570,6 +572,7 @@ begin
          triggerClk          => triggerClk,                     -- [in]
          triggerRst          => triggerRst,                     -- [in]
          triggerData         => triggerData,                    -- [out]
+         clearReadout        => clearReadout,                   -- [out]
          l1Clk               => l1Clk,                          -- [in]
          l1Rst               => l1Rst,                          -- [in]  
          l1Feedbacks         => l1Feedbacks,                    -- [in]  

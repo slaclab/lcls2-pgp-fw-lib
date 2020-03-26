@@ -90,6 +90,7 @@ entity SlacPgpCardG4Hsio is
       eventAxisMasters    : out AxiStreamMasterArray(NUM_PGP_LANES_G-1 downto 0);
       eventAxisSlaves     : in  AxiStreamSlaveArray(NUM_PGP_LANES_G-1 downto 0);
       eventAxisCtrl       : in  AxiStreamCtrlArray(NUM_PGP_LANES_G-1 downto 0);
+      clearReadout        : out slv(NUM_PGP_LANES_G-1 downto 0);
       ---------------------
       --  SlacPgpCardG4Hsio Ports
       ---------------------    
@@ -416,6 +417,7 @@ begin
          eventAxisMasters    => eventAxisMasters,     -- [out]
          eventAxisSlaves     => eventAxisSlaves,      -- [in]
          eventAxisCtrl       => eventAxisCtrl,        -- [in]
+         clearReadout        => clearReadout,         -- [out]
          -- AXI-Lite Interface (axilClk domain)
          axilClk             => axilClk,
          axilRst             => axilRst,
@@ -434,7 +436,7 @@ begin
    -- Feed triggers directly to PGP
    TRIGGER_GEN : for i in NUM_PGP_LANES_G-1 downto 0 generate
       remoteTriggersComb(i) <= iTriggerData(i).valid and iTriggerData(i).l0Accept;
-      trigerCodes(i)        <= "000" & iTriggerData(i).l0Tag;
+      triggerCodes(i)       <= "000" & iTriggerData(i).l0Tag;
    end generate TRIGGER_GEN;
    U_RegisterVector_1 : entity surf.RegisterVector
       generic map (
