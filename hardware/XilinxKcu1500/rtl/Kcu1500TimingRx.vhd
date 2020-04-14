@@ -40,7 +40,8 @@ entity Kcu1500TimingRx is
       AXIL_CLK_FREQ_G   : real    := 156.25E+6;  -- units of Hz
       DMA_AXIS_CONFIG_G : AxiStreamConfigType;
       AXI_BASE_ADDR_G   : slv(31 downto 0);
-      NUM_DETECTORS_G   : integer range 1 to 4);
+      NUM_DETECTORS_G   : integer range 1 to 4;
+      USE_EVR_G         : boolean := false);
    port (
       -- Reference Clock and Reset
       userClk25   : in  sl;
@@ -58,11 +59,11 @@ entity Kcu1500TimingRx is
       -- Event streams
       eventClk            : in  sl;
       eventRst            : in  sl;
-      eventTimingMessages : out TimingMessageArray(NUM_DETECTORS_G-1 downto 0);
+      eventTimingMessages : out TimingMessageArray(NUM_DETECTORS_G-1 downto 0)     := (others => TIMING_MESSAGE_INIT_C);
       eventAxisMasters    : out AxiStreamMasterArray(NUM_DETECTORS_G-1 downto 0);
       eventAxisSlaves     : in  AxiStreamSlaveArray(NUM_DETECTORS_G-1 downto 0);
       eventAxisCtrl       : in  AxiStreamCtrlArray(NUM_DETECTORS_G-1 downto 0);
-      clearReadout        : out slv(NUM_DETECTORS_G-1 downto 0);
+      clearReadout        : out slv(NUM_DETECTORS_G-1 downto 0)                    := (others => '0');
       -- AXI-Lite Interface
       axilClk             : in  sl;
       axilRst             : in  sl;
@@ -107,7 +108,7 @@ architecture mapping of Kcu1500TimingRx is
          connectivity  => X"FFFF"),
       TEM_INDEX_C      => (
          baseAddr      => (AXI_BASE_ADDR_G+x"0004_0000"),
-         addrBits      => 12,
+         addrBits      => 16,
          connectivity  => x"FFFF"),
       TIMING_INDEX_C   => (
          baseAddr      => (AXI_BASE_ADDR_G+x"0008_0000"),
@@ -393,14 +394,14 @@ begin
    begin
       -- Register to help meet timing
       if rising_edge(timingRxClk) then
-         if (useMiniTpg = '1') then
+         if (useMiniTpg = '1'and USE_EVR_G = false) then
 --            txStatus  <= TIMING_PHY_STATUS_FORCE_C after TPD_G;
             rxStatus  <= TIMING_PHY_STATUS_FORCE_C after TPD_G;
             rxData    <= xpmMiniTimingPhy.data     after TPD_G;
             rxDataK   <= xpmMiniTimingPhy.dataK    after TPD_G;
             rxDispErr <= "00"                      after TPD_G;
             rxDecErr  <= "00"                      after TPD_G;
-         elsif (timingClkSel = '1') then
+         elsif (timingClkSel = '1' and USE_EVR_G = false) then
 --            txStatus  <= gtTxStatus(1)  after TPD_G;
             rxStatus  <= gtRxStatus(1)  after TPD_G;
             rxData    <= gtRxData(1)    after TPD_G;
@@ -459,7 +460,7 @@ begin
    U_TimingCore : entity lcls_timing_core.TimingCore
       generic map (
          TPD_G             => TPD_G,
-         DEFAULT_CLK_SEL_G => '1',      -- '0': default LCLS-I, '1': default LCLS-II
+         DEFAULT_CLK_SEL_G => toSl(not USE_EVR_G),  -- '0': default LCLS-I, '1': default LCLS-II
          TPGEN_G           => false,
          AXIL_RINGB_G      => false,
          ASYNC_G           => true,
@@ -494,30 +495,31 @@ begin
    -- XPM Mini Wrapper
    -- Simulates a timing/xpm stream
    ---------------------
-   U_XpmMiniWrapper_1 : entity l2si_core.XpmMiniWrapper
-      generic map (
-         TPD_G           => TPD_G,
-         NUM_DS_LINKS_G  => 1,
-         AXIL_BASEADDR_G => AXIL_CONFIG_C(XPM_MINI_INDEX_C).baseAddr)
-      port map (
-         timingClk => timingRxClk,       -- [in]
-         timingRst => timingRxRst,       -- [in]
-         dsTx(0)   => xpmMiniTimingPhy,  -- [out]
+   XPM_MINI_GEN : if (not USE_EVR_G) generate
+      U_XpmMiniWrapper_1 : entity l2si_core.XpmMiniWrapper
+         generic map (
+            TPD_G           => TPD_G,
+            NUM_DS_LINKS_G  => 1,
+            AXIL_BASEADDR_G => AXIL_CONFIG_C(XPM_MINI_INDEX_C).baseAddr)
+         port map (
+            timingClk => timingRxClk,       -- [in]
+            timingRst => timingRxRst,       -- [in]
+            dsTx(0)   => xpmMiniTimingPhy,  -- [out]
 
-         dsRxClk(0)     => timingTxClk,           -- [in] 
-         dsRxRst(0)     => timingTxRst,           -- [in] 
-         dsRx(0).data   => temTimingTxPhy.data,   -- [in] 
-         dsRx(0).dataK  => temTimingTxPhy.dataK,  -- [in] 
-         dsRx(0).decErr => (others => '0'),       -- [in] 
-         dsRx(0).dspErr => (others => '0'),       -- [in] 
+            dsRxClk(0)     => timingTxClk,           -- [in] 
+            dsRxRst(0)     => timingTxRst,           -- [in] 
+            dsRx(0).data   => temTimingTxPhy.data,   -- [in] 
+            dsRx(0).dataK  => temTimingTxPhy.dataK,  -- [in] 
+            dsRx(0).decErr => (others => '0'),       -- [in] 
+            dsRx(0).dspErr => (others => '0'),       -- [in] 
 
-         axilClk         => axilClk,                             -- [in]
-         axilRst         => axilRst,                             -- [in]
-         axilReadMaster  => axilReadMasters(XPM_MINI_INDEX_C),   -- [in]
-         axilReadSlave   => axilReadSlaves(XPM_MINI_INDEX_C),    -- [out]
-         axilWriteMaster => axilWriteMasters(XPM_MINI_INDEX_C),  -- [in]
-         axilWriteSlave  => axilWriteSlaves(XPM_MINI_INDEX_C));  -- [out]
-
+            axilClk         => axilClk,                             -- [in]
+            axilRst         => axilRst,                             -- [in]
+            axilReadMaster  => axilReadMasters(XPM_MINI_INDEX_C),   -- [in]
+            axilReadSlave   => axilReadSlaves(XPM_MINI_INDEX_C),    -- [out]
+            axilWriteMaster => axilWriteMasters(XPM_MINI_INDEX_C),  -- [in]
+            axilWriteSlave  => axilWriteSlaves(XPM_MINI_INDEX_C));  -- [out]
+   end generate XPM_MINI_GEN;
 
    ---------------------
    -- Timing PHY Monitor
@@ -557,46 +559,75 @@ begin
          axilWriteSlave  => axilWriteSlaves(MON_INDEX_C));
 
 
-
-
    ---------------------------------------------------------------
    -- Decode events and buffer them for the application
    ---------------------------------------------------------------
-   U_TriggerEventManager_1 : entity l2si_core.TriggerEventManager
-      generic map (
-         TPD_G                          => TPD_G,
-         NUM_DETECTORS_G                => NUM_DETECTORS_G,     -- ???
-         AXIL_BASE_ADDR_G               => AXIL_CONFIG_C(TEM_INDEX_C).baseAddr,
-         EVENT_AXIS_CONFIG_G            => DMA_AXIS_CONFIG_G,
-         L1_CLK_IS_TIMING_TX_CLK_G      => false,
-         TRIGGER_CLK_IS_TIMING_RX_CLK_G => false,
-         EVENT_CLK_IS_TIMING_RX_CLK_G   => false)
-      port map (
-         timingRxClk         => timingRxClk,                    -- [in]
-         timingRxRst         => timingRxRst,                    -- [in]
-         timingBus           => appTimingBus,                   -- [in]
-         timingTxClk         => timingTxClk,                    -- [in]
-         timingTxRst         => timingTxRst,                    -- [in]
-         timingTxPhy         => temTimingTxPhy,                 -- [out]
-         triggerClk          => triggerClk,                     -- [in]
-         triggerRst          => triggerRst,                     -- [in]
-         triggerData         => triggerData,                    -- [out]
-         clearReadout        => clearReadout,                   -- [out]
-         l1Clk               => l1Clk,                          -- [in]
-         l1Rst               => l1Rst,                          -- [in]  
-         l1Feedbacks         => l1Feedbacks,                    -- [in]  
-         l1Acks              => l1Acks,                         -- [out] 
-         eventClk            => eventClk,                       -- [in]
-         eventRst            => eventRst,                       -- [in]
-         eventTimingMessages => eventTimingMessages,            -- [out]
-         eventAxisMasters    => eventAxisMasters,               -- [out]
-         eventAxisSlaves     => eventAxisSlaves,                -- [in]
-         eventAxisCtrl       => eventAxisCtrl,                  -- [in]
-         axilClk             => axilClk,                        -- [in]
-         axilRst             => axilRst,                        -- [in]
-         axilReadMaster      => axilReadMasters(TEM_INDEX_C),   -- [in]
-         axilReadSlave       => axilReadSlaves(TEM_INDEX_C),    -- [out]
-         axilWriteMaster     => axilWriteMasters(TEM_INDEX_C),  -- [in]
-         axilWriteSlave      => axilWriteSlaves(TEM_INDEX_C));  -- [out]
+   XPM_TEM_GEN : if (USE_EVR_G = false) generate
+      U_TriggerEventManager_1 : entity l2si_core.TriggerEventManager
+         generic map (
+            TPD_G                          => TPD_G,
+            NUM_DETECTORS_G                => NUM_DETECTORS_G,     -- ???
+            AXIL_BASE_ADDR_G               => AXIL_CONFIG_C(TEM_INDEX_C).baseAddr,
+            EVENT_AXIS_CONFIG_G            => DMA_AXIS_CONFIG_G,
+            L1_CLK_IS_TIMING_TX_CLK_G      => false,
+            TRIGGER_CLK_IS_TIMING_RX_CLK_G => false,
+            EVENT_CLK_IS_TIMING_RX_CLK_G   => false)
+         port map (
+            timingRxClk         => timingRxClk,                    -- [in]
+            timingRxRst         => timingRxRst,                    -- [in]
+            timingBus           => appTimingBus,                   -- [in]
+            timingTxClk         => timingTxClk,                    -- [in]
+            timingTxRst         => timingTxRst,                    -- [in]
+            timingTxPhy         => temTimingTxPhy,                 -- [out]
+            triggerClk          => triggerClk,                     -- [in]
+            triggerRst          => triggerRst,                     -- [in]
+            triggerData         => triggerData,                    -- [out]
+            clearReadout        => clearReadout,                   -- [out]
+            l1Clk               => l1Clk,                          -- [in]
+            l1Rst               => l1Rst,                          -- [in]  
+            l1Feedbacks         => l1Feedbacks,                    -- [in]  
+            l1Acks              => l1Acks,                         -- [out] 
+            eventClk            => eventClk,                       -- [in]
+            eventRst            => eventRst,                       -- [in]
+            eventTimingMessages => eventTimingMessages,            -- [out]
+            eventAxisMasters    => eventAxisMasters,               -- [out]
+            eventAxisSlaves     => eventAxisSlaves,                -- [in]
+            eventAxisCtrl       => eventAxisCtrl,                  -- [in]
+            axilClk             => axilClk,                        -- [in]
+            axilRst             => axilRst,                        -- [in]
+            axilReadMaster      => axilReadMasters(TEM_INDEX_C),   -- [in]
+            axilReadSlave       => axilReadSlaves(TEM_INDEX_C),    -- [out]
+            axilWriteMaster     => axilWriteMasters(TEM_INDEX_C),  -- [in]
+            axilWriteSlave      => axilWriteSlaves(TEM_INDEX_C));  -- [out]
+   end generate;
+
+   EVR_TEM_GEN : if (USE_EVR_G) generate
+      U_EvrTriggerEventManager_1 : entity l2si_core.EvrTriggerEventManager
+         generic map (
+            TPD_G                        => TPD_G,
+            AXIL_BASE_ADDR_G             => AXIL_CONFIG_C(TEM_INDEX_C).baseAddr,
+            EVR_CHANNELS_G               => NUM_DETECTORS_G,
+            EVR_TRIGGERS_G               => NUM_DETECTORS_G,
+            EVR_TRIG_DEPTH_G             => 28,
+            EVR_TRIG_PIPE_G              => 16,                 -- Or maybe 0?
+            EVENT_AXIS_CONFIG_G          => DMA_AXIS_CONFIG_G,
+            EVENT_CLK_IS_TIMING_RX_CLK_G => false)
+         port map (
+            timingRxClk      => timingRxClk,                    -- [in]
+            timingRxRst      => timingRxRst,                    -- [in]
+            timingBus        => appTimingBus,                   -- [in]
+            triggerData      => triggerData,                    -- [out]
+            eventClk         => eventClk,                       -- [in]
+            eventRst         => eventRst,                       -- [in]
+            eventAxisMasters => eventAxisMasters,               -- [out]
+            eventAxisSlaves  => eventAxisSlaves,                -- [in]
+            eventAxisCtrl    => eventAxisCtrl,                  -- [in]
+            axilClk          => axilClk,                        -- [in]
+            axilRst          => axilRst,                        -- [in]
+            axilReadMaster   => axilReadMasters(TEM_INDEX_C),   -- [in]
+            axilReadSlave    => axilReadSlaves(TEM_INDEX_C),    -- [out]
+            axilWriteMaster  => axilWriteMasters(TEM_INDEX_C),  -- [in]
+            axilWriteSlave   => axilWriteSlaves(TEM_INDEX_C));  -- [out]
+   end generate EVR_TEM_GEN;
 
 end mapping;

@@ -55,6 +55,7 @@ entity Kcu1500Hsio is
       AXIL_CLK_FREQ_G                : real                        := 156.25E+6;  -- units of Hz
       AXI_BASE_ADDR_G                : slv(31 downto 0)            := x"0080_0000";
       NUM_PGP_LANES_G                : integer range 1 to 4        := 4;
+      USE_EVR_G                      : boolean                     := false;
       L1_CLK_IS_TIMING_TX_CLK_G      : boolean                     := false;
       TRIGGER_CLK_IS_TIMING_RX_CLK_G : boolean                     := false;
       EVENT_CLK_IS_TIMING_RX_CLK_G   : boolean                     := false);
@@ -342,7 +343,8 @@ begin
          DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G,
          AXIL_CLK_FREQ_G   => AXIL_CLK_FREQ_G,
          AXI_BASE_ADDR_G   => AXIL_CONFIG_C(TIMING_INDEX_C).baseAddr,
-         NUM_DETECTORS_G   => NUM_PGP_LANES_G)
+         NUM_DETECTORS_G   => NUM_PGP_LANES_G,
+         USE_EVR_G         => USE_EVR_G)
       port map (
          -- Reference Clock and Reset
          userClk25           => userClk25,
