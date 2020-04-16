@@ -165,7 +165,7 @@ architecture mapping of Kcu1500TimingRx is
    signal txPhyReset    : sl;
    signal txPhyPllReset : sl;
 
-   signal tpgMiniTimingPhy : TimingPhyType;
+   signal tpgMiniStreamTimingPhy : TimingPhyType;
    signal xpmMiniTimingPhy : TimingPhyType;
    signal appTimingBus     : TimingBusType;
    signal appTimingMode    : sl;
@@ -394,14 +394,21 @@ begin
    begin
       -- Register to help meet timing
       if rising_edge(timingRxClk) then
-         if (useMiniTpg = '1'and USE_EVR_G = false) then
---            txStatus  <= TIMING_PHY_STATUS_FORCE_C after TPD_G;
-            rxStatus  <= TIMING_PHY_STATUS_FORCE_C after TPD_G;
-            rxData    <= xpmMiniTimingPhy.data     after TPD_G;
-            rxDataK   <= xpmMiniTimingPhy.dataK    after TPD_G;
-            rxDispErr <= "00"                      after TPD_G;
-            rxDecErr  <= "00"                      after TPD_G;
-         elsif (timingClkSel = '1' and USE_EVR_G = false) then
+         if (useMiniTpg = '1') then
+            if (USE_EVR_G = false) then
+               rxStatus  <= TIMING_PHY_STATUS_FORCE_C after TPD_G;
+               rxData    <= xpmMiniTimingPhy.data     after TPD_G;
+               rxDataK   <= xpmMiniTimingPhy.dataK    after TPD_G;
+               rxDispErr <= "00"                      after TPD_G;
+               rxDecErr  <= "00"                      after TPD_G;
+            elsif (USE_EVR_G and timingClkSel = '0') then
+               rxStatus  <= TIMING_PHY_STATUS_FORCE_C after TPD_G;
+               rxData    <= tpgMiniStreamTimingPhy.data           after TPD_G;
+               rxDataK   <= tpgMiniStreamTimingPhy.dataK          after TPD_G;
+               rxDispErr <= "00"                      after TPD_G;
+               rxDecErr  <= "00"                      after TPD_G;
+            end if;
+         elsif (timingClkSel = '1') then
 --            txStatus  <= gtTxStatus(1)  after TPD_G;
             rxStatus  <= gtRxStatus(1)  after TPD_G;
             rxData    <= gtRxData(1)    after TPD_G;
@@ -476,7 +483,7 @@ begin
          gtRxDecErr       => rxDecErr,
          gtRxControl      => timingRxControl,
          gtRxStatus       => rxStatus,
-         tpgMiniTimingPhy => tpgMiniTimingPhy,
+         tpgMiniTimingPhy => open,
          timingClkSel     => timingClkSel,
          -- Decoded timing message interface
          appTimingClk     => timingRxClk,
@@ -495,31 +502,31 @@ begin
    -- XPM Mini Wrapper
    -- Simulates a timing/xpm stream
    ---------------------
-   XPM_MINI_GEN : if (not USE_EVR_G) generate
-      U_XpmMiniWrapper_1 : entity l2si_core.XpmMiniWrapper
-         generic map (
-            TPD_G           => TPD_G,
-            NUM_DS_LINKS_G  => 1,
-            AXIL_BASEADDR_G => AXIL_CONFIG_C(XPM_MINI_INDEX_C).baseAddr)
-         port map (
-            timingClk => timingRxClk,       -- [in]
-            timingRst => timingRxRst,       -- [in]
-            dsTx(0)   => xpmMiniTimingPhy,  -- [out]
+   U_XpmMiniWrapper_1 : entity l2si_core.XpmMiniWrapper
+      generic map (
+         TPD_G           => TPD_G,
+         NUM_DS_LINKS_G  => 1,
+         AXIL_BASEADDR_G => AXIL_CONFIG_C(XPM_MINI_INDEX_C).baseAddr)
+      port map (
+         timingClk => timingRxClk,       -- [in]
+         timingRst => timingRxRst,       -- [in]
+         dsTx(0)   => xpmMiniTimingPhy,  -- [out]
 
-            dsRxClk(0)     => timingTxClk,           -- [in] 
-            dsRxRst(0)     => timingTxRst,           -- [in] 
-            dsRx(0).data   => temTimingTxPhy.data,   -- [in] 
-            dsRx(0).dataK  => temTimingTxPhy.dataK,  -- [in] 
-            dsRx(0).decErr => (others => '0'),       -- [in] 
-            dsRx(0).dspErr => (others => '0'),       -- [in] 
+         dsRxClk(0)     => timingTxClk,           -- [in] 
+         dsRxRst(0)     => timingTxRst,           -- [in] 
+         dsRx(0).data   => temTimingTxPhy.data,   -- [in] 
+         dsRx(0).dataK  => temTimingTxPhy.dataK,  -- [in] 
+         dsRx(0).decErr => (others => '0'),       -- [in] 
+         dsRx(0).dspErr => (others => '0'),       -- [in]
 
-            axilClk         => axilClk,                             -- [in]
-            axilRst         => axilRst,                             -- [in]
-            axilReadMaster  => axilReadMasters(XPM_MINI_INDEX_C),   -- [in]
-            axilReadSlave   => axilReadSlaves(XPM_MINI_INDEX_C),    -- [out]
-            axilWriteMaster => axilWriteMasters(XPM_MINI_INDEX_C),  -- [in]
-            axilWriteSlave  => axilWriteSlaves(XPM_MINI_INDEX_C));  -- [out]
-   end generate XPM_MINI_GEN;
+         tpgMiniStream => tpgMiniStreamTimingPhy,  -- [out]
+
+         axilClk         => axilClk,                             -- [in]
+         axilRst         => axilRst,                             -- [in]
+         axilReadMaster  => axilReadMasters(XPM_MINI_INDEX_C),   -- [in]
+         axilReadSlave   => axilReadSlaves(XPM_MINI_INDEX_C),    -- [out]
+         axilWriteMaster => axilWriteMasters(XPM_MINI_INDEX_C),  -- [in]
+         axilWriteSlave  => axilWriteSlaves(XPM_MINI_INDEX_C));  -- [out]
 
    ---------------------
    -- Timing PHY Monitor
@@ -608,8 +615,6 @@ begin
             AXIL_BASE_ADDR_G             => AXIL_CONFIG_C(TEM_INDEX_C).baseAddr,
             EVR_CHANNELS_G               => NUM_DETECTORS_G,
             EVR_TRIGGERS_G               => NUM_DETECTORS_G,
-            EVR_TRIG_DEPTH_G             => 28,
-            EVR_TRIG_PIPE_G              => 16,                 -- Or maybe 0?
             EVENT_AXIS_CONFIG_G          => DMA_AXIS_CONFIG_G,
             EVENT_CLK_IS_TIMING_RX_CLK_G => false)
          port map (
