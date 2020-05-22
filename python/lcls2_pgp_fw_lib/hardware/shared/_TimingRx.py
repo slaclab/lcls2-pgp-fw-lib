@@ -18,10 +18,13 @@ import l2si_core
 import lcls2_pgp_fw_lib.hardware.shared as shared
   
 class TimingRx(pr.Device):
-    def __init__(self, 
-        numLanes = 4, 
-        dualGTH  = True, 
-        **kwargs):
+    def __init__(
+            self, 
+            numLanes = 4, 
+            dualGTH  = True,
+            enLclsI = False,
+            enLclsII = True,
+            **kwargs):
         super().__init__(**kwargs)
          
         self.add(LclsTimingCore.GthRxAlignCheck(
@@ -54,6 +57,8 @@ class TimingRx(pr.Device):
         self.add(l2si_core.TriggerEventManager(
             offset  = 0x0004_0000,
             numDetectors = numLanes,
+            enLclsI = enLclsI,
+            enLclsII = enLclsII,
             expand  = True,
         ))
 
