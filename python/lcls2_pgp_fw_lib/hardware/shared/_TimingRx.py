@@ -22,7 +22,7 @@ class TimingRx(pr.Device):
             self, 
             numLanes = 4, 
             dualGTH  = True,
-            enLclsI = False,
+            enLclsI  = False,
             enLclsII = True,
             **kwargs):
         super().__init__(**kwargs)

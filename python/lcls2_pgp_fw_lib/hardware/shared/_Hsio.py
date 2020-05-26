@@ -20,8 +20,8 @@ class Hsio(pr.Device):
             self,
             timingRxCls,
             numLanes    = 4,
-            enLclsI = False,
-            enLclsII = True,
+            enLclsI     = False,
+            enLclsII    = True,
             pgp3        = False,
             **kwargs):
         
@@ -61,7 +61,7 @@ class Hsio(pr.Device):
         self.add(timingRxCls(
             name     = 'TimingRx',
             offset   = 0x0010_0000,
-            enLclsI = enLclsI,
+            enLclsI  = enLclsI,
             enLclsII = enLclsII,
             numLanes = numLanes,
         ))

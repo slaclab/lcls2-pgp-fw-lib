@@ -55,7 +55,7 @@ entity Kcu1500Hsio is
       AXIL_CLK_FREQ_G                : real                        := 156.25E+6;  -- units of Hz
       AXI_BASE_ADDR_G                : slv(31 downto 0)            := x"0080_0000";
       NUM_PGP_LANES_G                : integer range 1 to 4        := 4;
-      EN_LCLS_I_TIMING_G             : boolean                     := true;
+      EN_LCLS_I_TIMING_G             : boolean                     := false;
       EN_LCLS_II_TIMING_G            : boolean                     := true;
       L1_CLK_IS_TIMING_TX_CLK_G      : boolean                     := false;
       TRIGGER_CLK_IS_TIMING_RX_CLK_G : boolean                     := false;

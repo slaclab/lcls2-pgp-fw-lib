@@ -17,7 +17,7 @@ from lcls2_pgp_fw_lib.hardware.XilinxKcu1500 import Kcu1500TimingRx
 class Kcu1500Hsio(Hsio):
     def __init__(self,
                  numLanes = 4,
-                 enLclsI = False,
+                 enLclsI  = False,
                  enLclsII = True,
                  pgp3     = False,
                  **kwargs):
