@@ -15,11 +15,11 @@
 --    QSFP[1][3] = Unused QSFP Link
 -------------------------------------------------------------------------------
 -- This file is part of LCLS2 PGP Firmware Library'.
--- It is subject to the license terms in the LICENSE.txt file found in the 
--- top-level directory of this distribution and at: 
---    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
--- No part of LCLS2 PGP Firmware Library', including this file, 
--- may be copied, modified, propagated, or distributed except according to 
+-- It is subject to the license terms in the LICENSE.txt file found in the
+-- top-level directory of this distribution and at:
+--    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+-- No part of LCLS2 PGP Firmware Library', including this file,
+-- may be copied, modified, propagated, or distributed except according to
 -- the terms contained in the LICENSE.txt file.
 -------------------------------------------------------------------------------
 
@@ -61,9 +61,9 @@ entity Kcu1500Hsio is
       TRIGGER_CLK_IS_TIMING_RX_CLK_G : boolean                     := false;
       EVENT_CLK_IS_TIMING_RX_CLK_G   : boolean                     := false);
    port (
-      ------------------------      
+      ------------------------
       --  Top Level Interfaces
-      ------------------------    
+      ------------------------
       -- Reference Clock and Reset
       userClk25           : in  sl;
       userRst25           : in  sl;
@@ -99,7 +99,7 @@ entity Kcu1500Hsio is
 
       ---------------------
       --  Kcu1500Hsio Ports
-      ---------------------    
+      ---------------------
       -- QSFP[0] Ports
       qsfp0RefClkP : in  slv(1 downto 0) := (others => '0');
       qsfp0RefClkN : in  slv(1 downto 0) := (others => '0');
@@ -356,9 +356,9 @@ begin
          triggerRst          => triggerRst,           -- [in]
          triggerData         => iTriggerData,         -- [out]
          l1Clk               => l1Clk,                -- [in]
-         l1Rst               => l1Rst,                -- [in]  
-         l1Feedbacks         => l1Feedbacks,          -- [in]  
-         l1Acks              => l1Acks,               -- [out] 
+         l1Rst               => l1Rst,                -- [in]
+         l1Feedbacks         => l1Feedbacks,          -- [in]
+         l1Acks              => l1Acks,               -- [out]
          eventClk            => eventClk,             -- [in]
          eventRst            => eventRst,             -- [in]
          eventTimingMessages => eventTimingMessages,  -- [out]

@@ -3,11 +3,11 @@
 -- Company    : SLAC National Accelerator Laboratory
 -------------------------------------------------------------------------------
 -- This file is part of LCLS2 PGP Firmware Library'.
--- It is subject to the license terms in the LICENSE.txt file found in the 
--- top-level directory of this distribution and at: 
---    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html. 
--- No part of LCLS2 PGP Firmware Library', including this file, 
--- may be copied, modified, propagated, or distributed except according to 
+-- It is subject to the license terms in the LICENSE.txt file found in the
+-- top-level directory of this distribution and at:
+--    https://confluence.slac.stanford.edu/display/ppareg/LICENSE.html.
+-- No part of LCLS2 PGP Firmware Library', including this file,
+-- may be copied, modified, propagated, or distributed except according to
 -- the terms contained in the LICENSE.txt file.
 -------------------------------------------------------------------------------
 
@@ -322,7 +322,7 @@ begin
             O  => gtTxClk(i),           -- 1-bit output: Clock output
             I0 => gtTxOutClk(i),        -- 1-bit input: Clock input (S=0)
             I1 => refClkDiv2(i),        -- 1-bit input: Clock input (S=1)
-            S  => useMiniTpg);          -- 1-bit input: Clock select      
+            S  => useMiniTpg);          -- 1-bit input: Clock select
       --
 
       REAL_PCIE : if (not SIMULATION_G) generate
@@ -513,11 +513,11 @@ begin
          timingRst => timingRxRst,       -- [in]
          dsTx(0)   => xpmMiniTimingPhy,  -- [out]
 
-         dsRxClk(0)     => timingTxClk,           -- [in] 
-         dsRxRst(0)     => timingTxRst,           -- [in] 
-         dsRx(0).data   => temTimingTxPhy.data,   -- [in] 
-         dsRx(0).dataK  => temTimingTxPhy.dataK,  -- [in] 
-         dsRx(0).decErr => (others => '0'),       -- [in] 
+         dsRxClk(0)     => timingTxClk,           -- [in]
+         dsRxRst(0)     => timingTxRst,           -- [in]
+         dsRx(0).data   => temTimingTxPhy.data,   -- [in]
+         dsRx(0).dataK  => temTimingTxPhy.dataK,  -- [in]
+         dsRx(0).decErr => (others => '0'),       -- [in]
          dsRx(0).dspErr => (others => '0'),       -- [in]
 
          tpgMiniStream => tpgMiniStreamTimingPhy,  -- [out]
@@ -594,9 +594,9 @@ begin
          triggerData         => triggerData,                    -- [out]
          clearReadout        => clearReadout,                   -- [out]
          l1Clk               => l1Clk,                          -- [in]
-         l1Rst               => l1Rst,                          -- [in]  
-         l1Feedbacks         => l1Feedbacks,                    -- [in]  
-         l1Acks              => l1Acks,                         -- [out] 
+         l1Rst               => l1Rst,                          -- [in]
+         l1Feedbacks         => l1Feedbacks,                    -- [in]
+         l1Acks              => l1Acks,                         -- [out]
          eventClk            => eventClk,                       -- [in]
          eventRst            => eventRst,                       -- [in]
          eventTimingMessages => eventTimingMessages,            -- [out]
