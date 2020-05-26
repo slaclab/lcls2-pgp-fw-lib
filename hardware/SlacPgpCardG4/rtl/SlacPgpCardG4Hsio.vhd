@@ -333,6 +333,7 @@ begin
                port map (
                   -- Trigger Interface
                   trigger         => remoteTriggers(i),
+                  triggerCode     => triggerCodes(i),
                   -- QPLL Interface
                   qpllLock        => qpllLock(i),
                   qpllClk         => qpllClk(i),
@@ -369,6 +370,7 @@ begin
                port map (
                   -- Trigger Interface
                   trigger         => remoteTriggers(i),
+                  triggerCode     => triggerCodes(i),
                   -- PGP Serial Ports
                   pgpRxP          => qsfp1RxP(i-4),
                   pgpRxN          => qsfp1RxN(i-4),
