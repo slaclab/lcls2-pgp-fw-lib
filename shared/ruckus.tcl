@@ -10,9 +10,9 @@ if { [VersionCheck 2018.2 ] < 0 } {
 if { [info exists ::env(OVERRIDE_SUBMODULE_LOCKS)] != 1 || $::env(OVERRIDE_SUBMODULE_LOCKS) == 0 } {
    if { [SubmoduleCheck {axi-pcie-core}    {3.2.1}  ] < 0 } {exit -1}
    if { [SubmoduleCheck {l2si-core}        {3.1.0}  ] < 0 } {exit -1}
-   if { [SubmoduleCheck {lcls-timing-core} {3.3.0}  ] < 0 } {exit -1}
+   if { [SubmoduleCheck {lcls-timing-core} {3.2.1}  ] < 0 } {exit -1}
    if { [SubmoduleCheck {ruckus}           {2.5.1}  ] < 0 } {exit -1}
-   if { [SubmoduleCheck {surf}             {2.5.0}  ] < 0 } {exit -1}
+   if { [SubmoduleCheck {surf}             {2.5.1}  ] < 0 } {exit -1}
 } else {
    puts "\n\n*********************************************************"
    puts "OVERRIDE_SUBMODULE_LOCKS != 0"
