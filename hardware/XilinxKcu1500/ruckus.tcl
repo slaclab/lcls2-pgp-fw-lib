@@ -1,7 +1,7 @@
 # Load RUCKUS environment and library
 source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
 
-# Load local source Code 
+# Load local source Code
 loadSource      -lib lcls2_pgp_fw_lib -dir  "$::DIR_PATH/rtl"
 loadConstraints -path "$::DIR_PATH/xdc/Kcu1500Hsio.xdc"
 
