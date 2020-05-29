@@ -77,8 +77,7 @@ class TimingRx(pr.Device):
             time.sleep(1.0)
             self.TimingFrameRx.RxPllReset.set(0)
             self.TimingFrameRx.ClkSel.set(0x0)
-            self.TimingFrameRx.RxReset.set(1)
-            self.TimingFrameRx.RxReset.set(0)
+            self.TimingFrameRx.C_RxReset()
             time.sleep(0.1)
             self.TimingFrameRx.RxDown.set(0) # Reset the latching register
 
@@ -91,8 +90,7 @@ class TimingRx(pr.Device):
             time.sleep(1.0)
             self.TimingFrameRx.RxPllReset.set(0)
             self.TimingFrameRx.ClkSel.set(0x1)
-            self.TimingFrameRx.RxReset.set(1)
-            self.TimingFrameRx.RxReset.set(0)
+            self.TimingFrameRx.C_RxReset()
             time.sleep(0.1)
             self.TimingFrameRx.RxDown.set(0) # Reset the latching register
 
