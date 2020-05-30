@@ -91,7 +91,7 @@ entity Kcu1500Hsio is
       eventRst                 : in  sl;
       eventTimingMessagesValid : out slv(NUM_PGP_LANES_G-1 downto 0);
       eventTimingMessages      : out TimingMessageArray(NUM_PGP_LANES_G-1 downto 0);
-      eventTimingMessagesRd    : in  slv(NUM_PGP_LANES_G-1 downto 0);
+      eventTimingMessagesRd    : in  slv(NUM_PGP_LANES_G-1 downto 0) := (others=>'1');
       eventAxisMasters         : out AxiStreamMasterArray(NUM_PGP_LANES_G-1 downto 0);
       eventAxisSlaves          : in  AxiStreamSlaveArray(NUM_PGP_LANES_G-1 downto 0);
       eventAxisCtrl            : in  AxiStreamCtrlArray(NUM_PGP_LANES_G-1 downto 0);
