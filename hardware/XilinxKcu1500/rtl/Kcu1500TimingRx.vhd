@@ -43,36 +43,38 @@ entity Kcu1500TimingRx is
       NUM_DETECTORS_G   : integer range 1 to 4);
    port (
       -- Reference Clock and Reset
-      userClk25           : in  sl;
-      userRst25           : in  sl;
+      userClk25                : in  sl;
+      userRst25                : in  sl;
       -- Trigger Interface
-      triggerClk          : in  sl;
-      triggerRst          : in  sl;
-      triggerData         : out TriggerEventDataArray(NUM_DETECTORS_G-1 downto 0);
+      triggerClk               : in  sl;
+      triggerRst               : in  sl;
+      triggerData              : out TriggerEventDataArray(NUM_DETECTORS_G-1 downto 0);
       -- L1 trigger feedback (optional)
-      l1Clk               : in  sl                                                 := '0';
-      l1Rst               : in  sl                                                 := '0';
-      l1Feedbacks         : in  TriggerL1FeedbackArray(NUM_DETECTORS_G-1 downto 0) := (others => TRIGGER_L1_FEEDBACK_INIT_C);
-      l1Acks              : out slv(NUM_DETECTORS_G-1 downto 0);
+      l1Clk                    : in  sl                                                 := '0';
+      l1Rst                    : in  sl                                                 := '0';
+      l1Feedbacks              : in  TriggerL1FeedbackArray(NUM_DETECTORS_G-1 downto 0) := (others => TRIGGER_L1_FEEDBACK_INIT_C);
+      l1Acks                   : out slv(NUM_DETECTORS_G-1 downto 0);
       -- Event streams
-      eventClk            : in  sl;
-      eventRst            : in  sl;
-      eventTimingMessages : out TimingMessageArray(NUM_DETECTORS_G-1 downto 0);
-      eventAxisMasters    : out AxiStreamMasterArray(NUM_DETECTORS_G-1 downto 0);
-      eventAxisSlaves     : in  AxiStreamSlaveArray(NUM_DETECTORS_G-1 downto 0);
-      eventAxisCtrl       : in  AxiStreamCtrlArray(NUM_DETECTORS_G-1 downto 0);
+      eventClk                 : in  sl;
+      eventRst                 : in  sl;
+      eventTimingMessagesValid : out slv(NUM_DETECTORS_G-1 downto 0);
+      eventTimingMessages      : out TimingMessageArray(NUM_DETECTORS_G-1 downto 0);
+      eventTimingMessagesRd    : in  slv(NUM_DETECTORS_G-1 downto 0);
+      eventAxisMasters         : out AxiStreamMasterArray(NUM_DETECTORS_G-1 downto 0);
+      eventAxisSlaves          : in  AxiStreamSlaveArray(NUM_DETECTORS_G-1 downto 0);
+      eventAxisCtrl            : in  AxiStreamCtrlArray(NUM_DETECTORS_G-1 downto 0);
       -- AXI-Lite Interface
-      axilClk             : in  sl;
-      axilRst             : in  sl;
-      axilReadMaster      : in  AxiLiteReadMasterType;
-      axilReadSlave       : out AxiLiteReadSlaveType;
-      axilWriteMaster     : in  AxiLiteWriteMasterType;
-      axilWriteSlave      : out AxiLiteWriteSlaveType;
+      axilClk                  : in  sl;
+      axilRst                  : in  sl;
+      axilReadMaster           : in  AxiLiteReadMasterType;
+      axilReadSlave            : out AxiLiteReadSlaveType;
+      axilWriteMaster          : in  AxiLiteWriteMasterType;
+      axilWriteSlave           : out AxiLiteWriteSlaveType;
       -- GT Serial Ports
-      timingRxP           : in  slv(1 downto 0);
-      timingRxN           : in  slv(1 downto 0);
-      timingTxP           : out slv(1 downto 0);
-      timingTxN           : out slv(1 downto 0));
+      timingRxP                : in  slv(1 downto 0);
+      timingRxN                : in  slv(1 downto 0);
+      timingTxP                : out slv(1 downto 0);
+      timingTxN                : out slv(1 downto 0));
 end Kcu1500TimingRx;
 
 architecture mapping of Kcu1500TimingRx is
@@ -561,30 +563,32 @@ begin
          TRIGGER_CLK_IS_TIMING_RX_CLK_G => false,
          EVENT_CLK_IS_TIMING_RX_CLK_G   => false)
       port map (
-         timingRxClk         => timingRxClk,                    -- [in]
-         timingRxRst         => timingRxRst,                    -- [in]
-         timingBus           => appTimingBus,                   -- [in]
-         timingTxClk         => timingTxClk,                    -- [in]
-         timingTxRst         => timingTxRst,                    -- [in]
-         timingTxPhy         => temTimingTxPhy,                 -- [out]
-         triggerClk          => triggerClk,                     -- [in]
-         triggerRst          => triggerRst,                     -- [in]
-         triggerData         => triggerData,                    -- [out]
-         l1Clk               => l1Clk,                          -- [in]
-         l1Rst               => l1Rst,                          -- [in]  
-         l1Feedbacks         => l1Feedbacks,                    -- [in]  
-         l1Acks              => l1Acks,                         -- [out] 
-         eventClk            => eventClk,                       -- [in]
-         eventRst            => eventRst,                       -- [in]
-         eventTimingMessages => eventTimingMessages,            -- [out]
-         eventAxisMasters    => eventAxisMasters,               -- [out]
-         eventAxisSlaves     => eventAxisSlaves,                -- [in]
-         eventAxisCtrl       => eventAxisCtrl,                  -- [in]
-         axilClk             => axilClk,                        -- [in]
-         axilRst             => axilRst,                        -- [in]
-         axilReadMaster      => axilReadMasters(TEM_INDEX_C),   -- [in]
-         axilReadSlave       => axilReadSlaves(TEM_INDEX_C),    -- [out]
-         axilWriteMaster     => axilWriteMasters(TEM_INDEX_C),  -- [in]
-         axilWriteSlave      => axilWriteSlaves(TEM_INDEX_C));  -- [out]
+         timingRxClk              => timingRxClk,                    -- [in]
+         timingRxRst              => timingRxRst,                    -- [in]
+         timingBus                => appTimingBus,                   -- [in]
+         timingTxClk              => timingTxClk,                    -- [in]
+         timingTxRst              => timingTxRst,                    -- [in]
+         timingTxPhy              => temTimingTxPhy,                 -- [out]
+         triggerClk               => triggerClk,                     -- [in]
+         triggerRst               => triggerRst,                     -- [in]
+         triggerData              => triggerData,                    -- [out]
+         l1Clk                    => l1Clk,                          -- [in]
+         l1Rst                    => l1Rst,                          -- [in]  
+         l1Feedbacks              => l1Feedbacks,                    -- [in]  
+         l1Acks                   => l1Acks,                         -- [out] 
+         eventClk                 => eventClk,                       -- [in]
+         eventRst                 => eventRst,                       -- [in]
+         eventTimingMessagesValid => eventTimingMessagesValid,       -- [out]
+         eventTimingMessages      => eventTimingMessages,            -- [out]
+         eventTimingMessagesRd    => eventTimingMessagesRd,          -- [in]
+         eventAxisMasters         => eventAxisMasters,               -- [out]
+         eventAxisSlaves          => eventAxisSlaves,                -- [in]
+         eventAxisCtrl            => eventAxisCtrl,                  -- [in]
+         axilClk                  => axilClk,                        -- [in]
+         axilRst                  => axilRst,                        -- [in]
+         axilReadMaster           => axilReadMasters(TEM_INDEX_C),   -- [in]
+         axilReadSlave            => axilReadSlaves(TEM_INDEX_C),    -- [out]
+         axilWriteMaster          => axilWriteMasters(TEM_INDEX_C),  -- [in]
+         axilWriteSlave           => axilWriteSlaves(TEM_INDEX_C));  -- [out]
 
 end mapping;
