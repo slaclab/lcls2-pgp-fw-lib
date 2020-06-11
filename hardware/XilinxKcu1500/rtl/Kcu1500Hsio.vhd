@@ -89,13 +89,15 @@ entity Kcu1500Hsio is
       l1Feedbacks         : in  TriggerL1FeedbackArray(NUM_PGP_LANES_G-1 downto 0) := (others => TRIGGER_L1_FEEDBACK_INIT_C);
       l1Acks              : out slv(NUM_PGP_LANES_G-1 downto 0);
       -- Event streams
-      eventClk            : in  sl;
-      eventRst            : in  sl;
-      eventTimingMessages : out TimingMessageArray(NUM_PGP_LANES_G-1 downto 0);
-      eventAxisMasters    : out AxiStreamMasterArray(NUM_PGP_LANES_G-1 downto 0);
-      eventAxisSlaves     : in  AxiStreamSlaveArray(NUM_PGP_LANES_G-1 downto 0);
-      eventAxisCtrl       : in  AxiStreamCtrlArray(NUM_PGP_LANES_G-1 downto 0);
-      clearReadout        : out slv(NUM_PGP_LANES_G-1 downto 0);
+      eventClk                 : in  sl;
+      eventRst                 : in  sl;
+      eventTimingMessagesValid : out slv(NUM_PGP_LANES_G-1 downto 0);
+      eventTimingMessages      : out TimingMessageArray(NUM_PGP_LANES_G-1 downto 0);
+      eventTimingMessagesRd    : in  slv(NUM_PGP_LANES_G-1 downto 0) := (others=>'1');
+      eventAxisMasters         : out AxiStreamMasterArray(NUM_PGP_LANES_G-1 downto 0);
+      eventAxisSlaves          : in  AxiStreamSlaveArray(NUM_PGP_LANES_G-1 downto 0);
+      eventAxisCtrl            : in  AxiStreamCtrlArray(NUM_PGP_LANES_G-1 downto 0);
+      clearReadout             : out slv(NUM_PGP_LANES_G-1 downto 0);
 
       ---------------------
       --  Kcu1500Hsio Ports
@@ -351,7 +353,7 @@ begin
          -- Reference Clock and Reset
          userClk25           => userClk25,
          userRst25           => userRst25,
-         -- Trigger / event interfaces
+         -- Trigger interface
          triggerClk          => triggerClk,           -- [in]
          triggerRst          => triggerRst,           -- [in]
          triggerData         => iTriggerData,         -- [out]
@@ -359,13 +361,16 @@ begin
          l1Rst               => l1Rst,                -- [in]
          l1Feedbacks         => l1Feedbacks,          -- [in]
          l1Acks              => l1Acks,               -- [out]
-         eventClk            => eventClk,             -- [in]
-         eventRst            => eventRst,             -- [in]
-         eventTimingMessages => eventTimingMessages,  -- [out]
-         eventAxisMasters    => eventAxisMasters,     -- [out]
-         eventAxisSlaves     => eventAxisSlaves,      -- [in]
-         eventAxisCtrl       => eventAxisCtrl,        -- [in]
-         clearReadout        => clearReadout,         -- [out]
+         -- Event interface
+         eventClk                 => eventClk,             -- [in]
+         eventRst                 => eventRst,             -- [in]
+         eventTimingMessagesValid => eventTimingMessagesValid,  -- [out]
+         eventTimingMessages      => eventTimingMessages,       -- [out]
+         eventTimingMessagesRd    => eventTimingMessagesRd,     -- [in]
+         eventAxisMasters         => eventAxisMasters,     -- [out]
+         eventAxisSlaves          => eventAxisSlaves,      -- [in]
+         eventAxisCtrl            => eventAxisCtrl,        -- [in]
+         clearReadout             => clearReadout,         -- [out]
          -- AXI-Lite Interface (axilClk domain)
          axilClk             => axilClk,
          axilRst             => axilRst,

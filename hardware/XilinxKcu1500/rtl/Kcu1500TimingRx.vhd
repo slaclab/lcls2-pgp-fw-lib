@@ -58,13 +58,15 @@ entity Kcu1500TimingRx is
       l1Feedbacks         : in  TriggerL1FeedbackArray(NUM_DETECTORS_G-1 downto 0) := (others => TRIGGER_L1_FEEDBACK_INIT_C);
       l1Acks              : out slv(NUM_DETECTORS_G-1 downto 0);
       -- Event streams
-      eventClk            : in  sl;
-      eventRst            : in  sl;
-      eventTimingMessages : out TimingMessageArray(NUM_DETECTORS_G-1 downto 0)     := (others => TIMING_MESSAGE_INIT_C);
-      eventAxisMasters    : out AxiStreamMasterArray(NUM_DETECTORS_G-1 downto 0);
-      eventAxisSlaves     : in  AxiStreamSlaveArray(NUM_DETECTORS_G-1 downto 0);
-      eventAxisCtrl       : in  AxiStreamCtrlArray(NUM_DETECTORS_G-1 downto 0);
-      clearReadout        : out slv(NUM_DETECTORS_G-1 downto 0)                    := (others => '0');
+      eventClk                 : in  sl;
+      eventRst                 : in  sl;
+      eventTimingMessagesValid : out slv(NUM_DETECTORS_G-1 downto 0);
+      eventTimingMessages      : out TimingMessageArray(NUM_DETECTORS_G-1 downto 0) := (others => TIMING_MESSAGE_INIT_C);
+      eventTimingMessagesRd    : in  slv(NUM_DETECTORS_G-1 downto 0)                := (others=>'1');
+      eventAxisMasters         : out AxiStreamMasterArray(NUM_DETECTORS_G-1 downto 0);
+      eventAxisSlaves          : in  AxiStreamSlaveArray(NUM_DETECTORS_G-1 downto 0);
+      eventAxisCtrl            : in  AxiStreamCtrlArray(NUM_DETECTORS_G-1 downto 0);
+      clearReadout             : out slv(NUM_DETECTORS_G-1 downto 0)                := (others => '0');
       -- AXI-Lite Interface
       axilClk             : in  sl;
       axilRst             : in  sl;
@@ -599,7 +601,9 @@ begin
          l1Acks              => l1Acks,                         -- [out]
          eventClk            => eventClk,                       -- [in]
          eventRst            => eventRst,                       -- [in]
-         eventTimingMessages => eventTimingMessages,            -- [out]
+         eventTimingMessagesValid => eventTimingMessagesValid,  -- [out]
+         eventTimingMessages      => eventTimingMessages,       -- [out]
+         eventTimingMessagesRd    => eventTimingMessagesRd,     -- [in]
          eventAxisMasters    => eventAxisMasters,               -- [out]
          eventAxisSlaves     => eventAxisSlaves,                -- [in]
          eventAxisCtrl       => eventAxisCtrl,                  -- [in]
