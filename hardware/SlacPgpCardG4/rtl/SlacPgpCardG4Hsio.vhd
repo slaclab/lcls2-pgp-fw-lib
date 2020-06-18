@@ -412,22 +412,22 @@ begin
          EN_LCLS_II_TIMING_G => EN_LCLS_II_TIMING_G)
       port map (
          -- Trigger / event interfaces
-         triggerClk               => triggerClk,               -- [in]
-         triggerRst               => triggerRst,               -- [in]
-         triggerData              => iTriggerData,             -- [out]
-         l1Clk                    => l1Clk,                    -- [in]
-         l1Rst                    => l1Rst,                    -- [in]
-         l1Feedbacks              => l1Feedbacks,              -- [in]
-         l1Acks                   => l1Acks,                   -- [out]
-         eventClk                 => eventClk,                 -- [in]
-         eventRst                 => eventRst,                 -- [in]
-         eventTimingMessagesValid => eventTimingMessagesValid  -- [out]
-         eventTimingMessages      => eventTimingMessages,      -- [out]
-         eventTimingMessagesRd    => eventTimingMessagesRd,    -- [in]
-         eventAxisMasters         => eventAxisMasters,         -- [out]
-         eventAxisSlaves          => eventAxisSlaves,          -- [in]
-         eventAxisCtrl            => eventAxisCtrl,            -- [in]
-         clearReadout             => clearReadout,             -- [out]
+         triggerClk               => triggerClk,                -- [in]
+         triggerRst               => triggerRst,                -- [in]
+         triggerData              => iTriggerData,              -- [out]
+         l1Clk                    => l1Clk,                     -- [in]
+         l1Rst                    => l1Rst,                     -- [in]
+         l1Feedbacks              => l1Feedbacks,               -- [in]
+         l1Acks                   => l1Acks,                    -- [out]
+         eventClk                 => eventClk,                  -- [in]
+         eventRst                 => eventRst,                  -- [in]
+         eventTimingMessagesValid => eventTimingMessagesValid,  -- [out]
+         eventTimingMessages      => eventTimingMessages,       -- [out]
+         eventTimingMessagesRd    => eventTimingMessagesRd,     -- [in]
+         eventAxisMasters         => eventAxisMasters,          -- [out]
+         eventAxisSlaves          => eventAxisSlaves,           -- [in]
+         eventAxisCtrl            => eventAxisCtrl,             -- [in]
+         clearReadout             => clearReadout,              -- [out]
          -- AXI-Lite Interface (axilClk domain)
          axilClk                  => axilClk,
          axilRst                  => axilRst,
