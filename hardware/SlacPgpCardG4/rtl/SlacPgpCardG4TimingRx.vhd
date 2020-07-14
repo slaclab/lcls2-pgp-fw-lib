@@ -441,7 +441,8 @@ begin
    U_TimingCore : entity lcls_timing_core.TimingCore
       generic map (
          TPD_G             => TPD_G,
-         DEFAULT_CLK_SEL_G => toSl(EN_LCLS_II_TIMING_G),  -- '0': default LCLS-I, '1': default LCLS-II
+         -- DEFAULT_CLK_SEL_G => toSl(EN_LCLS_II_TIMING_G),  -- '0': default LCLS-I, '1': default LCLS-II
+         DEFAULT_CLK_SEL_G => ite(EN_LCLS_I_TIMING_G, '0', '1'),  -- '0': default LCLS-I, '1': default LCLS-II
          TPGEN_G           => false,
          AXIL_RINGB_G      => false,
          ASYNC_G           => true,
