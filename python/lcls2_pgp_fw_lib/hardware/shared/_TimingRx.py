@@ -59,6 +59,7 @@ class TimingRx(pr.Device):
             numDetectors = numLanes,
             enLclsI      = enLclsI,
             enLclsII     = enLclsII,
+            enableDeps   = [self.TimingFrameRx.RxLinkUp], # Only allow access if RX link up due to "Synchronize AXI-Lite bus to timingRxClk"
             expand       = True,
         ))
 
