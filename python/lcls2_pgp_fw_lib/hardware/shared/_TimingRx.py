@@ -96,6 +96,7 @@ class TimingRx(pr.Device):
 
         @self.command()
         def ConfigureXpmMini():
+            print ( 'ConfigureXpmMini()' )
             self.ConfigLclsTimingV2()
             self.TimingPhyMonitor.UseMiniTpg.set(True)
             self.XpmMiniWrapper.XpmMini.HwEnable.set(True)
@@ -105,5 +106,6 @@ class TimingRx(pr.Device):
 
         @self.command()
         def ConfigureTpgMiniStream():
+            print ( 'ConfigureTpgMiniStream()' )
             self.ConfigLclsTimingV1()
             self.TimingPhyMonitor.UseMiniTpg.set(True)
