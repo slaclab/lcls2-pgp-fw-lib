@@ -55,11 +55,11 @@ class TimingRx(pr.Device):
         ))
 
         self.add(l2si_core.TriggerEventManager(
-            offset  = 0x0004_0000,
+            offset       = 0x0004_0000,
             numDetectors = numLanes,
-            enLclsI = enLclsI,
-            enLclsII = enLclsII,
-            expand  = True,
+            enLclsI      = enLclsI,
+            enLclsII     = enLclsII,
+            expand       = True,
         ))
 
         self.add(shared.TimingPhyMonitor(
