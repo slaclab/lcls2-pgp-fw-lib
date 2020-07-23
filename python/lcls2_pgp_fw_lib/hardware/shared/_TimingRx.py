@@ -59,6 +59,7 @@ class TimingRx(pr.Device):
             numDetectors = numLanes,
             enLclsI      = enLclsI,
             enLclsII     = enLclsII,
+            # enableDeps   = [self.TimingFrameRx.RxLinkUp], # Only allow access if RX link up due to "Synchronize AXI-Lite bus to timingRxClk"
             expand       = True,
         ))
 
@@ -78,7 +79,7 @@ class TimingRx(pr.Device):
             self.TimingFrameRx.RxPllReset.set(0)
             self.TimingFrameRx.ClkSel.set(0x0)
             self.TimingFrameRx.C_RxReset()
-            time.sleep(0.1)
+            time.sleep(1.0)
             self.TimingFrameRx.RxDown.set(0) # Reset the latching register
 
         @self.command(description="Configure for LCLS-II Timing (186 MHz based)")
@@ -91,7 +92,7 @@ class TimingRx(pr.Device):
             self.TimingFrameRx.RxPllReset.set(0)
             self.TimingFrameRx.ClkSel.set(0x1)
             self.TimingFrameRx.C_RxReset()
-            time.sleep(0.1)
+            time.sleep(1.0)
             self.TimingFrameRx.RxDown.set(0) # Reset the latching register
 
         @self.command()

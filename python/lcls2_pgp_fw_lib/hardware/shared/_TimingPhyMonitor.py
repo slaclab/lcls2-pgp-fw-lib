@@ -259,19 +259,19 @@ class TimingPhyMonitor(pr.Device):
             stride       = 2,
         )
 
-        self.add(pr.RemoteVariable(
-            name         = "CntRst",
+        self.add(pr.RemoteCommand(
+            name         = 'CntRst',
             description  = "Counter Reset",
-            mode         = 'WO',
-            offset       = 0xFC,
-            hidden       = True,
+            offset       = 0x0FC,
+            bitSize      = 1,
+            function     = lambda cmd: cmd.post(1),
         ))
 
     def hardReset(self):
-        self.CntRst.set(0x1)
+        self.CntRst()
 
-    def softReset(self):
-        self.CntRst.set(0x1)
+    def initialize(self):
+        self.CntRst()
 
     def countReset(self):
-        self.CntRst.set(0x1)
+        self.CntRst()
