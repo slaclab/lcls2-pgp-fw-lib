@@ -30,6 +30,7 @@ entity Pgp3Lane is
       TPD_G                : time                        := 1 ns;
       ROGUE_SIM_EN_G       : boolean                     := false;
       ROGUE_SIM_PORT_NUM_G : natural range 1024 to 49151 := 7000;
+      RATE_G               : string                      := "10.3125Gbps";  -- or "6.25Gbps" or "3.125Gbps"
       DMA_AXIS_CONFIG_G    : AxiStreamConfigType;
       AXIL_CLK_FREQ_G      : real                        := 156.25E+6;  -- units of Hz
       AXI_BASE_ADDR_G      : slv(31 downto 0)            := (others => '0'));
@@ -99,7 +100,7 @@ begin
 
    U_TrigCode : entity surf.SynchronizerVector
       generic map (
-         TPD_G => TPD_G,
+         TPD_G   => TPD_G,
          WIDTH_G => 8)
       port map (
          clk     => pgpClk,
@@ -153,6 +154,7 @@ begin
       U_Pgp : entity surf.Pgp3GthUs
          generic map (
             TPD_G            => TPD_G,
+            RATE_G           => RATE_G,
             EN_PGP_MON_G     => true,
             NUM_VC_G         => 4,
             AXIL_CLK_FREQ_G  => AXIL_CLK_FREQ_G,
