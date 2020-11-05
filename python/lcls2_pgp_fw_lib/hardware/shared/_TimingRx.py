@@ -65,7 +65,6 @@ class TimingRx(pr.Device):
 
         self.add(shared.TimingPhyMonitor(
             offset  = 0x0002_0000,
-            numLanes = numLanes,
             expand  = False,
         ))
 

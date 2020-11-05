@@ -12,7 +12,6 @@ import pyrogue as pr
 class TimingPhyMonitor(pr.Device):
     def __init__(   self,
             description = "Timing Debug Monitor Module",
-            numLanes     = 4,
             **kwargs):
         super().__init__(description=description, **kwargs)
 
@@ -158,106 +157,115 @@ class TimingPhyMonitor(pr.Device):
             pollInterval = 1,
         ))
 
-        self.addRemoteVariables(
-            name         = "LocalTrigRate",
-            offset       =  0x40,
-            bitSize      = 32,
-            bitOffset    = 0,
-            units        = 'Hz',
-            disp         = '{:d}',
-            mode         = "RO",
-            pollInterval = 1,
-            number       = numLanes,
-            stride       = 4,
-        )
+        #####################################################
+        # Commented out because hard code to zero and will be
+        # a depreciated interface
+        #####################################################
+        # remTrig         => (others => '0'),  --remTrig,
+        # remTrigDrop     => (others => '0'),  --remTrigDrop,
+        # locTrig         => (others => '0'),  --locTrig,
+        # locTrigDrop     => (others => '0'),  --locTrigDrop,
+        #####################################################
 
-        self.addRemoteVariables(
-            name         = "RemoteTrigRate",
-            offset       =  0x50,
-            bitSize      = 32,
-            bitOffset    = 0,
-            units        = 'Hz',
-            disp         = '{:d}',
-            mode         = "RO",
-            pollInterval = 1,
-            number       = numLanes,
-            stride       = 4,
-        )
+        # self.addRemoteVariables(
+            # name         = "LocalTrigRate",
+            # offset       =  0x40,
+            # bitSize      = 32,
+            # bitOffset    = 0,
+            # units        = 'Hz',
+            # disp         = '{:d}',
+            # mode         = "RO",
+            # pollInterval = 1,
+            # number       = numLanes,
+            # stride       = 4,
+        # )
 
+        # self.addRemoteVariables(
+            # name         = "RemoteTrigRate",
+            # offset       =  0x50,
+            # bitSize      = 32,
+            # bitOffset    = 0,
+            # units        = 'Hz',
+            # disp         = '{:d}',
+            # mode         = "RO",
+            # pollInterval = 1,
+            # number       = numLanes,
+            # stride       = 4,
+        # )
 
-        self.addRemoteVariables(
-            name         = "LocalTrigDropRate",
-            offset       =  0x60,
-            bitSize      = 32,
-            bitOffset    = 0,
-            units        = 'Hz',
-            disp         = '{:d}',
-            mode         = "RO",
-            pollInterval = 1,
-            number       = numLanes,
-            stride       = 4,
-        )
+        # self.addRemoteVariables(
+            # name         = "LocalTrigDropRate",
+            # offset       =  0x60,
+            # bitSize      = 32,
+            # bitOffset    = 0,
+            # units        = 'Hz',
+            # disp         = '{:d}',
+            # mode         = "RO",
+            # pollInterval = 1,
+            # number       = numLanes,
+            # stride       = 4,
+        # )
 
-        self.addRemoteVariables(
-            name         = "RemoteTrigDropRate",
-            offset       =  0x70,
-            bitSize      = 32,
-            bitOffset    = 0,
-            units        = 'Hz',
-            disp         = '{:d}',
-            mode         = "RO",
-            pollInterval = 1,
-            number       = numLanes,
-            stride       = 4,
-        )
+        # self.addRemoteVariables(
+            # name         = "RemoteTrigDropRate",
+            # offset       =  0x70,
+            # bitSize      = 32,
+            # bitOffset    = 0,
+            # units        = 'Hz',
+            # disp         = '{:d}',
+            # mode         = "RO",
+            # pollInterval = 1,
+            # number       = numLanes,
+            # stride       = 4,
+        # )
 
-        self.addRemoteVariables(
-            name         = "LocalTrigCnt",
-            offset       =  0x80,
-            bitSize      = 16,
-            bitOffset    = 0,
-            disp         = '{:d}',
-            mode         = "RO",
-            pollInterval = 1,
-            number       = numLanes,
-            stride       = 2,
-        )
+        # self.addRemoteVariables(
+            # name         = "LocalTrigCnt",
+            # offset       =  0x80,
+            # bitSize      = 16,
+            # bitOffset    = 0,
+            # disp         = '{:d}',
+            # mode         = "RO",
+            # pollInterval = 1,
+            # number       = numLanes,
+            # stride       = 2,
+        # )
 
-        self.addRemoteVariables(
-            name         = "RemoteTrigCnt",
-            offset       =  0x88,
-            bitSize      = 16,
-            bitOffset    = 0,
-            disp         = '{:d}',
-            mode         = "RO",
-            pollInterval = 1,
-            number       = numLanes,
-            stride       = 2,
-        )
+        # self.addRemoteVariables(
+            # name         = "RemoteTrigCnt",
+            # offset       =  0x88,
+            # bitSize      = 16,
+            # bitOffset    = 0,
+            # disp         = '{:d}',
+            # mode         = "RO",
+            # pollInterval = 1,
+            # number       = numLanes,
+            # stride       = 2,
+        # )
 
-        self.addRemoteVariables(
-            name         = "LocalTrigDropCnt",
-            offset       =  0x90,
-            bitSize      = 16,
-            bitOffset    = 0,
-            disp         = '{:d}',
-            mode         = "RO",
-            pollInterval = 1,
-            number       = numLanes,
-            stride       = 2,
-        )
+        # self.addRemoteVariables(
+            # name         = "LocalTrigDropCnt",
+            # offset       =  0x90,
+            # bitSize      = 16,
+            # bitOffset    = 0,
+            # disp         = '{:d}',
+            # mode         = "RO",
+            # pollInterval = 1,
+            # number       = numLanes,
+            # stride       = 2,
+        # )
 
-        self.addRemoteVariables(
-            name         = "RemoteTrigDropCnt",
-            offset       =  0x98,
-            bitSize      = 16,
-            bitOffset    = 0,
-            disp         = '{:d}',
-            mode         = "RO",
-            pollInterval = 1,
-            number       = numLanes,
-            stride       = 2,
-        )
+        # self.addRemoteVariables(
+            # name         = "RemoteTrigDropCnt",
+            # offset       =  0x98,
+            # bitSize      = 16,
+            # bitOffset    = 0,
+            # disp         = '{:d}',
+            # mode         = "RO",
+            # pollInterval = 1,
+            # number       = numLanes,
+            # stride       = 2,
+        # )
 
         self.add(pr.RemoteCommand(
             name         = 'CntRst',
