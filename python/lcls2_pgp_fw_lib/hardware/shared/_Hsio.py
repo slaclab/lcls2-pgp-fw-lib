@@ -32,10 +32,12 @@ class Hsio(pr.Device):
 
             if (pgp3):
                 self.add(pgp.Pgp3AxiL(
-                    name    = (f'PgpMon[{i}]'),
-                    offset  = (i*0x00010000),
-                    numVc   = 4,
-                    writeEn = True,
+                    name            = (f'PgpMon[{i}]'),
+                    offset          = (i*0x00010000),
+                    numVc           = 4,
+                    statusCountBits = 12,
+                    errorCountBits  = 8,
+                    writeEn         = True,
                 ))
 
             else:
@@ -46,14 +48,8 @@ class Hsio(pr.Device):
                 ))
 
             self.add(axi.AxiStreamMonAxiL(
-                name        = (f'PgpTxAxisMon[{i}]'),
-                offset      = (i*0x00010000 + 1*0x2000),
-                numberLanes = 4,
-            ))
-
-            self.add(axi.AxiStreamMonAxiL(
                 name        = (f'PgpRxAxisMon[{i}]'),
-                offset      = (i*0x00010000 + 2*0x2000),
+                offset      = (i*0x00010000 + 1*0x2000),
                 numberLanes = 4,
             ))
 

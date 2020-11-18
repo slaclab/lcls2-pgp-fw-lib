@@ -61,7 +61,7 @@ end Pgp2bLane;
 
 architecture mapping of Pgp2bLane is
 
-   constant NUM_AXIL_MASTERS_C : natural := 3;
+   constant NUM_AXIL_MASTERS_C : natural := 2;
 
    constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 16, 13);
 
@@ -261,8 +261,8 @@ begin
          COMMON_RX_CLK_G    => false,
          WRITE_EN_G         => true,
          AXI_CLK_FREQ_G     => AXIL_CLK_FREQ_G,
-         STATUS_CNT_WIDTH_G => 16,
-         ERROR_CNT_WIDTH_G  => 16)
+         STATUS_CNT_WIDTH_G => 12,
+         ERROR_CNT_WIDTH_G  => 8)
       port map (
          -- TX PGP Interface (pgpTxClk)
          pgpTxClk        => pgpTxClk,
@@ -285,30 +285,6 @@ begin
          axilWriteSlave  => axilWriteSlaves(0));
 
    -----------------------------
-   -- Monitor the PGP TX streams
-   -----------------------------
-   U_AXIS_TX_MON : entity surf.AxiStreamMonAxiL
-      generic map(
-         TPD_G            => TPD_G,
-         COMMON_CLK_G     => false,
-         AXIS_CLK_FREQ_G  => 156.25E+6,
-         AXIS_NUM_SLOTS_G => 4,
-         AXIS_CONFIG_G    => SSI_PGP2B_CONFIG_C)
-      port map(
-         -- AXIS Stream Interface
-         axisClk          => pgpTxClk,
-         axisRst          => pgpTxRst,
-         axisMasters      => pgpTxMasters,
-         axisSlaves       => pgpTxSlaves,
-         -- AXI lite slave port for register access
-         axilClk          => axilClk,
-         axilRst          => axilRst,
-         sAxilWriteMaster => axilWriteMasters(1),
-         sAxilWriteSlave  => axilWriteSlaves(1),
-         sAxilReadMaster  => axilReadMasters(1),
-         sAxilReadSlave   => axilReadSlaves(1));
-
-   -----------------------------
    -- Monitor the PGP RX streams
    -----------------------------
    U_AXIS_RX_MON : entity surf.AxiStreamMonAxiL
@@ -327,10 +303,10 @@ begin
          -- AXI lite slave port for register access
          axilClk          => axilClk,
          axilRst          => axilRst,
-         sAxilWriteMaster => axilWriteMasters(2),
-         sAxilWriteSlave  => axilWriteSlaves(2),
-         sAxilReadMaster  => axilReadMasters(2),
-         sAxilReadSlave   => axilReadSlaves(2));
+         sAxilWriteMaster => axilWriteMasters(1),
+         sAxilWriteSlave  => axilWriteSlaves(1),
+         sAxilReadMaster  => axilReadMasters(1),
+         sAxilReadSlave   => axilReadSlaves(1));
 
    --------------
    -- PGP TX Path

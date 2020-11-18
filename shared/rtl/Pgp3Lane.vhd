@@ -64,7 +64,7 @@ end Pgp3Lane;
 
 architecture mapping of Pgp3Lane is
 
-   constant NUM_AXIL_MASTERS_C : natural := 3;
+   constant NUM_AXIL_MASTERS_C : natural := 2;
 
    constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 16, 13);
 
@@ -153,12 +153,14 @@ begin
    REAL_PGP : if (not ROGUE_SIM_EN_G) generate
       U_Pgp : entity surf.Pgp3GthUs
          generic map (
-            TPD_G            => TPD_G,
-            RATE_G           => RATE_G,
-            EN_PGP_MON_G     => true,
-            NUM_VC_G         => 4,
-            AXIL_CLK_FREQ_G  => AXIL_CLK_FREQ_G,
-            AXIL_BASE_ADDR_G => AXIL_CONFIG_C(0).baseAddr)
+            TPD_G              => TPD_G,
+            RATE_G             => RATE_G,
+            EN_PGP_MON_G       => true,
+            NUM_VC_G           => 4,
+            STATUS_CNT_WIDTH_G => 12,
+            ERROR_CNT_WIDTH_G  => 8,
+            AXIL_CLK_FREQ_G    => AXIL_CLK_FREQ_G,
+            AXIL_BASE_ADDR_G   => AXIL_CONFIG_C(0).baseAddr)
          port map (
             -- Stable Clock and Reset
             stableClk       => axilClk,
@@ -237,30 +239,6 @@ begin
    end generate SIM_PGP;
 
    -----------------------------
-   -- Monitor the PGP TX streams
-   -----------------------------
-   U_AXIS_TX_MON : entity surf.AxiStreamMonAxiL
-      generic map(
-         TPD_G            => TPD_G,
-         COMMON_CLK_G     => false,
-         AXIS_CLK_FREQ_G  => 156.25E+6,
-         AXIS_NUM_SLOTS_G => 4,
-         AXIS_CONFIG_G    => PGP3_AXIS_CONFIG_C)
-      port map(
-         -- AXIS Stream Interface
-         axisClk          => pgpClk,
-         axisRst          => pgpRst,
-         axisMasters      => pgpTxMasters,
-         axisSlaves       => pgpTxSlaves,
-         -- AXI lite slave port for register access
-         axilClk          => axilClk,
-         axilRst          => axilRst,
-         sAxilWriteMaster => axilWriteMasters(1),
-         sAxilWriteSlave  => axilWriteSlaves(1),
-         sAxilReadMaster  => axilReadMasters(1),
-         sAxilReadSlave   => axilReadSlaves(1));
-
-   -----------------------------
    -- Monitor the PGP RX streams
    -----------------------------
    U_AXIS_RX_MON : entity surf.AxiStreamMonAxiL
@@ -279,10 +257,10 @@ begin
          -- AXI lite slave port for register access
          axilClk          => axilClk,
          axilRst          => axilRst,
-         sAxilWriteMaster => axilWriteMasters(2),
-         sAxilWriteSlave  => axilWriteSlaves(2),
-         sAxilReadMaster  => axilReadMasters(2),
-         sAxilReadSlave   => axilReadSlaves(2));
+         sAxilWriteMaster => axilWriteMasters(1),
+         sAxilWriteSlave  => axilWriteSlaves(1),
+         sAxilReadMaster  => axilReadMasters(1),
+         sAxilReadSlave   => axilReadSlaves(1));
 
    --------------
    -- PGP TX Path
