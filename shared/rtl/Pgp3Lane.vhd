@@ -64,6 +64,11 @@ end Pgp3Lane;
 
 architecture mapping of Pgp3Lane is
 
+   constant AXIS_CLK_FREQ_C : real :=
+      ite(RATE_G = "10.3125Gbps", (10.3125E+9/66.0),
+          ite(RATE_G = "6.25Gbps", (6.25E+9/66.0),
+              (3.125E+9/66.0)));        -- RATE_G="3.125Gbps"
+
    constant NUM_AXIL_MASTERS_C : natural := 2;
 
    constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 16, 13);
@@ -245,7 +250,7 @@ begin
       generic map(
          TPD_G            => TPD_G,
          COMMON_CLK_G     => false,
-         AXIS_CLK_FREQ_G  => 156.25E+6,
+         AXIS_CLK_FREQ_G  => AXIS_CLK_FREQ_C,
          AXIS_NUM_SLOTS_G => 4,
          AXIS_CONFIG_G    => PGP3_AXIS_CONFIG_C)
       port map(
