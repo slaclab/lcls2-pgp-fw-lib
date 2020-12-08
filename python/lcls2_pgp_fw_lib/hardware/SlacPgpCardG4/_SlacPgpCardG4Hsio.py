@@ -8,8 +8,6 @@
 # contained in the LICENSE.txt file.
 #-----------------------------------------------------------------------------
 
-import pyrogue as pr
-
 from lcls2_pgp_fw_lib.hardware.shared import Hsio
 from lcls2_pgp_fw_lib.hardware.SlacPgpCardG4 import SlacPgpCardG4TimingRx
 
