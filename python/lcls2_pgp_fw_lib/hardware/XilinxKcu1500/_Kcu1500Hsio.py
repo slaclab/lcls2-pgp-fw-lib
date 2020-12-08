@@ -8,8 +8,6 @@
 # contained in the LICENSE.txt file.
 #-----------------------------------------------------------------------------
 
-import pyrogue as pr
-
 from lcls2_pgp_fw_lib.hardware.shared import Hsio
 from lcls2_pgp_fw_lib.hardware.XilinxKcu1500 import Kcu1500TimingRx
 
@@ -28,4 +26,3 @@ class Kcu1500Hsio(Hsio):
                          enLclsII=enLclsII,
                          pgp3=pgp3,
                          **kwargs)
-
