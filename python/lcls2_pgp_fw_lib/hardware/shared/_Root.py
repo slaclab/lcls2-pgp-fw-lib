@@ -10,8 +10,6 @@
 import pyrogue as pr
 import pyrogue.interfaces.simulation
 
-import rogue
-
 class Root(pr.Root):
     """ A generic Root class that sets up all of the common sub-devices and hardware connections that a PGP project would have."""
     def __init__(self,

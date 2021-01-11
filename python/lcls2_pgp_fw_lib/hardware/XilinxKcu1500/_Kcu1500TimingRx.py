@@ -13,4 +13,3 @@ from lcls2_pgp_fw_lib.hardware.shared import TimingRx
 class Kcu1500TimingRx(TimingRx):
     def __init__(self, numLanes = 4, **kwargs):
         super().__init__(numLanes=numLanes, dualGTH=True, **kwargs)
-
