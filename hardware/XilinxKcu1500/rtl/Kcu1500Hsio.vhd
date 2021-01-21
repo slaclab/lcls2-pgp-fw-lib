@@ -66,57 +66,55 @@ entity Kcu1500Hsio is
       --  Top Level Interfaces
       ------------------------
       -- Reference Clock and Reset
-      userClk25                : in  sl;
-      userRst25                : in  sl;
+      userClk25             : in  sl;
+      userRst25             : in  sl;
       -- AXI-Lite Interface
-      axilClk                  : in  sl;
-      axilRst                  : in  sl;
-      axilReadMaster           : in  AxiLiteReadMasterType;
-      axilReadSlave            : out AxiLiteReadSlaveType;
-      axilWriteMaster          : in  AxiLiteWriteMasterType;
-      axilWriteSlave           : out AxiLiteWriteSlaveType;
+      axilClk               : in  sl;
+      axilRst               : in  sl;
+      axilReadMaster        : in  AxiLiteReadMasterType;
+      axilReadSlave         : out AxiLiteReadSlaveType;
+      axilWriteMaster       : in  AxiLiteWriteMasterType;
+      axilWriteSlave        : out AxiLiteWriteSlaveType;
       -- PGP Streams (axilClk domain)
-      pgpIbMasters             : in  AxiStreamMasterArray(NUM_PGP_LANES_G-1 downto 0);
-      pgpIbSlaves              : out AxiStreamSlaveArray(NUM_PGP_LANES_G-1 downto 0);
-      pgpObMasters             : out AxiStreamQuadMasterArray(NUM_PGP_LANES_G-1 downto 0);
-      pgpObSlaves              : in  AxiStreamQuadSlaveArray(NUM_PGP_LANES_G-1 downto 0);
+      pgpIbMasters          : in  AxiStreamMasterArray(NUM_PGP_LANES_G-1 downto 0);
+      pgpIbSlaves           : out AxiStreamSlaveArray(NUM_PGP_LANES_G-1 downto 0);
+      pgpObMasters          : out AxiStreamQuadMasterArray(NUM_PGP_LANES_G-1 downto 0);
+      pgpObSlaves           : in  AxiStreamQuadSlaveArray(NUM_PGP_LANES_G-1 downto 0);
       -- Trigger Interface
-      triggerClk               : in  sl;
-      triggerRst               : in  sl;
-      triggerData              : out TriggerEventDataArray(NUM_PGP_LANES_G-1 downto 0);
+      triggerClk            : in  sl;
+      triggerRst            : in  sl;
+      triggerData           : out TriggerEventDataArray(NUM_PGP_LANES_G-1 downto 0);
       -- L1 trigger feedback (optional)
-      l1Clk                    : in  sl                                                 := '0';
-      l1Rst                    : in  sl                                                 := '0';
-      l1Feedbacks              : in  TriggerL1FeedbackArray(NUM_PGP_LANES_G-1 downto 0) := (others => TRIGGER_L1_FEEDBACK_INIT_C);
-      l1Acks                   : out slv(NUM_PGP_LANES_G-1 downto 0);
+      l1Clk                 : in  sl                                                 := '0';
+      l1Rst                 : in  sl                                                 := '0';
+      l1Feedbacks           : in  TriggerL1FeedbackArray(NUM_PGP_LANES_G-1 downto 0) := (others => TRIGGER_L1_FEEDBACK_INIT_C);
+      l1Acks                : out slv(NUM_PGP_LANES_G-1 downto 0);
       -- Event streams
-      eventClk                 : in  sl;
-      eventRst                 : in  sl;
-      eventTimingMessagesValid : out slv(NUM_PGP_LANES_G-1 downto 0);
-      eventTimingMessages      : out TimingMessageArray(NUM_PGP_LANES_G-1 downto 0);
-      eventTimingMessagesRd    : in  slv(NUM_PGP_LANES_G-1 downto 0)                    := (others => '1');
-      eventAxisMasters         : out AxiStreamMasterArray(NUM_PGP_LANES_G-1 downto 0);
-      eventAxisSlaves          : in  AxiStreamSlaveArray(NUM_PGP_LANES_G-1 downto 0);
-      eventAxisCtrl            : in  AxiStreamCtrlArray(NUM_PGP_LANES_G-1 downto 0);
-      clearReadout             : out slv(NUM_PGP_LANES_G-1 downto 0);
-
+      eventClk              : in  sl;
+      eventRst              : in  sl;
+      eventTrigMsgMasters   : out AxiStreamMasterArray(NUM_PGP_LANES_G-1 downto 0);
+      eventTrigMsgSlaves    : in  AxiStreamSlaveArray(NUM_PGP_LANES_G-1 downto 0);
+      eventTrigMsgCtrl      : in  AxiStreamCtrlArray(NUM_PGP_LANES_G-1 downto 0);
+      eventTimingMsgMasters : out AxiStreamMasterArray(NUM_PGP_LANES_G-1 downto 0);
+      eventTimingMsgSlaves  : in  AxiStreamSlaveArray(NUM_PGP_LANES_G-1 downto 0);
+      clearReadout          : out slv(NUM_PGP_LANES_G-1 downto 0);
       ---------------------
       --  Kcu1500Hsio Ports
       ---------------------
       -- QSFP[0] Ports
-      qsfp0RefClkP : in  slv(1 downto 0) := (others => '0');
-      qsfp0RefClkN : in  slv(1 downto 0) := (others => '0');
-      qsfp0RxP     : in  slv(3 downto 0) := (others => '0');
-      qsfp0RxN     : in  slv(3 downto 0) := (others => '0');
-      qsfp0TxP     : out slv(3 downto 0) := (others => '0');
-      qsfp0TxN     : out slv(3 downto 0) := (others => '0');
+      qsfp0RefClkP          : in  slv(1 downto 0)                                    := (others => '0');
+      qsfp0RefClkN          : in  slv(1 downto 0)                                    := (others => '0');
+      qsfp0RxP              : in  slv(3 downto 0)                                    := (others => '0');
+      qsfp0RxN              : in  slv(3 downto 0)                                    := (others => '0');
+      qsfp0TxP              : out slv(3 downto 0)                                    := (others => '0');
+      qsfp0TxN              : out slv(3 downto 0)                                    := (others => '0');
       -- QSFP[1] Ports
-      qsfp1RefClkP : in  slv(1 downto 0) := (others => '0');
-      qsfp1RefClkN : in  slv(1 downto 0) := (others => '0');
-      qsfp1RxP     : in  slv(3 downto 0) := (others => '0');
-      qsfp1RxN     : in  slv(3 downto 0) := (others => '0');
-      qsfp1TxP     : out slv(3 downto 0) := (others => '0');
-      qsfp1TxN     : out slv(3 downto 0) := (others => '0'));
+      qsfp1RefClkP          : in  slv(1 downto 0)                                    := (others => '0');
+      qsfp1RefClkN          : in  slv(1 downto 0)                                    := (others => '0');
+      qsfp1RxP              : in  slv(3 downto 0)                                    := (others => '0');
+      qsfp1RxN              : in  slv(3 downto 0)                                    := (others => '0');
+      qsfp1TxP              : out slv(3 downto 0)                                    := (others => '0');
+      qsfp1TxN              : out slv(3 downto 0)                                    := (others => '0'));
 end Kcu1500Hsio;
 
 architecture mapping of Kcu1500Hsio is
@@ -354,38 +352,37 @@ begin
          EN_LCLS_II_TIMING_G => EN_LCLS_II_TIMING_G)
       port map (
          -- Reference Clock and Reset
-         userClk25                => userClk25,
-         userRst25                => userRst25,
+         userClk25             => userClk25,
+         userRst25             => userRst25,
          -- Trigger interface
-         triggerClk               => triggerClk,                -- [in]
-         triggerRst               => triggerRst,                -- [in]
-         triggerData              => iTriggerData,              -- [out]
-         l1Clk                    => l1Clk,                     -- [in]
-         l1Rst                    => l1Rst,                     -- [in]
-         l1Feedbacks              => l1Feedbacks,               -- [in]
-         l1Acks                   => l1Acks,                    -- [out]
+         triggerClk            => triggerClk,             -- [in]
+         triggerRst            => triggerRst,             -- [in]
+         triggerData           => iTriggerData,           -- [out]
+         l1Clk                 => l1Clk,                  -- [in]
+         l1Rst                 => l1Rst,                  -- [in]
+         l1Feedbacks           => l1Feedbacks,            -- [in]
+         l1Acks                => l1Acks,                 -- [out]
          -- Event interface
-         eventClk                 => eventClk,                  -- [in]
-         eventRst                 => eventRst,                  -- [in]
-         eventTimingMessagesValid => eventTimingMessagesValid,  -- [out]
-         eventTimingMessages      => eventTimingMessages,       -- [out]
-         eventTimingMessagesRd    => eventTimingMessagesRd,     -- [in]
-         eventAxisMasters         => eventAxisMasters,          -- [out]
-         eventAxisSlaves          => eventAxisSlaves,           -- [in]
-         eventAxisCtrl            => eventAxisCtrl,             -- [in]
-         clearReadout             => clearReadout,              -- [out]
+         eventClk              => eventClk,               -- [in]
+         eventRst              => eventRst,               -- [in]
+         eventTrigMsgMasters   => eventTrigMsgMasters,    -- [out]
+         eventTrigMsgSlaves    => eventTrigMsgSlaves,     -- [in]
+         eventTrigMsgCtrl      => eventTrigMsgCtrl,       -- [in]
+         eventTimingMsgMasters => eventTimingMsgMasters,  -- [out]
+         eventTimingMsgSlaves  => eventTimingMsgSlaves,   -- [in]
+         clearReadout          => clearReadout,           -- [out]
          -- AXI-Lite Interface (axilClk domain)
-         axilClk                  => axilClk,
-         axilRst                  => axilRst,
-         axilReadMaster           => axilReadMasters(TIMING_INDEX_C),
-         axilReadSlave            => axilReadSlaves(TIMING_INDEX_C),
-         axilWriteMaster          => axilWriteMasters(TIMING_INDEX_C),
-         axilWriteSlave           => axilWriteSlaves(TIMING_INDEX_C),
+         axilClk               => axilClk,
+         axilRst               => axilRst,
+         axilReadMaster        => axilReadMasters(TIMING_INDEX_C),
+         axilReadSlave         => axilReadSlaves(TIMING_INDEX_C),
+         axilWriteMaster       => axilWriteMasters(TIMING_INDEX_C),
+         axilWriteSlave        => axilWriteSlaves(TIMING_INDEX_C),
          -- GT Serial Ports
-         timingRxP                => qsfp1RxP(1 downto 0),
-         timingRxN                => qsfp1RxN(1 downto 0),
-         timingTxP                => qsfp1TxP(1 downto 0),
-         timingTxN                => qsfp1TxN(1 downto 0));
+         timingRxP             => qsfp1RxP(1 downto 0),
+         timingRxN             => qsfp1RxN(1 downto 0),
+         timingTxP             => qsfp1TxP(1 downto 0),
+         timingTxN             => qsfp1TxN(1 downto 0));
 
    -- Feed l0 triggers directly to PGP
    TRIGGER_GEN : for i in NUM_PGP_LANES_G-1 downto 0 generate
