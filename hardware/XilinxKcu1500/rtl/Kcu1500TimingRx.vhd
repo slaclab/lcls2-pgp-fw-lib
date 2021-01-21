@@ -53,32 +53,31 @@ entity Kcu1500TimingRx is
       triggerData : out TriggerEventDataArray(NUM_DETECTORS_G-1 downto 0);
 
       -- L1 trigger feedback (optional)
-      l1Clk                    : in  sl                                                 := '0';
-      l1Rst                    : in  sl                                                 := '0';
-      l1Feedbacks              : in  TriggerL1FeedbackArray(NUM_DETECTORS_G-1 downto 0) := (others => TRIGGER_L1_FEEDBACK_INIT_C);
-      l1Acks                   : out slv(NUM_DETECTORS_G-1 downto 0);
+      l1Clk                 : in  sl                                                 := '0';
+      l1Rst                 : in  sl                                                 := '0';
+      l1Feedbacks           : in  TriggerL1FeedbackArray(NUM_DETECTORS_G-1 downto 0) := (others => TRIGGER_L1_FEEDBACK_INIT_C);
+      l1Acks                : out slv(NUM_DETECTORS_G-1 downto 0);
       -- Event streams
-      eventClk                 : in  sl;
-      eventRst                 : in  sl;
-      eventTimingMessagesValid : out slv(NUM_DETECTORS_G-1 downto 0);
-      eventTimingMessages      : out TimingMessageArray(NUM_DETECTORS_G-1 downto 0)     := (others => TIMING_MESSAGE_INIT_C);
-      eventTimingMessagesRd    : in  slv(NUM_DETECTORS_G-1 downto 0)                    := (others => '1');
-      eventAxisMasters         : out AxiStreamMasterArray(NUM_DETECTORS_G-1 downto 0);
-      eventAxisSlaves          : in  AxiStreamSlaveArray(NUM_DETECTORS_G-1 downto 0);
-      eventAxisCtrl            : in  AxiStreamCtrlArray(NUM_DETECTORS_G-1 downto 0);
-      clearReadout             : out slv(NUM_DETECTORS_G-1 downto 0)                    := (others => '0');
+      eventClk              : in  sl;
+      eventRst              : in  sl;
+      eventTrigMsgMasters   : out AxiStreamMasterArray(NUM_DETECTORS_G-1 downto 0);
+      eventTrigMsgSlaves    : in  AxiStreamSlaveArray(NUM_DETECTORS_G-1 downto 0);
+      eventTrigMsgCtrl      : in  AxiStreamCtrlArray(NUM_DETECTORS_G-1 downto 0);
+      eventTimingMsgMasters : out AxiStreamMasterArray(NUM_DETECTORS_G-1 downto 0);
+      eventTimingMsgSlaves  : in  AxiStreamSlaveArray(NUM_DETECTORS_G-1 downto 0);
+      clearReadout          : out slv(NUM_DETECTORS_G-1 downto 0)                    := (others => '0');
       -- AXI-Lite Interface
-      axilClk                  : in  sl;
-      axilRst                  : in  sl;
-      axilReadMaster           : in  AxiLiteReadMasterType;
-      axilReadSlave            : out AxiLiteReadSlaveType;
-      axilWriteMaster          : in  AxiLiteWriteMasterType;
-      axilWriteSlave           : out AxiLiteWriteSlaveType;
+      axilClk               : in  sl;
+      axilRst               : in  sl;
+      axilReadMaster        : in  AxiLiteReadMasterType;
+      axilReadSlave         : out AxiLiteReadSlaveType;
+      axilWriteMaster       : in  AxiLiteWriteMasterType;
+      axilWriteSlave        : out AxiLiteWriteSlaveType;
       -- GT Serial Ports
-      timingRxP                : in  slv(1 downto 0);
-      timingRxN                : in  slv(1 downto 0);
-      timingTxP                : out slv(1 downto 0);
-      timingTxN                : out slv(1 downto 0));
+      timingRxP             : in  slv(1 downto 0);
+      timingRxN             : in  slv(1 downto 0);
+      timingTxP             : out slv(1 downto 0);
+      timingTxN             : out slv(1 downto 0));
 end Kcu1500TimingRx;
 
 architecture mapping of Kcu1500TimingRx is
@@ -178,6 +177,9 @@ architecture mapping of Kcu1500TimingRx is
    -----------------------------------------------
    signal temTimingTxPhy : TimingPhyType;
 
+   signal eventTimingMessagesValid : slv(NUM_DETECTORS_G-1 downto 0);
+   signal eventTimingMessages      : TimingMessageArray(NUM_DETECTORS_G-1 downto 0);
+   signal eventTimingMessagesRd    : slv(NUM_DETECTORS_G-1 downto 0);
 
 begin
 
@@ -604,14 +606,31 @@ begin
          eventTimingMessagesValid => eventTimingMessagesValid,       -- [out]
          eventTimingMessages      => eventTimingMessages,            -- [out]
          eventTimingMessagesRd    => eventTimingMessagesRd,          -- [in]
-         eventAxisMasters         => eventAxisMasters,               -- [out]
-         eventAxisSlaves          => eventAxisSlaves,                -- [in]
-         eventAxisCtrl            => eventAxisCtrl,                  -- [in]
+         eventAxisMasters         => eventTrigMsgMasters,            -- [out]
+         eventAxisSlaves          => eventTrigMsgSlaves,             -- [in]
+         eventAxisCtrl            => eventTrigMsgCtrl,               -- [in]
          axilClk                  => axilClk,                        -- [in]
          axilRst                  => axilRst,                        -- [in]
          axilReadMaster           => axilReadMasters(TEM_INDEX_C),   -- [in]
          axilReadSlave            => axilReadSlaves(TEM_INDEX_C),    -- [out]
          axilWriteMaster          => axilWriteMasters(TEM_INDEX_C),  -- [in]
          axilWriteSlave           => axilWriteSlaves(TEM_INDEX_C));  -- [out]
+
+   U_EventTimingMessage : entity l2si_core.EventTimingMessage
+      generic map (
+         TPD_G               => TPD_G,
+         NUM_DETECTORS_G     => NUM_DETECTORS_G,
+         EVENT_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+      port map (
+         -- Clock and Reset
+         eventClk                 => eventClk,                  -- [in]
+         eventRst                 => eventRst,                  -- [in]
+         -- Input Streams
+         eventTimingMessagesValid => eventTimingMessagesValid,  -- [in]
+         eventTimingMessages      => eventTimingMessages,       -- [in]
+         eventTimingMessagesRd    => eventTimingMessagesRd,     -- [out]
+         -- Output Streams
+         eventTimingMsgMasters    => eventTimingMsgMasters,     -- [out]
+         eventTimingMsgSlaves     => eventTimingMsgSlaves);     -- [in]
 
 end mapping;
