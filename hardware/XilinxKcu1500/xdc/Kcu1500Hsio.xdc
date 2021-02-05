@@ -8,17 +8,15 @@
 ## the terms contained in the LICENSE.txt file.
 ##############################################################################
 
-
 #### Base Clocks 
 create_generated_clock -name clk156 [get_pins {U_axilClk/PllGen.U_Pll/CLKOUT0}] 
 create_generated_clock -name clk25  [get_pins {U_axilClk/PllGen.U_Pll/CLKOUT1}] 
 
-create_generated_clock -name clk238 [get_pins -hier -filter {name =~ */U_TimingRx/U_238MHz/MmcmGen.U_Mmcm/CLKOUT0}] 
-create_generated_clock -name clk371 [get_pins -hier -filter {name =~ */U_TimingRx/U_371MHz/MmcmGen.U_Mmcm/CLKOUT0}] 
+create_generated_clock -name clk238 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_MMCM.U_238MHz/MmcmGen.U_Mmcm/CLKOUT0}] 
+create_generated_clock -name clk371 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_MMCM.U_371MHz/MmcmGen.U_Mmcm/CLKOUT0}] 
 
 create_generated_clock -name clk119 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[0].U_refClkDiv2/O}] 
 create_generated_clock -name clk186 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[1].U_refClkDiv2/O}] 
-
 
 #### GT Out Clocks
 create_clock -name timingGtRxOutClk0  -period 8.403 \

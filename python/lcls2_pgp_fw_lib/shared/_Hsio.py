@@ -10,17 +10,17 @@
 
 import pyrogue as pr
 
-import surf.protocols.pgp as pgp
-import surf.axi           as axi
+import surf.protocols.pgp      as pgp
+import surf.axi                as axi
+import lcls2_pgp_fw_lib.shared as shared
 
 class Hsio(pr.Device):
     def __init__(
             self,
-            timingRxCls,
             numLanes    = 4,
             enLclsI     = False,
             enLclsII    = True,
-            pgp3        = False,
+            pgp4        = False,
             **kwargs):
 
         super().__init__(**kwargs)
@@ -28,8 +28,8 @@ class Hsio(pr.Device):
         # Add PGP Core
         for i in range(numLanes):
 
-            if (pgp3):
-                self.add(pgp.Pgp3AxiL(
+            if (pgp4):
+                self.add(pgp.Pgp4AxiL(
                     name            = (f'PgpMon[{i}]'),
                     offset          = (i*0x00010000),
                     numVc           = 4,
@@ -52,7 +52,7 @@ class Hsio(pr.Device):
             ))
 
         # Add Timing Core
-        self.add(timingRxCls(
+        self.add(shared.TimingRx(
             name     = 'TimingRx',
             offset   = 0x0010_0000,
             enLclsI  = enLclsI,

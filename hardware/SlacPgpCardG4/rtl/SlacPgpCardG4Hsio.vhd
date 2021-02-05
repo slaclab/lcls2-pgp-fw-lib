@@ -4,16 +4,16 @@
 -------------------------------------------------------------------------------
 -- Description: SlacPgpCardG4Hsio File
 -------------------------------------------------------------------------------
--- Fiber Mapping to SlacPgpCardG4Hsio:
---    SFP[0] = LCLS-I & LCLS-II Timing Receiver
+-- Fiber Mapping to Kcu1500Hsio:
 --    QSFP[0][0] = PGP.Lane[0].VC[3:0]
 --    QSFP[0][1] = PGP.Lane[1].VC[3:0]
 --    QSFP[0][2] = PGP.Lane[2].VC[3:0]
 --    QSFP[0][3] = PGP.Lane[3].VC[3:0]
---    QSFP[1][0] = PGP.Lane[0].VC[3:0]
---    QSFP[1][1] = PGP.Lane[1].VC[3:0]
---    QSFP[1][2] = PGP.Lane[2].VC[3:0]
---    QSFP[1][3] = PGP.Lane[3].VC[3:0]
+--    QSFP[1][0] = LCLS-I  Timing Receiver
+--    QSFP[1][1] = LCLS-II Timing Receiver
+--    QSFP[1][2] = Unused QSFP Link
+--    QSFP[1][3] = Unused QSFP Link
+--           SFP = Unused QSFP Link
 -------------------------------------------------------------------------------
 -- This file is part of LCLS2 PGP Firmware Library'.
 -- It is subject to the license terms in the LICENSE.txt file found in the
@@ -51,11 +51,11 @@ entity SlacPgpCardG4Hsio is
       ROGUE_SIM_EN_G                 : boolean                     := false;
       ROGUE_SIM_PORT_NUM_G           : natural range 1024 to 49151 := 7000;
       DMA_AXIS_CONFIG_G              : AxiStreamConfigType;
-      PGP_TYPE_G                     : string                      := "PGP2b";  -- PGP2b@3.125Gb/s, PGP3@RATE_G
+      PGP_TYPE_G                     : string                      := "PGP2b";  -- PGP2b@3.125Gb/s, PGP4@RATE_G
       RATE_G                         : string                      := "10.3125Gbps";  -- or "6.25Gbps" or "3.125Gbps"
       AXIL_CLK_FREQ_G                : real                        := 156.25E+6;  -- units of Hz
       AXI_BASE_ADDR_G                : slv(31 downto 0)            := x"0080_0000";
-      NUM_PGP_LANES_G                : integer range 1 to 8        := 8;
+      NUM_PGP_LANES_G                : integer range 1 to 4        := 4;
       EN_LCLS_I_TIMING_G             : boolean                     := false;
       EN_LCLS_II_TIMING_G            : boolean                     := true;
       L1_CLK_IS_TIMING_TX_CLK_G      : boolean                     := false;
@@ -120,10 +120,10 @@ end SlacPgpCardG4Hsio;
 
 architecture mapping of SlacPgpCardG4Hsio is
 
-   constant NUM_AXIL_MASTERS_C : positive := 9;
+   constant NUM_AXIL_MASTERS_C : positive := 5;
 
    constant PGP_INDEX_C    : natural := 0;
-   constant TIMING_INDEX_C : natural := 8;
+   constant TIMING_INDEX_C : natural := 4;
 
    -- 22 Bits available
    constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL_MASTERS_C-1 downto 0) := (
@@ -143,22 +143,6 @@ architecture mapping of SlacPgpCardG4Hsio is
          baseAddr     => (AXI_BASE_ADDR_G+x"0003_0000"),
          addrBits     => 16,
          connectivity => x"FFFF"),
-      PGP_INDEX_C+4   => (
-         baseAddr     => (AXI_BASE_ADDR_G+x"0004_0000"),
-         addrBits     => 16,
-         connectivity => x"FFFF"),
-      PGP_INDEX_C+5   => (
-         baseAddr     => (AXI_BASE_ADDR_G+x"0005_0000"),
-         addrBits     => 16,
-         connectivity => x"FFFF"),
-      PGP_INDEX_C+6   => (
-         baseAddr     => (AXI_BASE_ADDR_G+x"0006_0000"),
-         addrBits     => 16,
-         connectivity => x"FFFF"),
-      PGP_INDEX_C+7   => (
-         baseAddr     => (AXI_BASE_ADDR_G+x"0007_0000"),
-         addrBits     => 16,
-         connectivity => x"FFFF"),
       TIMING_INDEX_C  => (
          baseAddr     => (AXI_BASE_ADDR_G+x"0010_0000"),
          addrBits     => 20,
@@ -169,10 +153,10 @@ architecture mapping of SlacPgpCardG4Hsio is
    signal axilReadMasters  : AxiLiteReadMasterArray(NUM_AXIL_MASTERS_C-1 downto 0);
    signal axilReadSlaves   : AxiLiteReadSlaveArray(NUM_AXIL_MASTERS_C-1 downto 0)  := (others => AXI_LITE_READ_SLAVE_EMPTY_DECERR_C);
 
-   signal qpllLock   : Slv2Array(7 downto 0);
-   signal qpllClk    : Slv2Array(7 downto 0);
-   signal qpllRefclk : Slv2Array(7 downto 0);
-   signal qpllRst    : Slv2Array(7 downto 0);
+   signal qpllLock   : Slv2Array(3 downto 0);
+   signal qpllClk    : Slv2Array(3 downto 0);
+   signal qpllRefclk : Slv2Array(3 downto 0);
+   signal qpllRst    : Slv2Array(3 downto 0);
 
    signal refClk : sl;
 
@@ -183,8 +167,8 @@ architecture mapping of SlacPgpCardG4Hsio is
 
 begin
 
-   assert ((PGP_TYPE_G = "PGP2b") or (PGP_TYPE_G = "PGP3"))
-      report "PGP_TYPE_G must be either PGP2b or PGP3" severity failure;
+   assert ((PGP_TYPE_G = "PGP2b") or (PGP_TYPE_G = "PGP4"))
+      report "PGP_TYPE_G must be either PGP2b or PGP4" severity failure;
 
    ---------------------
    -- AXI-Lite Crossbar
@@ -222,24 +206,21 @@ begin
          ODIV2 => open,
          O     => refClk);
 
-   GEN_PGP3_QPLL : if (PGP_TYPE_G = "PGP3") generate
-      GEN_QUAD :
-      for i in 1 downto 0 generate
-         U_QPLL : entity surf.Pgp3GthUsQpll
-            generic map (
-               TPD_G  => TPD_G,
-               RATE_G => RATE_G)
-            port map (
-               -- Stable Clock and Reset
-               stableClk  => axilClk,
-               stableRst  => axilRst,
-               -- QPLL Clocking
-               pgpRefClk  => refClk,
-               qpllLock   => qpllLock(4*i+3 downto 4*i),
-               qpllClk    => qpllClk(4*i+3 downto 4*i),
-               qpllRefclk => qpllRefclk(4*i+3 downto 4*i),
-               qpllRst    => qpllRst(4*i+3 downto 4*i));
-      end generate GEN_QUAD;
+   GEN_PGP4_QPLL : if (PGP_TYPE_G = "PGP4") generate
+      U_QPLL : entity surf.Pgp3GthUsQpll
+         generic map (
+            TPD_G  => TPD_G,
+            RATE_G => RATE_G)
+         port map (
+            -- Stable Clock and Reset
+            stableClk  => axilClk,
+            stableRst  => axilRst,
+            -- QPLL Clocking
+            pgpRefClk  => refClk,
+            qpllLock   => qpllLock,
+            qpllClk    => qpllClk,
+            qpllRefclk => qpllRefclk,
+            qpllRst    => qpllRst);
    end generate;
 
    --------------
@@ -248,163 +229,101 @@ begin
    GEN_LANE :
    for i in NUM_PGP_LANES_G-1 downto 0 generate
 
-      QUAD_A : if (i <= 3) generate
+      GEN_PGP4 : if (PGP_TYPE_G = "PGP4") generate
+         U_Lane : entity lcls2_pgp_fw_lib.Pgp4Lane
+            generic map (
+               TPD_G                => TPD_G,
+               ROGUE_SIM_EN_G       => ROGUE_SIM_EN_G,
+               ROGUE_SIM_PORT_NUM_G => (ROGUE_SIM_PORT_NUM_G + i*34),
+               DMA_AXIS_CONFIG_G    => DMA_AXIS_CONFIG_G,
+               RATE_G               => RATE_G,
+               AXIL_CLK_FREQ_G      => AXIL_CLK_FREQ_G,
+               AXI_BASE_ADDR_G      => AXIL_CONFIG_C(i).baseAddr)
+            port map (
+               -- Trigger Interface
+               trigger         => remoteTriggers(i),
+               triggerCode     => triggerCodes(i),
+               -- QPLL Interface
+               qpllLock        => qpllLock(i),
+               qpllClk         => qpllClk(i),
+               qpllRefclk      => qpllRefclk(i),
+               qpllRst         => qpllRst(i),
+               -- PGP Serial Ports
+               pgpRxP          => qsfp0RxP(i),
+               pgpRxN          => qsfp0RxN(i),
+               pgpTxP          => qsfp0TxP(i),
+               pgpTxN          => qsfp0TxN(i),
+               -- Streaming Interface (axilClk domain)
+               pgpIbMaster     => pgpIbMasters(i),
+               pgpIbSlave      => pgpIbSlaves(i),
+               pgpObMasters    => pgpObMasters(i),
+               pgpObSlaves     => pgpObSlaves(i),
+               -- AXI-Lite Interface (axilClk domain)
+               axilClk         => axilClk,
+               axilRst         => axilRst,
+               axilReadMaster  => axilReadMasters(i),
+               axilReadSlave   => axilReadSlaves(i),
+               axilWriteMaster => axilWriteMasters(i),
+               axilWriteSlave  => axilWriteSlaves(i));
+      end generate;
 
-         GEN_PGP3 : if (PGP_TYPE_G = "PGP3") generate
-            U_Lane : entity lcls2_pgp_fw_lib.Pgp3Lane
-               generic map (
-                  TPD_G                => TPD_G,
-                  ROGUE_SIM_EN_G       => ROGUE_SIM_EN_G,
-                  ROGUE_SIM_PORT_NUM_G => (ROGUE_SIM_PORT_NUM_G + i*34),
-                  DMA_AXIS_CONFIG_G    => DMA_AXIS_CONFIG_G,
-                  RATE_G               => RATE_G,
-                  AXIL_CLK_FREQ_G      => AXIL_CLK_FREQ_G,
-                  AXI_BASE_ADDR_G      => AXIL_CONFIG_C(i).baseAddr)
-               port map (
-                  -- Trigger Interface
-                  trigger         => remoteTriggers(i),
-                  triggerCode     => triggerCodes(i),
-                  -- QPLL Interface
-                  qpllLock        => qpllLock(i),
-                  qpllClk         => qpllClk(i),
-                  qpllRefclk      => qpllRefclk(i),
-                  qpllRst         => qpllRst(i),
-                  -- PGP Serial Ports
-                  pgpRxP          => qsfp0RxP(i),
-                  pgpRxN          => qsfp0RxN(i),
-                  pgpTxP          => qsfp0TxP(i),
-                  pgpTxN          => qsfp0TxN(i),
-                  -- Streaming Interface (axilClk domain)
-                  pgpIbMaster     => pgpIbMasters(i),
-                  pgpIbSlave      => pgpIbSlaves(i),
-                  pgpObMasters    => pgpObMasters(i),
-                  pgpObSlaves     => pgpObSlaves(i),
-                  -- AXI-Lite Interface (axilClk domain)
-                  axilClk         => axilClk,
-                  axilRst         => axilRst,
-                  axilReadMaster  => axilReadMasters(i),
-                  axilReadSlave   => axilReadSlaves(i),
-                  axilWriteMaster => axilWriteMasters(i),
-                  axilWriteSlave  => axilWriteSlaves(i));
-         end generate;
-
-         GEN_PGP2b : if (PGP_TYPE_G = "PGP2b") generate
-            U_Lane : entity lcls2_pgp_fw_lib.Pgp2bLane
-               generic map (
-                  TPD_G                => TPD_G,
-                  ROGUE_SIM_EN_G       => ROGUE_SIM_EN_G,
-                  ROGUE_SIM_PORT_NUM_G => (ROGUE_SIM_PORT_NUM_G + i*34),
-                  DMA_AXIS_CONFIG_G    => DMA_AXIS_CONFIG_G,
-                  AXIL_CLK_FREQ_G      => AXIL_CLK_FREQ_G,
-                  AXI_BASE_ADDR_G      => AXIL_CONFIG_C(i).baseAddr)
-               port map (
-                  -- Trigger Interface
-                  trigger         => remoteTriggers(i),
-                  triggerCode     => triggerCodes(i),
-                  -- PGP Serial Ports
-                  pgpRxP          => qsfp0RxP(i),
-                  pgpRxN          => qsfp0RxN(i),
-                  pgpTxP          => qsfp0TxP(i),
-                  pgpTxN          => qsfp0TxN(i),
-                  pgpRefClk       => refClk,
-                  -- Streaming Interface (axilClk domain)
-                  pgpIbMaster     => pgpIbMasters(i),
-                  pgpIbSlave      => pgpIbSlaves(i),
-                  pgpObMasters    => pgpObMasters(i),
-                  pgpObSlaves     => pgpObSlaves(i),
-                  -- AXI-Lite Interface (axilClk domain)
-                  axilClk         => axilClk,
-                  axilRst         => axilRst,
-                  axilReadMaster  => axilReadMasters(i),
-                  axilReadSlave   => axilReadSlaves(i),
-                  axilWriteMaster => axilWriteMasters(i),
-                  axilWriteSlave  => axilWriteSlaves(i));
-         end generate;
-
-      end generate QUAD_A;
-
-      QUAD_B : if (i >= 4) generate
-
-         GEN_PGP3 : if (PGP_TYPE_G = "PGP3") generate
-            U_Lane : entity lcls2_pgp_fw_lib.Pgp3Lane
-               generic map (
-                  TPD_G                => TPD_G,
-                  ROGUE_SIM_EN_G       => ROGUE_SIM_EN_G,
-                  ROGUE_SIM_PORT_NUM_G => (ROGUE_SIM_PORT_NUM_G + i*34),
-                  DMA_AXIS_CONFIG_G    => DMA_AXIS_CONFIG_G,
-                  AXIL_CLK_FREQ_G      => AXIL_CLK_FREQ_G,
-                  AXI_BASE_ADDR_G      => AXIL_CONFIG_C(i).baseAddr)
-               port map (
-                  -- Trigger Interface
-                  trigger         => remoteTriggers(i),
-                  triggerCode     => triggerCodes(i),
-                  -- QPLL Interface
-                  qpllLock        => qpllLock(i),
-                  qpllClk         => qpllClk(i),
-                  qpllRefclk      => qpllRefclk(i),
-                  qpllRst         => qpllRst(i),
-                  -- PGP Serial Ports
-                  pgpRxP          => qsfp1RxP(i-4),
-                  pgpRxN          => qsfp1RxN(i-4),
-                  pgpTxP          => qsfp1TxP(i-4),
-                  pgpTxN          => qsfp1TxN(i-4),
-                  -- Streaming Interface (axilClk domain)
-                  pgpIbMaster     => pgpIbMasters(i),
-                  pgpIbSlave      => pgpIbSlaves(i),
-                  pgpObMasters    => pgpObMasters(i),
-                  pgpObSlaves     => pgpObSlaves(i),
-                  -- AXI-Lite Interface (axilClk domain)
-                  axilClk         => axilClk,
-                  axilRst         => axilRst,
-                  axilReadMaster  => axilReadMasters(i),
-                  axilReadSlave   => axilReadSlaves(i),
-                  axilWriteMaster => axilWriteMasters(i),
-                  axilWriteSlave  => axilWriteSlaves(i));
-         end generate;
-
-         GEN_PGP2b : if (PGP_TYPE_G = "PGP2b") generate
-            U_Lane : entity lcls2_pgp_fw_lib.Pgp2bLane
-               generic map (
-                  TPD_G                => TPD_G,
-                  ROGUE_SIM_EN_G       => ROGUE_SIM_EN_G,
-                  ROGUE_SIM_PORT_NUM_G => (ROGUE_SIM_PORT_NUM_G + i*34),
-                  DMA_AXIS_CONFIG_G    => DMA_AXIS_CONFIG_G,
-                  AXIL_CLK_FREQ_G      => AXIL_CLK_FREQ_G,
-                  AXI_BASE_ADDR_G      => AXIL_CONFIG_C(i).baseAddr)
-               port map (
-                  -- Trigger Interface
-                  trigger         => remoteTriggers(i),
-                  triggerCode     => triggerCodes(i),
-                  -- PGP Serial Ports
-                  pgpRxP          => qsfp1RxP(i-4),
-                  pgpRxN          => qsfp1RxN(i-4),
-                  pgpTxP          => qsfp1TxP(i-4),
-                  pgpTxN          => qsfp1TxN(i-4),
-                  pgpRefClk       => refClk,
-                  -- Streaming Interface (axilClk domain)
-                  pgpIbMaster     => pgpIbMasters(i),
-                  pgpIbSlave      => pgpIbSlaves(i),
-                  pgpObMasters    => pgpObMasters(i),
-                  pgpObSlaves     => pgpObSlaves(i),
-                  -- AXI-Lite Interface (axilClk domain)
-                  axilClk         => axilClk,
-                  axilRst         => axilRst,
-                  axilReadMaster  => axilReadMasters(i),
-                  axilReadSlave   => axilReadSlaves(i),
-                  axilWriteMaster => axilWriteMasters(i),
-                  axilWriteSlave  => axilWriteSlaves(i));
-         end generate;
-
-      end generate QUAD_B;
+      GEN_PGP2b : if (PGP_TYPE_G = "PGP2b") generate
+         U_Lane : entity lcls2_pgp_fw_lib.Pgp2bLane
+            generic map (
+               TPD_G                => TPD_G,
+               ROGUE_SIM_EN_G       => ROGUE_SIM_EN_G,
+               ROGUE_SIM_PORT_NUM_G => (ROGUE_SIM_PORT_NUM_G + i*34),
+               DMA_AXIS_CONFIG_G    => DMA_AXIS_CONFIG_G,
+               AXIL_CLK_FREQ_G      => AXIL_CLK_FREQ_G,
+               AXI_BASE_ADDR_G      => AXIL_CONFIG_C(i).baseAddr)
+            port map (
+               -- Trigger Interface
+               trigger         => remoteTriggers(i),
+               triggerCode     => triggerCodes(i),
+               -- PGP Serial Ports
+               pgpRxP          => qsfp0RxP(i),
+               pgpRxN          => qsfp0RxN(i),
+               pgpTxP          => qsfp0TxP(i),
+               pgpTxN          => qsfp0TxN(i),
+               pgpRefClk       => refClk,
+               -- Streaming Interface (axilClk domain)
+               pgpIbMaster     => pgpIbMasters(i),
+               pgpIbSlave      => pgpIbSlaves(i),
+               pgpObMasters    => pgpObMasters(i),
+               pgpObSlaves     => pgpObSlaves(i),
+               -- AXI-Lite Interface (axilClk domain)
+               axilClk         => axilClk,
+               axilRst         => axilRst,
+               axilReadMaster  => axilReadMasters(i),
+               axilReadSlave   => axilReadSlaves(i),
+               axilWriteMaster => axilWriteMasters(i),
+               axilWriteSlave  => axilWriteSlaves(i));
+      end generate;
 
    end generate GEN_LANE;
+
+   SIM_GUARD_0 : if (not ROGUE_SIM_EN_G) generate
+      GEN_DUMMY : if (NUM_PGP_LANES_G < 4) generate
+         U_QSFP1 : entity surf.Gthe3ChannelDummy
+            generic map (
+               TPD_G   => TPD_G,
+               WIDTH_G => 4-NUM_PGP_LANES_G)
+            port map (
+               refClk => axilClk,
+               gtRxP  => qsfp0RxP(3 downto NUM_PGP_LANES_G),
+               gtRxN  => qsfp0RxN(3 downto NUM_PGP_LANES_G),
+               gtTxP  => qsfp0TxP(3 downto NUM_PGP_LANES_G),
+               gtTxN  => qsfp0TxN(3 downto NUM_PGP_LANES_G));
+      end generate GEN_DUMMY;
+   end generate SIM_GUARD_0;
 
    ------------------
    -- Timing Receiver
    ------------------
-   U_TimingRx : entity lcls2_pgp_fw_lib.SlacPgpCardG4TimingRx
+   U_TimingRx : entity lcls2_pgp_fw_lib.TimingRx
       generic map (
          TPD_G               => TPD_G,
+         USE_GT_REFCLK_G     => true,  -- TRUE: refClkP/N
          SIMULATION_G        => ROGUE_SIM_EN_G,
          DMA_AXIS_CONFIG_G   => DMA_AXIS_CONFIG_G,
          AXIL_CLK_FREQ_G     => AXIL_CLK_FREQ_G,
@@ -439,12 +358,14 @@ begin
          -- GT Serial Ports
          refClkP               => sfpRefClkP,
          refClkN               => sfpRefClkN,
-         timingRxP             => sfpRxP,
-         timingRxN             => sfpRxN,
-         timingTxP             => sfpTxP,
-         timingTxN             => sfpTxN);
+         timingRxP             => qsfp1RxP(1 downto 0),
+         timingRxN             => qsfp1RxN(1 downto 0),
+         timingTxP             => qsfp1TxP(1 downto 0),
+         timingTxN             => qsfp1TxN(1 downto 0));
 
+   --------------------------------
    -- Feed triggers directly to PGP
+   --------------------------------
    TRIGGER_GEN : for i in NUM_PGP_LANES_G-1 downto 0 generate
       remoteTriggersComb(i) <= iTriggerData(i).valid and iTriggerData(i).l0Accept;
       triggerCodes(i)       <= "000" & iTriggerData(i).l0Tag;
@@ -459,5 +380,31 @@ begin
          reg_o => remoteTriggers);      -- [out]
 
    triggerData <= iTriggerData;
+
+   --------------------
+   -- Unused QSFP Links
+   --------------------
+   SIM_GUARD_1 : if (not ROGUE_SIM_EN_G) generate
+      U_QSFP1 : entity surf.Gthe3ChannelDummy
+         generic map (
+            TPD_G   => TPD_G,
+            WIDTH_G => 2)
+         port map (
+            refClk => axilClk,
+            gtRxP  => qsfp1RxP(3 downto 2),
+            gtRxN  => qsfp1RxN(3 downto 2),
+            gtTxP  => qsfp1TxP(3 downto 2),
+            gtTxN  => qsfp1TxN(3 downto 2));
+      U_SFP : entity surf.Gthe3ChannelDummy
+         generic map (
+            TPD_G   => TPD_G,
+            WIDTH_G => 1)
+         port map (
+            refClk   => axilClk,
+            gtRxP(0) => sfpRxP,
+            gtRxN(0) => sfpRxN,
+            gtTxP(0) => sfpTxP,
+            gtTxN(0) => sfpTxN);
+   end generate SIM_GUARD_1;
 
 end mapping;

@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- File       : Pgp3Lane.vhd
+-- File       : Pgp4Lane.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -------------------------------------------------------------------------------
 -- This file is part of LCLS2 PGP Firmware Library'.
@@ -21,11 +21,11 @@ library surf;
 use surf.StdRtlPkg.all;
 use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
-use surf.Pgp3Pkg.all;
+use surf.Pgp4Pkg.all;
 
 library lcls2_pgp_fw_lib;
 
-entity Pgp3Lane is
+entity Pgp4Lane is
    generic (
       TPD_G                : time                        := 1 ns;
       ROGUE_SIM_EN_G       : boolean                     := false;
@@ -60,9 +60,9 @@ entity Pgp3Lane is
       axilReadSlave   : out AxiLiteReadSlaveType;
       axilWriteMaster : in  AxiLiteWriteMasterType;
       axilWriteSlave  : out AxiLiteWriteSlaveType);
-end Pgp3Lane;
+end Pgp4Lane;
 
-architecture mapping of Pgp3Lane is
+architecture mapping of Pgp4Lane is
 
    constant AXIS_CLK_FREQ_C : real :=
       ite(RATE_G = "10.3125Gbps", (10.3125E+9/66.0),
@@ -82,13 +82,13 @@ architecture mapping of Pgp3Lane is
    signal pgpRst : sl;
    signal wdtRst : sl;
 
-   signal pgpTxIn      : Pgp3TxInType := PGP3_TX_IN_INIT_C;
-   signal pgpTxOut     : Pgp3TxOutType;
+   signal pgpTxIn      : Pgp4TxInType := PGP4_TX_IN_INIT_C;
+   signal pgpTxOut     : Pgp4TxOutType;
    signal pgpTxMasters : AxiStreamMasterArray(3 downto 0);
    signal pgpTxSlaves  : AxiStreamSlaveArray(3 downto 0);
 
-   signal pgpRxIn      : Pgp3RxInType := PGP3_RX_IN_INIT_C;
-   signal pgpRxOut     : Pgp3RxOutType;
+   signal pgpRxIn      : Pgp4RxInType := PGP4_RX_IN_INIT_C;
+   signal pgpRxOut     : Pgp4RxOutType;
    signal pgpRxMasters : AxiStreamMasterArray(3 downto 0);
    signal pgpRxCtrl    : AxiStreamCtrlArray(3 downto 0);
    signal pgpRxSlaves  : AxiStreamSlaveArray(3 downto 0);
@@ -156,7 +156,7 @@ begin
    -- PGP Core
    -----------
    REAL_PGP : if (not ROGUE_SIM_EN_G) generate
-      U_Pgp : entity surf.Pgp3GthUs
+      U_Pgp : entity surf.Pgp4GthUs
          generic map (
             TPD_G              => TPD_G,
             RATE_G             => RATE_G,
@@ -252,7 +252,7 @@ begin
          COMMON_CLK_G     => false,
          AXIS_CLK_FREQ_G  => AXIS_CLK_FREQ_C,
          AXIS_NUM_SLOTS_G => 4,
-         AXIS_CONFIG_G    => PGP3_AXIS_CONFIG_C)
+         AXIS_CONFIG_G    => PGP4_AXIS_CONFIG_C)
       port map(
          -- AXIS Stream Interface
          axisClk          => pgpClk,
@@ -274,7 +274,7 @@ begin
       generic map (
          TPD_G            => TPD_G,
          APP_AXI_CONFIG_G => DMA_AXIS_CONFIG_G,
-         PHY_AXI_CONFIG_G => PGP3_AXIS_CONFIG_C)
+         PHY_AXI_CONFIG_G => PGP4_AXIS_CONFIG_C)
       port map (
          -- AXIS Interface (axisClk domain)
          axisClk      => axilClk,
@@ -297,7 +297,7 @@ begin
          TPD_G            => TPD_G,
          ROGUE_SIM_EN_G   => ROGUE_SIM_EN_G,
          APP_AXI_CONFIG_G => DMA_AXIS_CONFIG_G,
-         PHY_AXI_CONFIG_G => PGP3_AXIS_CONFIG_C)
+         PHY_AXI_CONFIG_G => PGP4_AXIS_CONFIG_C)
       port map (
          -- AXIS Interface (axisClk domain)
          axisClk      => axilClk,

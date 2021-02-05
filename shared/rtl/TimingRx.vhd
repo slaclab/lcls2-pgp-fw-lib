@@ -1,5 +1,5 @@
 -------------------------------------------------------------------------------
--- File       : Kcu1500TimingRx.vhd
+-- File       : TimingRx.vhd
 -- Company    : SLAC National Accelerator Laboratory
 -------------------------------------------------------------------------------
 -- This file is part of LCLS2 PGP Firmware Library'.
@@ -33,10 +33,11 @@ use l2si_core.L2SiPkg.all;
 
 library lcls2_pgp_fw_lib;
 
-entity Kcu1500TimingRx is
+entity TimingRx is
    generic (
       TPD_G               : time    := 1 ns;
       SIMULATION_G        : boolean := false;
+      USE_GT_REFCLK_G     : boolean := false; -- False: userClk25/userRst25, True: refClkP/N
       AXIL_CLK_FREQ_G     : real    := 156.25E+6;  -- units of Hz
       DMA_AXIS_CONFIG_G   : AxiStreamConfigType;
       AXI_BASE_ADDR_G     : slv(31 downto 0);
@@ -45,8 +46,8 @@ entity Kcu1500TimingRx is
       EN_LCLS_II_TIMING_G : boolean := true);
    port (
       -- Reference Clock and Reset
-      userClk25   : in  sl;
-      userRst25   : in  sl;
+      userClk25   : in  sl := '0'; -- USE_GT_REFCLK_G = FALSE
+      userRst25   : in  sl := '1'; -- USE_GT_REFCLK_G = FALSE
       -- Trigger Interface
       triggerClk  : in  sl;
       triggerRst  : in  sl;
@@ -74,13 +75,15 @@ entity Kcu1500TimingRx is
       axilWriteMaster       : in  AxiLiteWriteMasterType;
       axilWriteSlave        : out AxiLiteWriteSlaveType;
       -- GT Serial Ports
+      refClkP               : in  slv(1 downto 0) := "00"; -- USE_GT_REFCLK_G = TRUE
+      refClkN               : in  slv(1 downto 0) := "11"; -- USE_GT_REFCLK_G = TRUE    
       timingRxP             : in  slv(1 downto 0);
       timingRxN             : in  slv(1 downto 0);
       timingTxP             : out slv(1 downto 0);
       timingTxN             : out slv(1 downto 0));
-end Kcu1500TimingRx;
+end TimingRx;
 
-architecture mapping of Kcu1500TimingRx is
+architecture mapping of TimingRx is
 
    constant NUM_AXIL_MASTERS_C : positive := 6;
 
@@ -128,6 +131,7 @@ architecture mapping of Kcu1500TimingRx is
    signal initWriteSlave  : AxiLiteWriteSlaveType;
 
    signal mmcmRst      : sl;
+   signal gtediv2      : slv(1 downto 0);
    signal refClk       : slv(1 downto 0);
    signal refClkDiv2   : slv(1 downto 0);
    signal refRst       : slv(1 downto 0);
@@ -194,55 +198,100 @@ begin
          asyncRst => timingRxRstTmp,    -- [in]
          syncRst  => timingRxRst);      -- [out]
 
-   -------------------------
-   -- Reference LCLS-I Clock
-   -------------------------
-   U_238MHz : entity surf.ClockManagerUltraScale
-      generic map(
-         TPD_G              => TPD_G,
-         SIMULATION_G       => SIMULATION_G,
-         TYPE_G             => "MMCM",
-         INPUT_BUFG_G       => false,
-         FB_BUFG_G          => true,
-         RST_IN_POLARITY_G  => '1',
-         NUM_CLOCKS_G       => 1,
-         -- MMCM attributes
-         BANDWIDTH_G        => "OPTIMIZED",
-         CLKIN_PERIOD_G     => 40.0,    -- 25 MHz
-         DIVCLK_DIVIDE_G    => 1,       -- 25 MHz = 25MHz/1
-         CLKFBOUT_MULT_F_G  => 29.750,  -- 743.75 MHz = 25 MHz x 29.75
-         CLKOUT0_DIVIDE_F_G => 3.125)   -- 238 MHz = 743.75 MHz/3.125
-      port map(
-         clkIn     => userClk25,
-         rstIn     => mmcmRst,
-         clkOut(0) => refClk(0),
-         rstOut(0) => refRst(0),
-         locked    => mmcmLocked(0));
+   GEN_MMCM : if (not USE_GT_REFCLK_G) generate
+      
+      -------------------------
+      -- Reference LCLS-I Clock
+      -------------------------
+      U_238MHz : entity surf.ClockManagerUltraScale
+         generic map(
+            TPD_G              => TPD_G,
+            SIMULATION_G       => SIMULATION_G,
+            TYPE_G             => "MMCM",
+            INPUT_BUFG_G       => false,
+            FB_BUFG_G          => true,
+            RST_IN_POLARITY_G  => '1',
+            NUM_CLOCKS_G       => 1,
+            -- MMCM attributes
+            BANDWIDTH_G        => "OPTIMIZED",
+            CLKIN_PERIOD_G     => 40.0,    -- 25 MHz
+            DIVCLK_DIVIDE_G    => 1,       -- 25 MHz = 25MHz/1
+            CLKFBOUT_MULT_F_G  => 29.750,  -- 743.75 MHz = 25 MHz x 29.75
+            CLKOUT0_DIVIDE_F_G => 3.125)   -- 238 MHz = 743.75 MHz/3.125
+         port map(
+            clkIn     => userClk25,
+            rstIn     => mmcmRst,
+            clkOut(0) => refClk(0),
+            rstOut(0) => refRst(0),
+            locked    => mmcmLocked(0));
 
-   --------------------------
-   -- Reference LCLS-II Clock
-   --------------------------
-   U_371MHz : entity surf.ClockManagerUltraScale
-      generic map(
-         TPD_G              => TPD_G,
-         SIMULATION_G       => SIMULATION_G,
-         TYPE_G             => "MMCM",
-         INPUT_BUFG_G       => false,
-         FB_BUFG_G          => true,
-         RST_IN_POLARITY_G  => '1',
-         NUM_CLOCKS_G       => 1,
-         -- MMCM attributes
-         BANDWIDTH_G        => "HIGH",
-         CLKIN_PERIOD_G     => 40.0,    -- 25 MHz
-         DIVCLK_DIVIDE_G    => 1,       -- 25 MHz = 25MHz/1
-         CLKFBOUT_MULT_F_G  => 52.000,  -- 1.3 GHz = 25 MHz x 52
-         CLKOUT0_DIVIDE_F_G => 3.500)   -- 371.429 MHz = 1.3 GHz/3.5
-      port map(
-         clkIn     => userClk25,
-         rstIn     => mmcmRst,
-         clkOut(0) => refClk(1),
-         rstOut(0) => refRst(1),
-         locked    => mmcmLocked(1));
+      --------------------------
+      -- Reference LCLS-II Clock
+      --------------------------
+      U_371MHz : entity surf.ClockManagerUltraScale
+         generic map(
+            TPD_G              => TPD_G,
+            SIMULATION_G       => SIMULATION_G,
+            TYPE_G             => "MMCM",
+            INPUT_BUFG_G       => false,
+            FB_BUFG_G          => true,
+            RST_IN_POLARITY_G  => '1',
+            NUM_CLOCKS_G       => 1,
+            -- MMCM attributes
+            BANDWIDTH_G        => "HIGH",
+            CLKIN_PERIOD_G     => 40.0,    -- 25 MHz
+            DIVCLK_DIVIDE_G    => 1,       -- 25 MHz = 25MHz/1
+            CLKFBOUT_MULT_F_G  => 52.000,  -- 1.3 GHz = 25 MHz x 52
+            CLKOUT0_DIVIDE_F_G => 3.500)   -- 371.429 MHz = 1.3 GHz/3.5
+         port map(
+            clkIn     => userClk25,
+            rstIn     => mmcmRst,
+            clkOut(0) => refClk(1),
+            rstOut(0) => refRst(1),
+            locked    => mmcmLocked(1));
+
+   end generate GEN_MMCM;
+
+   GEN_REFCLK : if (USE_GT_REFCLK_G) generate
+
+      GEN_GT_VEC :
+      for i in 1 downto 0 generate
+
+         U_IBUFDS_GTE3 : IBUFDS_GTE3
+            generic map (
+               REFCLK_EN_TX_PATH  => '0',
+               REFCLK_HROW_CK_SEL => "00",  -- 2'b00: ODIV2 = O
+               REFCLK_ICNTL_RX    => "00")
+            port map (
+               I     => refClkP(i),
+               IB    => refClkN(i),
+               CEB   => '0',
+               ODIV2 => gtediv2(i),
+               O     => open);
+
+         U_BUFG_GT : BUFG_GT
+            port map (
+               I       => gtediv2(i),
+               CE      => '1',
+               CEMASK  => '1',
+               CLR     => '0',
+               CLRMASK => '1',
+               DIV     => "000",           -- Divide by 1
+               O       => refClk(i));
+
+         U_RstSync : entity surf.RstSync
+            generic map (
+               TPD_G => TPD_G)
+            port map (
+               clk      => refClk(i),
+               asyncRst => mmcmRst,
+               syncRst  => refRst(i));
+
+         mmcmLocked(i) <= not(refRst(i));
+
+      end generate GEN_GT_VEC;
+
+   end generate GEN_REFCLK;
 
    -----------------------------------------------
    -- Power Up Initialization of the Timing RX PHY
