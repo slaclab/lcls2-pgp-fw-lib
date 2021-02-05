@@ -18,7 +18,7 @@ class Root(pr.Root):
                  initRead = True,            # Read all registers at start of the system
                  numLanes = 4,               # Number of PGP lanes
                  enVcMask = 0xD,             # Enable lane mask: Don't connect data stream (VC1) by default because intended for C++ process
-                 pgp3     = False,           # Not used here but capture so it doesn't go into super call
+                 pgp4     = False,           # Not used here but capture so it doesn't go into super call
                  **kwargs):
 
         super().__init__(**kwargs)

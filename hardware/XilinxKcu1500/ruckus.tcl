@@ -6,10 +6,10 @@ loadSource      -lib lcls2_pgp_fw_lib -dir  "$::DIR_PATH/rtl"
 loadConstraints -path "$::DIR_PATH/xdc/Kcu1500Hsio.xdc"
 
 # Case the timing on communication protocol
-if { [info exists ::env(INCLUDE_PGP3_10G)] != 1 || $::env(INCLUDE_PGP3_10G) == 0 } {
+if { [info exists ::env(INCLUDE_PGP4_10G)] != 1 || $::env(INCLUDE_PGP4_10G) == 0 } {
    loadConstraints -path "$::DIR_PATH/xdc/Pgp2bTiming.xdc"
 } else {
-   loadConstraints -path "$::DIR_PATH/xdc/Pgp3Timing.xdc"
+   loadConstraints -path "$::DIR_PATH/xdc/Pgp4Timing.xdc"
 }
 
 # Load shared source code

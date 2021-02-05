@@ -15,13 +15,12 @@ import LclsTimingCore
 
 import l2si_core
 
-import lcls2_pgp_fw_lib.hardware.shared as shared
+import lcls2_pgp_fw_lib.shared as shared
 
 class TimingRx(pr.Device):
     def __init__(
             self,
             numLanes = 4,
-            dualGTH  = True,
             enLclsI  = False,
             enLclsII = True,
             **kwargs):
@@ -34,13 +33,12 @@ class TimingRx(pr.Device):
             hidden = True,
         ))
 
-        if dualGTH:
-            self.add(LclsTimingCore.GthRxAlignCheck(
-                name   = "GthRxAlignCheck[1]",
-                offset = 0x0001_0000,
-                expand = False,
-                hidden = True,
-            ))
+        self.add(LclsTimingCore.GthRxAlignCheck(
+            name   = "GthRxAlignCheck[1]",
+            offset = 0x0001_0000,
+            expand = False,
+            hidden = True,
+        ))
 
         # TimingCore
         self.add(LclsTimingCore.TimingFrameRx(
@@ -59,7 +57,6 @@ class TimingRx(pr.Device):
             numDetectors = numLanes,
             enLclsI      = enLclsI,
             enLclsII     = enLclsII,
-            # enableDeps   = [self.TimingFrameRx.RxLinkUp], # Only allow access if RX link up due to "Synchronize AXI-Lite bus to timingRxClk"
             expand       = True,
         ))
 

@@ -51,7 +51,7 @@ entity Kcu1500Hsio is
       ROGUE_SIM_EN_G                 : boolean                     := false;
       ROGUE_SIM_PORT_NUM_G           : natural range 1024 to 49151 := 7000;
       DMA_AXIS_CONFIG_G              : AxiStreamConfigType;
-      PGP_TYPE_G                     : string                      := "PGP2b";  -- PGP2b@3.125Gb/s, PGP3@RATE_G
+      PGP_TYPE_G                     : string                      := "PGP2b";  -- PGP2b@3.125Gb/s, PGP4@RATE_G
       RATE_G                         : string                      := "10.3125Gbps";  -- or "6.25Gbps" or "3.125Gbps"
       AXIL_CLK_FREQ_G                : real                        := 156.25E+6;  -- units of Hz
       AXI_BASE_ADDR_G                : slv(31 downto 0)            := x"0080_0000";
@@ -171,8 +171,8 @@ architecture mapping of Kcu1500Hsio is
 
 begin
 
-   assert ((PGP_TYPE_G = "PGP2b") or (PGP_TYPE_G = "PGP3"))
-      report "PGP_TYPE_G must be either PGP2b or PGP3" severity failure;
+   assert ((PGP_TYPE_G = "PGP2b") or (PGP_TYPE_G = "PGP4"))
+      report "PGP_TYPE_G must be either PGP2b or PGP4" severity failure;
 
    ---------------------
    -- AXI-Lite Crossbar
@@ -227,7 +227,7 @@ begin
 
    end generate GEN_REFCLK;
 
-   GEN_PGP3_QPLL : if (PGP_TYPE_G = "PGP3") generate
+   GEN_PGP4_QPLL : if (PGP_TYPE_G = "PGP4") generate
       U_QPLL : entity surf.Pgp3GthUsQpll
          generic map (
             TPD_G  => TPD_G,
@@ -250,8 +250,8 @@ begin
    GEN_LANE :
    for i in NUM_PGP_LANES_G-1 downto 0 generate
 
-      GEN_PGP3 : if (PGP_TYPE_G = "PGP3") generate
-         U_Lane : entity lcls2_pgp_fw_lib.Pgp3Lane
+      GEN_PGP4 : if (PGP_TYPE_G = "PGP4") generate
+         U_Lane : entity lcls2_pgp_fw_lib.Pgp4Lane
             generic map (
                TPD_G                => TPD_G,
                ROGUE_SIM_EN_G       => ROGUE_SIM_EN_G,
@@ -323,26 +323,28 @@ begin
 
    end generate GEN_LANE;
 
---   SIM_GUARD_0 : if (not ROGUE_SIM_EN_G) generate
-   GEN_DUMMY : if (NUM_PGP_LANES_G < 4) generate
-      U_QSFP1 : entity surf.Gthe3ChannelDummy
-         generic map (
-            TPD_G   => TPD_G,
-            WIDTH_G => 4-NUM_PGP_LANES_G)
-         port map (
-            refClk => axilClk,
-            gtRxP  => qsfp0RxP(3 downto NUM_PGP_LANES_G),
-            gtRxN  => qsfp0RxN(3 downto NUM_PGP_LANES_G),
-            gtTxP  => qsfp0TxP(3 downto NUM_PGP_LANES_G),
-            gtTxN  => qsfp0TxN(3 downto NUM_PGP_LANES_G));
-   end generate GEN_DUMMY;
---   end generate SIM_GUARD_0;
+   SIM_GUARD_0 : if (not ROGUE_SIM_EN_G) generate
+      GEN_DUMMY : if (NUM_PGP_LANES_G < 4) generate
+         U_QSFP1 : entity surf.Gthe3ChannelDummy
+            generic map (
+               TPD_G   => TPD_G,
+               WIDTH_G => 4-NUM_PGP_LANES_G)
+            port map (
+               refClk => axilClk,
+               gtRxP  => qsfp0RxP(3 downto NUM_PGP_LANES_G),
+               gtRxN  => qsfp0RxN(3 downto NUM_PGP_LANES_G),
+               gtTxP  => qsfp0TxP(3 downto NUM_PGP_LANES_G),
+               gtTxN  => qsfp0TxN(3 downto NUM_PGP_LANES_G));
+      end generate GEN_DUMMY;
+   end generate SIM_GUARD_0;
+
    ------------------
    -- Timing Receiver
    ------------------
-   U_TimingRx : entity lcls2_pgp_fw_lib.Kcu1500TimingRx
+   U_TimingRx : entity lcls2_pgp_fw_lib.TimingRx
       generic map (
          TPD_G               => TPD_G,
+         USE_GT_REFCLK_G     => false,  -- FALSE: userClk25/userRst25
          SIMULATION_G        => ROGUE_SIM_EN_G,
          DMA_AXIS_CONFIG_G   => DMA_AXIS_CONFIG_G,
          AXIL_CLK_FREQ_G     => AXIL_CLK_FREQ_G,
@@ -384,7 +386,9 @@ begin
          timingTxP             => qsfp1TxP(1 downto 0),
          timingTxN             => qsfp1TxN(1 downto 0));
 
-   -- Feed l0 triggers directly to PGP
+   --------------------------------
+   -- Feed triggers directly to PGP
+   --------------------------------
    TRIGGER_GEN : for i in NUM_PGP_LANES_G-1 downto 0 generate
       remoteTriggersComb(i) <= iTriggerData(i).valid and iTriggerData(i).l0Accept;
       triggerCodes(i)       <= "000" & iTriggerData(i).l0Tag;
@@ -398,23 +402,22 @@ begin
          sig_i => remoteTriggersComb,   -- [in]
          reg_o => remoteTriggers);      -- [out]
 
-
    triggerData <= iTriggerData;
 
    --------------------
    -- Unused QSFP Links
    --------------------
---   SIM_GUARD : if (not ROGUE_SIM_EN_G) generate
-   U_QSFP1 : entity surf.Gthe3ChannelDummy
-      generic map (
-         TPD_G   => TPD_G,
-         WIDTH_G => 2)
-      port map (
-         refClk => axilClk,
-         gtRxP  => qsfp1RxP(3 downto 2),
-         gtRxN  => qsfp1RxN(3 downto 2),
-         gtTxP  => qsfp1TxP(3 downto 2),
-         gtTxN  => qsfp1TxN(3 downto 2));
---   end generate SIM_GUARD;
+   SIM_GUARD_1 : if (not ROGUE_SIM_EN_G) generate
+      U_QSFP1 : entity surf.Gthe3ChannelDummy
+         generic map (
+            TPD_G   => TPD_G,
+            WIDTH_G => 2)
+         port map (
+            refClk => axilClk,
+            gtRxP  => qsfp1RxP(3 downto 2),
+            gtRxN  => qsfp1RxN(3 downto 2),
+            gtTxP  => qsfp1TxP(3 downto 2),
+            gtTxN  => qsfp1TxN(3 downto 2));
+   end generate SIM_GUARD_1;
 
 end mapping;
