@@ -75,7 +75,7 @@ begin
             -- FIFO configurations
             MEMORY_TYPE_G       => "block",
             GEN_SYNC_FIFO_G     => false,
-            FIFO_ADDR_WIDTH_G   => 9,
+            FIFO_ADDR_WIDTH_G   => 10,
             FIFO_FIXED_THRESH_G => true,
             FIFO_PAUSE_THRESH_G => 128,
             -- AXI Stream Port Configurations

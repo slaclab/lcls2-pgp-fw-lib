@@ -19,6 +19,6 @@ class RogueStreams(object):
                  pgp4     = False,
                  **kwargs):
 
-        trigIndex = 32 if pgp3 else 8
+        trigIndex = 32 if pgp4 else 8
         self.pgpStreams = [[rogue.interfaces.stream.TcpClient(host, basePort+(34*lane)+2*vc) for vc in range(4)] for lane in range(numLanes)]
         self.pgpTriggers = [pyrogue.interfaces.simulation.SideBandSim(host, basePort+(34*lane)+trigIndex) for lane in range(numLanes)]
