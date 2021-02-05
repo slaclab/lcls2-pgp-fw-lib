@@ -15,10 +15,7 @@ setup (
    name='lcls2_pgp_fw_lib',
    version=ver,
    packages=['lcls2_pgp_fw_lib',
-             'lcls2_pgp_fw_lib/hardware/',
-             'lcls2_pgp_fw_lib/hardware/SlacPgpCardG4',
-             'lcls2_pgp_fw_lib/hardware/XilinxKcu1500',
-             'lcls2_pgp_fw_lib/hardware/shared',],
+             'lcls2_pgp_fw_lib/shared',],
    package_dir={'':'python'},
 )
 
