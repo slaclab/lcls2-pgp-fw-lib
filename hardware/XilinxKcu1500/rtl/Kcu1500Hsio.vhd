@@ -52,7 +52,7 @@ entity Kcu1500Hsio is
       ROGUE_SIM_PORT_NUM_G           : natural range 1024 to 49151 := 7000;
       DMA_AXIS_CONFIG_G              : AxiStreamConfigType;
       PGP_TYPE_G                     : string                      := "PGP2b";  -- PGP2b@3.125Gb/s, PGP4@RATE_G
-      RATE_G                         : string                      := "10.3125Gbps";  -- or "6.25Gbps" or "3.125Gbps"
+      RATE_G                         : string                      := "6.25Gbps";  -- or "10.3125Gbps" or "3.125Gbps"
       AXIL_CLK_FREQ_G                : real                        := 156.25E+6;  -- units of Hz
       AXI_BASE_ADDR_G                : slv(31 downto 0)            := x"0080_0000";
       NUM_PGP_LANES_G                : integer range 1 to 4        := 4;

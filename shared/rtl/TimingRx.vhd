@@ -76,7 +76,7 @@ entity TimingRx is
       axilWriteSlave        : out AxiLiteWriteSlaveType;
       -- GT Serial Ports
       refClkP               : in  slv(1 downto 0) := "00"; -- USE_GT_REFCLK_G = TRUE
-      refClkN               : in  slv(1 downto 0) := "11"; -- USE_GT_REFCLK_G = TRUE    
+      refClkN               : in  slv(1 downto 0) := "11"; -- USE_GT_REFCLK_G = TRUE
       timingRxP             : in  slv(1 downto 0);
       timingRxN             : in  slv(1 downto 0);
       timingTxP             : out slv(1 downto 0);
@@ -199,7 +199,7 @@ begin
          syncRst  => timingRxRst);      -- [out]
 
    GEN_MMCM : if (not USE_GT_REFCLK_G) generate
-      
+
       -------------------------
       -- Reference LCLS-I Clock
       -------------------------
