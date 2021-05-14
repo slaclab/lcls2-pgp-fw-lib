@@ -17,7 +17,7 @@ import lcls2_pgp_fw_lib.shared as shared
 class Hsio(pr.Device):
     def __init__(
             self,
-            numLanes    = 4,
+            laneConfig = {0: 'Opal1000'},
             enLclsI     = False,
             enLclsII    = True,
             pgp4        = False,
@@ -26,7 +26,7 @@ class Hsio(pr.Device):
         super().__init__(**kwargs)
 
         # Add PGP Core
-        for i in range(numLanes):
+        for i in laneConfig:
 
             if (pgp4):
                 self.add(pgp.Pgp4AxiL(
@@ -57,5 +57,4 @@ class Hsio(pr.Device):
             offset   = 0x0010_0000,
             enLclsI  = enLclsI,
             enLclsII = enLclsII,
-            numLanes = numLanes,
         ))
