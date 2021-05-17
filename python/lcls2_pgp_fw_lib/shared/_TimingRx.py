@@ -20,7 +20,6 @@ import lcls2_pgp_fw_lib.shared as shared
 class TimingRx(pr.Device):
     def __init__(
             self,
-            numLanes = 4,
             enLclsI  = False,
             enLclsII = True,
             **kwargs):
@@ -54,7 +53,7 @@ class TimingRx(pr.Device):
 
         self.add(l2si_core.TriggerEventManager(
             offset       = 0x0004_0000,
-            numDetectors = numLanes,
+            numDetectors = 4,
             enLclsI      = enLclsI,
             enLclsII     = enLclsII,
             expand       = True,

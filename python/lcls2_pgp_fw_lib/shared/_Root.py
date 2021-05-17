@@ -16,7 +16,6 @@ class Root(pr.Root):
                  dev      = '/dev/datadev_0',# path to PCIe device
                  pollEn   = True,            # Enable automatic polling registers
                  initRead = True,            # Read all registers at start of the system
-                 numLanes = 4,               # Number of PGP lanes
                  enVcMask = 0xD,             # Enable lane mask: Don't connect data stream (VC1) by default because intended for C++ process
                  pgp4     = False,           # Not used here but capture so it doesn't go into super call
                  **kwargs):
@@ -36,7 +35,6 @@ class Root(pr.Root):
         self.HardReset.hidden     = True
         self.CountReset.hidden    = True
         self.ClearLog.hidden      = True
-        self.numLanes              = numLanes
 
         # Enable Init after config
         self.InitAfterConfig._default = True
