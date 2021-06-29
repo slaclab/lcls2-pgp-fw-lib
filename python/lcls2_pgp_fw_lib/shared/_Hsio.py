@@ -40,9 +40,11 @@ class Hsio(pr.Device):
 
             else:
                 self.add(pgp.Pgp2bAxi(
-                    name    = (f'PgpMon[{i}]'),
-                    offset  = (i*0x00010000),
-                    writeEn = True,
+                    name            = (f'PgpMon[{i}]'),
+                    offset          = (i*0x00010000),
+                    statusCountBits = 12,
+                    errorCountBits  = 8,
+                    writeEn         = True,
                 ))
 
             self.add(axi.AxiStreamMonAxiL(
