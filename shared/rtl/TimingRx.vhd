@@ -383,6 +383,7 @@ begin
             generic map (
                TPD_G            => TPD_G,
                EXTREF_G         => false,
+               TXBUF_G          => true,
                AXIL_BASE_ADDR_G => AXIL_CONFIG_C(RX_PHY0_INDEX_C+i).baseAddr,
                ADDR_BITS_G      => 12,
                GTH_DRP_OFFSET_G => x"00001000")
