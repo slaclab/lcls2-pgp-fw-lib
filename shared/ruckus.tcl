@@ -22,3 +22,6 @@ if { [info exists ::env(OVERRIDE_SUBMODULE_LOCKS)] != 1 || $::env(OVERRIDE_SUBMO
 
 # Load local source Code
 loadSource -lib lcls2_pgp_fw_lib -dir "$::DIR_PATH/rtl"
+
+# Load Simulation
+loadSource -lib lcls2_pgp_fw_lib -sim_only -dir "$::DIR_PATH/tb"
