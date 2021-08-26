@@ -68,6 +68,7 @@ class TimingRx(pr.Device):
         def ConfigLclsTimingV1():
             print ( 'ConfigLclsTimingV1()' )
             self.TimingPhyMonitor.UseMiniTpg.set(False)
+            self.TimingPhyMonitor.TxPhyReset.set(1)
             self.TimingFrameRx.ModeSelEn.setDisp('UseClkSel')
             self.TimingFrameRx.RxPllReset.set(1)
             time.sleep(1.0)
@@ -81,6 +82,7 @@ class TimingRx(pr.Device):
         def ConfigLclsTimingV2():
             print ( 'ConfigLclsTimingV2()' )
             self.TimingPhyMonitor.UseMiniTpg.set(False)
+            self.TimingPhyMonitor.TxPhyReset.set(1)
             self.TimingFrameRx.ModeSelEn.setDisp('UseClkSel')
             self.TimingFrameRx.RxPllReset.set(1)
             time.sleep(1.0)
