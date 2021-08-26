@@ -57,7 +57,7 @@ begin
       port map (
          clkP => axilClk,
          rst  => axilRst);
-         
+
    U_userClk25 : entity surf.ClkRst
       generic map (
          CLK_PERIOD_G      => 40 ns,
@@ -65,7 +65,7 @@ begin
          RST_HOLD_TIME_G   => 1000 ns)
       port map (
          clkP => userClk25,
-         rst  => userRst25);         
+         rst  => userRst25);
 
    ------------------
    -- Timing Receiver
@@ -74,7 +74,8 @@ begin
       generic map (
          TPD_G               => TPD_G,
          USE_GT_REFCLK_G     => false,  -- FALSE: userClk25/userRst25
-         SIMULATION_G        => false, -- Using .XCI IP cores
+         SIMULATION_G        => true,
+         BYP_GT_SIM_G        => false, -- FASLE: Using .XCI IP cores
          DMA_AXIS_CONFIG_G   => AXI_STREAM_CONFIG_INIT_C,
          AXIL_CLK_FREQ_G     => 156.25E+6,
          AXI_BASE_ADDR_G     => x"0000_0000",
@@ -92,14 +93,14 @@ begin
          l1Clk                 => axilClk,
          l1Rst                 => axilRst,
          -- Event interface
-         eventRst              => axilClk,              
-         eventClk              => axilRst,              
-         eventTrigMsgMasters   => open,  
-         eventTrigMsgSlaves    => (others => AXI_STREAM_SLAVE_FORCE_C),   
-         eventTrigMsgCtrl      => (others => AXI_STREAM_CTRL_UNUSED_C),     
+         eventRst              => axilClk,
+         eventClk              => axilRst,
+         eventTrigMsgMasters   => open,
+         eventTrigMsgSlaves    => (others => AXI_STREAM_SLAVE_FORCE_C),
+         eventTrigMsgCtrl      => (others => AXI_STREAM_CTRL_UNUSED_C),
          eventTimingMsgMasters => open,
-         eventTimingMsgSlaves  => (others => AXI_STREAM_SLAVE_FORCE_C), 
-         clearReadout          => open,         
+         eventTimingMsgSlaves  => (others => AXI_STREAM_SLAVE_FORCE_C),
+         clearReadout          => open,
          -- AXI-Lite Interface (axilClk domain)
          axilClk               => axilClk,
          axilRst               => axilRst,
