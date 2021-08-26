@@ -29,14 +29,14 @@ class TimingRx(pr.Device):
             name   = "GthRxAlignCheck[0]",
             offset = 0x0000_0000,
             expand = False,
-            hidden = True,
+            hidden = False,
         ))
 
         self.add(LclsTimingCore.GthRxAlignCheck(
             name   = "GthRxAlignCheck[1]",
             offset = 0x0001_0000,
             expand = False,
-            hidden = True,
+            hidden = False,
         ))
 
         # TimingCore
