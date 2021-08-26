@@ -29,14 +29,14 @@ class TimingRx(pr.Device):
             name   = "GthRxAlignCheck[0]",
             offset = 0x0000_0000,
             expand = False,
-            hidden = True,
+            hidden = False,
         ))
 
         self.add(LclsTimingCore.GthRxAlignCheck(
             name   = "GthRxAlignCheck[1]",
             offset = 0x0001_0000,
             expand = False,
-            hidden = True,
+            hidden = False,
         ))
 
         # TimingCore
@@ -68,6 +68,7 @@ class TimingRx(pr.Device):
         def ConfigLclsTimingV1():
             print ( 'ConfigLclsTimingV1()' )
             self.TimingPhyMonitor.UseMiniTpg.set(False)
+            self.TimingPhyMonitor.TxPhyReset()
             self.TimingFrameRx.ModeSelEn.setDisp('UseClkSel')
             self.TimingFrameRx.RxPllReset.set(1)
             time.sleep(1.0)
@@ -81,6 +82,7 @@ class TimingRx(pr.Device):
         def ConfigLclsTimingV2():
             print ( 'ConfigLclsTimingV2()' )
             self.TimingPhyMonitor.UseMiniTpg.set(False)
+            self.TimingPhyMonitor.TxPhyReset()
             self.TimingFrameRx.ModeSelEn.setDisp('UseClkSel')
             self.TimingFrameRx.RxPllReset.set(1)
             time.sleep(1.0)

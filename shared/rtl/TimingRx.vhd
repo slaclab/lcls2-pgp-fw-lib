@@ -37,6 +37,7 @@ entity TimingRx is
    generic (
       TPD_G               : time    := 1 ns;
       SIMULATION_G        : boolean := false;
+      BYP_GT_SIM_G        : boolean := false;
       USE_GT_REFCLK_G     : boolean := false; -- False: userClk25/userRst25, True: refClkP/N
       AXIL_CLK_FREQ_G     : real    := 156.25E+6;  -- units of Hz
       DMA_AXIS_CONFIG_G   : AxiStreamConfigType;
@@ -378,7 +379,7 @@ begin
             S  => useMiniTpg);          -- 1-bit input: Clock select
       --
 
-      REAL_PCIE : if (not SIMULATION_G) generate
+      REAL_PCIE : if (not BYP_GT_SIM_G) generate
          U_GTH : entity lcls_timing_core.TimingGtCoreWrapper
             generic map (
                TPD_G            => TPD_G,
@@ -397,12 +398,15 @@ begin
                stableClk       => axilClk,
                stableRst       => axilRst,
                -- GTH FPGA IO
-               gtRefClk        => refClk(i),
+               gtRefClk        => '0', -- Using GTGREFCLK instead
                gtRefClkDiv2    => refClkDiv2(i),
                gtRxP           => timingRxP(i),
                gtRxN           => timingRxN(i),
                gtTxP           => timingTxP(i),
                gtTxN           => timingTxN(i),
+               -- GTGREFCLK Interface Option
+               gtgRefClk       => refClk(i),
+               cpllRefClkSel   => "111",
                -- Rx ports
                rxControl       => gtRxControl,
                rxStatus        => gtRxStatus(i),
@@ -426,7 +430,7 @@ begin
       end generate;
 
 
-      SIM_PCIE : if (SIMULATION_G) generate
+      SIM_PCIE : if (BYP_GT_SIM_G) generate
 
          axilReadSlaves(RX_PHY0_INDEX_C+i)  <= AXI_LITE_READ_SLAVE_EMPTY_OK_C;
          axilWriteSlaves(RX_PHY0_INDEX_C+i) <= AXI_LITE_WRITE_SLAVE_EMPTY_OK_C;
