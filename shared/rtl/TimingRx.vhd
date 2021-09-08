@@ -38,7 +38,7 @@ entity TimingRx is
       TPD_G               : time    := 1 ns;
       SIMULATION_G        : boolean := false;
       BYP_GT_SIM_G        : boolean := false;
-      USE_GT_REFCLK_G     : boolean := false; -- False: userClk25/userRst25, True: refClkP/N
+      USE_GT_REFCLK_G     : boolean := false;  -- False: userClk25/userRst25, True: refClkP/N
       AXIL_CLK_FREQ_G     : real    := 156.25E+6;  -- units of Hz
       DMA_AXIS_CONFIG_G   : AxiStreamConfigType;
       AXI_BASE_ADDR_G     : slv(31 downto 0);
@@ -47,8 +47,9 @@ entity TimingRx is
       EN_LCLS_II_TIMING_G : boolean := true);
    port (
       -- Reference Clock and Reset
-      userClk25   : in  sl := '0'; -- USE_GT_REFCLK_G = FALSE
-      userRst25   : in  sl := '1'; -- USE_GT_REFCLK_G = FALSE
+      userClk156  : in  sl := '0';      -- USE_GT_REFCLK_G = FALSE
+      userClk25   : in  sl := '0';      -- USE_GT_REFCLK_G = FALSE
+      userRst25   : in  sl := '1';      -- USE_GT_REFCLK_G = FALSE
       -- Trigger Interface
       triggerClk  : in  sl;
       triggerRst  : in  sl;
@@ -76,8 +77,8 @@ entity TimingRx is
       axilWriteMaster       : in  AxiLiteWriteMasterType;
       axilWriteSlave        : out AxiLiteWriteSlaveType;
       -- GT Serial Ports
-      refClkP               : in  slv(1 downto 0) := "00"; -- USE_GT_REFCLK_G = TRUE
-      refClkN               : in  slv(1 downto 0) := "11"; -- USE_GT_REFCLK_G = TRUE
+      refClkP               : in  slv(1 downto 0)                                    := "00";  -- USE_GT_REFCLK_G = TRUE
+      refClkN               : in  slv(1 downto 0)                                    := "11";  -- USE_GT_REFCLK_G = TRUE
       timingRxP             : in  slv(1 downto 0);
       timingRxN             : in  slv(1 downto 0);
       timingTxP             : out slv(1 downto 0);
@@ -239,13 +240,13 @@ begin
             RST_IN_POLARITY_G  => '1',
             NUM_CLOCKS_G       => 1,
             -- MMCM attributes
-            BANDWIDTH_G        => "HIGH",
-            CLKIN_PERIOD_G     => 40.0,    -- 25 MHz
-            DIVCLK_DIVIDE_G    => 1,       -- 25 MHz = 25MHz/1
-            CLKFBOUT_MULT_F_G  => 52.000,  -- 1.3 GHz = 25 MHz x 52
-            CLKOUT0_DIVIDE_F_G => 3.500)   -- 371.429 MHz = 1.3 GHz/3.5
+            BANDWIDTH_G        => "OPTIMIZED",
+            CLKIN_PERIOD_G     => 6.4,     -- 156.25 MHz
+            DIVCLK_DIVIDE_G    => 7,       -- 22.321 MHz = 156.25MHz/7
+            CLKFBOUT_MULT_F_G  => 52.000,  -- 1160.714 MHz = 22.321 MHz x 52
+            CLKOUT0_DIVIDE_F_G => 3.125)   -- 371.429 MHz = 1160.714 MHz/3.125
          port map(
-            clkIn     => userClk25,
+            clkIn     => userClk156,
             rstIn     => mmcmRst,
             clkOut(0) => refClk(1),
             rstOut(0) => refRst(1),
@@ -277,7 +278,7 @@ begin
                CEMASK  => '1',
                CLR     => '0',
                CLRMASK => '1',
-               DIV     => "000",           -- Divide by 1
+               DIV     => "000",        -- Divide by 1
                O       => refClk(i));
 
          U_RstSync : entity surf.RstSync
@@ -398,7 +399,7 @@ begin
                stableClk       => axilClk,
                stableRst       => axilRst,
                -- GTH FPGA IO
-               gtRefClk        => '0', -- Using GTGREFCLK instead
+               gtRefClk        => '0',          -- Using GTGREFCLK instead
                gtRefClkDiv2    => refClkDiv2(i),
                gtRxP           => timingRxP(i),
                gtRxN           => timingRxN(i),

@@ -66,6 +66,7 @@ entity Kcu1500Hsio is
       --  Top Level Interfaces
       ------------------------
       -- Reference Clock and Reset
+      userClk156            : in  sl;
       userClk25             : in  sl;
       userRst25             : in  sl;
       -- AXI-Lite Interface
@@ -354,6 +355,7 @@ begin
          EN_LCLS_II_TIMING_G => EN_LCLS_II_TIMING_G)
       port map (
          -- Reference Clock and Reset
+         userClk156            => userClk156,
          userClk25             => userClk25,
          userRst25             => userRst25,
          -- Trigger interface
