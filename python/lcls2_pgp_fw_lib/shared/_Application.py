@@ -13,20 +13,6 @@ import pyrogue as pr
 
 import surf.protocols.batcher as batcher
 
-class VcDataTap(pr.Device):
-    def __init__(   self,
-            name        = "VcDataTap",
-            description = "Selects the VC used for the AxiStreamBatcherEventBuilder",
-            **kwargs):
-        super().__init__(name=name, description=description, **kwargs)
-
-        self.add(pr.RemoteVariable(
-            name         = 'Tap',
-            offset       = 0x100,
-            bitSize      = 2,
-            mode         = 'RW',
-        ))
-
 class AppLane(pr.Device):
     def __init__(   self,
             name        = "AppLane",
@@ -48,10 +34,20 @@ class AppLane(pr.Device):
             expand       = True,
         ))
 
-        self.add(VcDataTap(
+        self.add(pr.RemoteVariable(
             name         = 'VcDataTap',
-            offset       = 0x1_0000,
-            expand       = True,
+            description  = 'Selects the VC used for the AxiStreamBatcherEventBuilder',
+            offset       = 0x1_0100,
+            bitSize      = 2,
+            mode         = 'RW',
+        ))
+
+        self.add(pr.RemoteVariable(
+            name         = 'XpmPauseThresh',
+            description  = 'Threshold in unit of AXIS words (8 bytes per word).  The XPM is 48byte message. So setting this register to 0x7 would NOT back pressure until there is two message in the pipeline',
+            offset       = 0x1_0104,
+            bitSize      = 9,
+            mode         = 'RW',
         ))
 
 class Application(pr.Device):

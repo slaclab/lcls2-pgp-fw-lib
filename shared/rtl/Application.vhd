@@ -44,6 +44,7 @@ entity Application is
       -- Trigger Event streams (axilClk domain)
       eventTrigMsgMasters   : in  AxiStreamMasterArray(DMA_SIZE_G-1 downto 0);
       eventTrigMsgSlaves    : out AxiStreamSlaveArray(DMA_SIZE_G-1 downto 0);
+      eventTrigMsgCtrl      : out AxiStreamCtrlArray(DMA_SIZE_G-1 downto 0);
       eventTimingMsgMasters : in  AxiStreamMasterArray(DMA_SIZE_G-1 downto 0);
       eventTimingMsgSlaves  : out AxiStreamSlaveArray(DMA_SIZE_G-1 downto 0);
       -- DMA Interface (dmaClk domain)
@@ -113,6 +114,7 @@ begin
             -- Trigger Event streams (axilClk domain)
             eventTrigMsgMaster   => eventTrigMsgMasters(i),
             eventTrigMsgSlave    => eventTrigMsgSlaves(i),
+            eventTrigMsgCtrl     => eventTrigMsgCtrl(i),
             eventTimingMsgMaster => eventTimingMsgMasters(i),
             eventTimingMsgSlave  => eventTimingMsgSlaves(i),
             -- DMA Interface (dmaClk domain)
