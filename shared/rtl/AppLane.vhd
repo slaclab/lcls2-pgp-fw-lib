@@ -58,6 +58,10 @@ end AppLane;
 
 architecture mapping of AppLane is
 
+   constant INI_WRITE_REG_C : Slv32Array(1 downto 0) := (
+      0 => x"0000_0001",                -- default to VC1 as data path VC
+      1 => x"0000_0001");               -- eventTrigPauseThresh
+
    constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(1 downto 0) := genAxiLiteConfig(2, AXI_BASE_ADDR_G, 19, 16);
 
    signal axilWriteMasters : AxiLiteWriteMasterArray(1 downto 0);
@@ -118,9 +122,7 @@ begin
       generic map (
          TPD_G           => TPD_G,
          NUM_WRITE_REG_G => 2,
-         INI_WRITE_REG_G => (
-            0            => x"0000_0001",   -- default to VC1 as data path VC
-            1            => x"0000_0001"))  -- eventTrigPauseThresh
+         INI_WRITE_REG_G => INI_WRITE_REG_C)
       port map (
          -- AXI-Lite Bus
          axiClk         => axilClk,

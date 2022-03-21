@@ -237,7 +237,7 @@ begin
          clkIn     => qsfp0RefClkBuf,
          rstIn     => axilRst,
          -- Clock Outputs
-         clkOut(0) => gtRefClk);   
+         clkOut(0) => gtRefClk);
 
    GEN_PGP4_QPLL : if (PGP_TYPE_G = "PGP4") generate
       U_QPLL : entity surf.Pgp3GtyUsQpll

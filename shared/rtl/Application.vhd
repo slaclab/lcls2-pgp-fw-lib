@@ -22,6 +22,8 @@ use surf.AxiPkg.all;
 use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
 
+library lcls2_pgp_fw_lib;
+
 entity Application is
    generic (
       TPD_G             : time             := 1 ns;
