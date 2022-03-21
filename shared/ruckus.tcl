@@ -1,18 +1,21 @@
 # Load RUCKUS environment and library
 source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
 
-# Check for Vivado version 2018.2 (or later)
-if { [VersionCheck 2018.2 ] < 0 } {
+# Get the family type
+set family [getFpgaArch]
+
+# Check for Vivado version 2021.2 (or later)
+if { [VersionCheck 2021.2 ] < 0 } {
    exit -1
 }
 
 # Check for submodule tagging
 if { [info exists ::env(OVERRIDE_SUBMODULE_LOCKS)] != 1 || $::env(OVERRIDE_SUBMODULE_LOCKS) == 0 } {
-   if { [SubmoduleCheck {axi-pcie-core}    {3.5.3}  ] < 0 } {exit -1}
-   if { [SubmoduleCheck {l2si-core}        {3.3.2}  ] < 0 } {exit -1}
-   if { [SubmoduleCheck {lcls-timing-core} {3.6.0}  ] < 0 } {exit -1}
-   if { [SubmoduleCheck {ruckus}           {2.9.2}  ] < 0 } {exit -1}
-   if { [SubmoduleCheck {surf}             {2.13.0} ] < 0 } {exit -1}
+   if { [SubmoduleCheck {axi-pcie-core}    {3.10.1} ] < 0 } {exit -1}
+   if { [SubmoduleCheck {l2si-core}        {3.3.3}  ] < 0 } {exit -1}
+   if { [SubmoduleCheck {lcls-timing-core} {3.6.3}  ] < 0 } {exit -1}
+   if { [SubmoduleCheck {ruckus}           {4.3.2}  ] < 0 } {exit -1}
+   if { [SubmoduleCheck {surf}             {2.31.0} ] < 0 } {exit -1}
 } else {
    puts "\n\n*********************************************************"
    puts "OVERRIDE_SUBMODULE_LOCKS != 0"
@@ -23,5 +26,15 @@ if { [info exists ::env(OVERRIDE_SUBMODULE_LOCKS)] != 1 || $::env(OVERRIDE_SUBMO
 # Load local source Code
 loadSource -lib lcls2_pgp_fw_lib -dir "$::DIR_PATH/rtl"
 
-# Load Simulation
-loadSource -lib lcls2_pgp_fw_lib -sim_only -dir "$::DIR_PATH/tb"
+if { ${family} eq {kintexu} } {
+   loadSource -lib lcls2_pgp_fw_lib -dir "$::DIR_PATH/rtl/UltraScale"
+   loadSource -lib lcls2_pgp_fw_lib -sim_only -dir "$::DIR_PATH/tb"
+}
+
+if { ${family} eq {kintexuplus} ||
+     ${family} eq {virtexuplus} ||
+     ${family} eq {virtexuplusHBM} ||
+     ${family} eq {zynquplus} ||
+     ${family} eq {zynquplusRFSOC} } {
+   loadSource -lib lcls2_pgp_fw_lib -dir "$::DIR_PATH/rtl/UltraScale+"
+}
