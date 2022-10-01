@@ -22,6 +22,7 @@ class TimingRx(pr.Device):
             self,
             enLclsI  = False,
             enLclsII = True,
+            numDetectors = 4,
             **kwargs):
         super().__init__(**kwargs)
 
@@ -53,7 +54,7 @@ class TimingRx(pr.Device):
 
         self.add(l2si_core.TriggerEventManager(
             offset       = 0x0004_0000,
-            numDetectors = 4,
+            numDetectors = numDetectors,
             enLclsI      = enLclsI,
             enLclsII     = enLclsII,
             expand       = True,
