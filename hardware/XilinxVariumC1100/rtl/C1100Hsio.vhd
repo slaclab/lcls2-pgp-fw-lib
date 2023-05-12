@@ -66,7 +66,6 @@ entity C1100Hsio is
       --  Top Level Interfaces
       ------------------------
       -- Reference Clock and Reset
-      userClk156            : in  sl;
       userClk25             : in  sl;
       userRst25             : in  sl;
       -- AXI-Lite Interface
@@ -103,15 +102,15 @@ entity C1100Hsio is
       --  C1100Hsio Ports
       ---------------------
       -- QSFP[0] Ports
-      qsfp0RefClkP          : in  sl                                    := '0';
-      qsfp0RefClkN          : in  sl                                    := '0';
+      qsfp0RefClkP          : in  sl                                                 := '0';
+      qsfp0RefClkN          : in  sl                                                 := '0';
       qsfp0RxP              : in  slv(3 downto 0)                                    := (others => '0');
       qsfp0RxN              : in  slv(3 downto 0)                                    := (others => '0');
       qsfp0TxP              : out slv(3 downto 0)                                    := (others => '0');
       qsfp0TxN              : out slv(3 downto 0)                                    := (others => '0');
       -- QSFP[1] Ports
-      qsfp1RefClkP          : in  sl                                    := '0';
-      qsfp1RefClkN          : in  sl                                   := '0';
+      qsfp1RefClkP          : in  sl                                                 := '0';
+      qsfp1RefClkN          : in  sl                                                 := '0';
       qsfp1RxP              : in  slv(3 downto 0)                                    := (others => '0');
       qsfp1RxN              : in  slv(3 downto 0)                                    := (others => '0');
       qsfp1TxP              : out slv(3 downto 0)                                    := (others => '0');
@@ -158,9 +157,9 @@ architecture mapping of C1100Hsio is
    signal qpllRefclk : Slv2Array(3 downto 0);
    signal qpllRst    : Slv2Array(3 downto 0);
 
-   signal qsfp0RefClk    : sl;
-   signal qsfp0RefClkBuf    : sl;
-   signal gtRefClk    : sl;
+   signal qsfp0RefClk  : sl;
+   signal userClock156 : sl;
+   signal userClk156   : sl;
 
    signal iTriggerData       : TriggerEventDataArray(NUM_PGP_LANES_G-1 downto 0);
    signal remoteTriggersComb : slv(NUM_PGP_LANES_G-1 downto 0);
@@ -205,52 +204,30 @@ begin
          I     => qsfp0RefClkP,
          IB    => qsfp0RefClkN,
          CEB   => '0',
-         ODIV2 => qsfp0RefClk,
-         O     => open);
+         ODIV2 => userClock156,
+         O     => qsfp0RefClk);
 
    U_BUFG_GT : BUFG_GT
       port map (
-         I       => qsfp0RefClk,
+         I       => userClock156,
          CE      => '1',
          CEMASK  => '1',
          CLR     => '0',
          CLRMASK => '1',
          DIV     => "000",
-         O       => qsfp0RefClkBuf);
-
-   U_gtRefClk : entity surf.ClockManagerUltraScale
-      generic map(
-         TPD_G              => TPD_G,
-         TYPE_G             => "MMCM",
-         INPUT_BUFG_G       => false,
-         FB_BUFG_G          => true,
-         RST_IN_POLARITY_G  => '1',
-         NUM_CLOCKS_G       => 1,
-         -- MMCM attributes
-         BANDWIDTH_G        => "OPTIMIZED",
-         CLKIN_PERIOD_G     => 6.206,   -- 161.1328125MHz
-         DIVCLK_DIVIDE_G    => 11,      -- 14.6484375MHz = 161.1328125MHz/11
-         CLKFBOUT_MULT_F_G  => 80.0,    -- 1171.875MHz = 80 x 14.6484375MHz
-         CLKOUT0_DIVIDE_F_G => 7.5)     -- 156.25MHz = 1171.875MHz/7.5
-      port map(
-         -- Clock Input
-         clkIn     => qsfp0RefClkBuf,
-         rstIn     => axilRst,
-         -- Clock Outputs
-         clkOut(0) => gtRefClk);
+         O       => userClk156);
 
    GEN_PGP4_QPLL : if (PGP_TYPE_G = "PGP4") generate
       U_QPLL : entity surf.Pgp3GtyUsQpll
          generic map (
-            TPD_G             => TPD_G,
-            QPLL_REFCLK_SEL_G => "111",
-            RATE_G            => RATE_G)
+            TPD_G  => TPD_G,
+            RATE_G => RATE_G)
          port map (
             -- Stable Clock and Reset
             stableClk  => axilClk,
             stableRst  => axilRst,
             -- QPLL Clocking
-            pgpRefClk  => gtRefClk,
+            pgpRefClk  => qsfp0RefClk,
             qpllLock   => qpllLock,
             qpllClk    => qpllClk,
             qpllRefclk => qpllRefclk,
