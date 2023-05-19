@@ -61,7 +61,10 @@ end Pgp2bLane;
 
 architecture mapping of Pgp2bLane is
 
-   constant NUM_AXIL_MASTERS_C : natural := 2;
+   constant PGP_CORE_INDEX_C   : natural := 0;
+   constant RX_MON_INDEX_C     : natural := 1;
+   constant TX_MON_INDEX_C     : natural := 2;
+   constant NUM_AXIL_MASTERS_C : natural := 3;
 
    constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 16, 13);
 
@@ -279,10 +282,10 @@ begin
          -- AXI-Lite Register Interface (axilClk domain)
          axilClk         => axilClk,
          axilRst         => axilRst,
-         axilReadMaster  => axilReadMasters(0),
-         axilReadSlave   => axilReadSlaves(0),
-         axilWriteMaster => axilWriteMasters(0),
-         axilWriteSlave  => axilWriteSlaves(0));
+         axilReadMaster  => axilReadMasters(PGP_CORE_INDEX_C),
+         axilReadSlave   => axilReadSlaves(PGP_CORE_INDEX_C),
+         axilWriteMaster => axilWriteMasters(PGP_CORE_INDEX_C),
+         axilWriteSlave  => axilWriteSlaves(PGP_CORE_INDEX_C));
 
    -----------------------------
    -- Monitor the PGP RX streams
@@ -303,10 +306,34 @@ begin
          -- AXI lite slave port for register access
          axilClk          => axilClk,
          axilRst          => axilRst,
-         sAxilWriteMaster => axilWriteMasters(1),
-         sAxilWriteSlave  => axilWriteSlaves(1),
-         sAxilReadMaster  => axilReadMasters(1),
-         sAxilReadSlave   => axilReadSlaves(1));
+         sAxilWriteMaster => axilWriteMasters(RX_MON_INDEX_C),
+         sAxilWriteSlave  => axilWriteSlaves(RX_MON_INDEX_C),
+         sAxilReadMaster  => axilReadMasters(RX_MON_INDEX_C),
+         sAxilReadSlave   => axilReadSlaves(RX_MON_INDEX_C));
+
+   -----------------------------
+   -- Monitor the PGP TX streams
+   -----------------------------
+   U_AXIS_TX_MON : entity surf.AxiStreamMonAxiL
+      generic map(
+         TPD_G            => TPD_G,
+         COMMON_CLK_G     => false,
+         AXIS_CLK_FREQ_G  => 156.25E+6,
+         AXIS_NUM_SLOTS_G => 4,
+         AXIS_CONFIG_G    => SSI_PGP2B_CONFIG_C)
+      port map(
+         -- AXIS Stream Interface
+         axisClk          => pgpTxClk,
+         axisRst          => pgpTxRst,
+         axisMasters      => pgpTxMasters,
+         axisSlaves       => pgpTxSlaves,
+         -- AXI lite slave port for register access
+         axilClk          => axilClk,
+         axilRst          => axilRst,
+         sAxilWriteMaster => axilWriteMasters(TX_MON_INDEX_C),
+         sAxilWriteSlave  => axilWriteSlaves(TX_MON_INDEX_C),
+         sAxilReadMaster  => axilReadMasters(TX_MON_INDEX_C),
+         sAxilReadSlave   => axilReadSlaves(TX_MON_INDEX_C));
 
    --------------
    -- PGP TX Path

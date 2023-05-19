@@ -48,8 +48,14 @@ class Hsio(pr.Device):
                 ))
 
             self.add(axi.AxiStreamMonAxiL(
-                name        = (f'PgpRxAxisMon[{i}]'),
+                name        = (f'PgpRxVcMon[{i}]'),
                 offset      = (i*0x00010000 + 1*0x2000),
+                numberLanes = 4,
+            ))
+
+            self.add(axi.AxiStreamMonAxiL(
+                name        = (f'PgpTxVcMon[{i}]'),
+                offset      = (i*0x00010000 + 2*0x2000),
                 numberLanes = 4,
             ))
 
