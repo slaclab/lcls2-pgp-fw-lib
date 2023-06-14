@@ -296,7 +296,7 @@ begin
                pgpRxN          => qsfp0RxN(i),
                pgpTxP          => qsfp0TxP(i),
                pgpTxN          => qsfp0TxN(i),
-               pgpRefClk       => gtRefClk,
+               pgpRefClk       => qsfp0RefClk,
                -- Streaming Interface (axilClk domain)
                pgpIbMaster     => pgpIbMasters(i),
                pgpIbSlave      => pgpIbSlaves(i),
