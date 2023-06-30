@@ -50,8 +50,8 @@ entity TimingRx is
       userClk156     : in  sl := '0';      -- USE_GT_REFCLK_G = FALSE
       userClk25      : in  sl := '0';      -- USE_GT_REFCLK_G = FALSE
       userRst25      : in  sl := '1';      -- USE_GT_REFCLK_G = FALSE
-      timingRxClkOut : in  sl;
-      timingRxRstOut : in  sl;
+      timingRxClkOut : out sl;
+      timingRxRstOut : out sl;
 
       -- Trigger Interface
       triggerClk  : in  sl;
