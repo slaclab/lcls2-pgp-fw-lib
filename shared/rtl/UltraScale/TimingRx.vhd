@@ -47,9 +47,12 @@ entity TimingRx is
       EN_LCLS_II_TIMING_G : boolean := true);
    port (
       -- Reference Clock and Reset
-      userClk156  : in  sl := '0';      -- USE_GT_REFCLK_G = FALSE
-      userClk25   : in  sl := '0';      -- USE_GT_REFCLK_G = FALSE
-      userRst25   : in  sl := '1';      -- USE_GT_REFCLK_G = FALSE
+      userClk156     : in  sl := '0';      -- USE_GT_REFCLK_G = FALSE
+      userClk25      : in  sl := '0';      -- USE_GT_REFCLK_G = FALSE
+      userRst25      : in  sl := '1';      -- USE_GT_REFCLK_G = FALSE
+      timingRxClkOut : in  sl;
+      timingRxRstOut : in  sl;
+
       -- Trigger Interface
       triggerClk  : in  sl;
       triggerRst  : in  sl;
@@ -188,6 +191,9 @@ architecture mapping of TimingRx is
    signal eventTimingMessagesRd    : slv(NUM_DETECTORS_G-1 downto 0);
 
 begin
+
+   timingRxClkOut <= timingRxClk;
+   timingRxRstOut <= timingRxRst;
 
    timingTxRst    <= txUserRst;
    timingRxRstTmp <= rxUserRst or not rxStatus.resetDone;
