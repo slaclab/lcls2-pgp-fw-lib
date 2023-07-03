@@ -39,6 +39,7 @@ entity TimingRx is
       SIMULATION_G        : boolean := false;
       BYP_GT_SIM_G        : boolean := false;
       USE_GT_REFCLK_G     : boolean := false;  -- False: userClk25/userRst25, True: refClkP/N
+      USE_GTY_G           : boolean := true;
       AXIL_CLK_FREQ_G     : real    := 156.25E+6;  -- units of Hz
       DMA_AXIS_CONFIG_G   : AxiStreamConfigType;
       AXI_BASE_ADDR_G     : slv(31 downto 0);
@@ -181,7 +182,7 @@ architecture mapping of TimingRx is
    -----------------------------------------------
    -- Event Header Cache signals
    -----------------------------------------------
-   signal temTimingTxPhy : TimingPhyType;
+   signal temTimingTxPhy : TimingPhyType := TIMING_PHY_INIT_C;
 
    signal eventTimingMessagesValid : slv(NUM_DETECTORS_G-1 downto 0);
    signal eventTimingMessages      : TimingMessageArray(NUM_DETECTORS_G-1 downto 0);
@@ -381,6 +382,7 @@ begin
       --
 
       REAL_PCIE : if (not BYP_GT_SIM_G) generate
+        REAL_GTY : if (USE_GTY_G) generate
          U_GTY : entity lcls_timing_core.TimingGtCoreWrapper
             generic map (
                TPD_G            => TPD_G,
@@ -428,6 +430,56 @@ begin
                txOutClk        => gtTxOutClk(i),
                -- Misc.
                loopback        => loopback);
+        end generate;
+        REAL_GTH : if (not USE_GTY_G) generate
+          U_GTH : entity lcls_timing_core.TimingGthCoreWrapper
+            generic map (
+               TPD_G            => TPD_G,
+               EXTREF_G         => false,
+               AXIL_BASE_ADDR_G => AXIL_CONFIG_C(RX_PHY0_INDEX_C+i).baseAddr,
+               ADDR_BITS_G      => 12,
+               GTH_DRP_OFFSET_G => x"00001000")
+            port map (
+               -- AXI-Lite Port
+               axilClk         => axilClk,
+               axilRst         => axilRst,
+               axilReadMaster  => axilReadMasters(RX_PHY0_INDEX_C+i),
+               axilReadSlave   => axilReadSlaves(RX_PHY0_INDEX_C+i),
+               axilWriteMaster => axilWriteMasters(RX_PHY0_INDEX_C+i),
+               axilWriteSlave  => axilWriteSlaves(RX_PHY0_INDEX_C+i),
+               stableClk       => axilClk,
+               stableRst       => axilRst,
+               -- GTH FPGA IO
+               gtRefClk        => '0',          -- Using GTGREFCLK instead
+               gtRefClkDiv2    => refClkDiv2(i),
+               gtRxP           => timingRxP(i),
+               gtRxN           => timingRxN(i),
+               gtTxP           => timingTxP(i),
+               gtTxN           => timingTxN(i),
+               -- GTGREFCLK Interface Option
+               gtgRefClk       => refClk(i),
+               cpllRefClkSel   => "111",
+               -- Rx ports
+               rxControl       => gtRxControl,
+               rxStatus        => gtRxStatus(i),
+               rxUsrClkActive  => mmcmLocked(i),
+               rxUsrClk        => timingRxClk,
+               rxData          => gtRxData(i),
+               rxDataK         => gtRxDataK(i),
+               rxDispErr       => gtRxDispErr(i),
+               rxDecErr        => gtRxDecErr(i),
+               rxOutClk        => gtRxOutClk(i),
+               -- Tx Ports
+               txControl       => gtTxControl,  --temTimingTxPhy.control,
+               txStatus        => gtTxStatus(i),
+               txUsrClk        => gtTxOutClk(i),
+               txUsrClkActive  => mmcmLocked(i),
+               txData          => temTimingTxPhy.data,
+               txDataK         => temTimingTxPhy.dataK,
+               txOutClk        => gtTxOutClk(i),
+               -- Misc.
+               loopback        => loopback);
+          end generate;
       end generate;
 
 
