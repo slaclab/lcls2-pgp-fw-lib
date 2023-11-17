@@ -65,3 +65,18 @@ class Application(pr.Device):
                 offset = (i*0x0008_0000),
                 expand = True,
             ))
+
+class ApplicationLaneConfigDict(pr.Device):
+    def __init__(   self,
+            name        = "Application",
+            description = "PCIe Lane Container",
+            laneConfig  = {0: 'Opal1000'},
+            **kwargs):
+        super().__init__(name=name, description=description, **kwargs)
+
+        for i in laneConfig:
+            self.add(AppLane(
+                name   = f'AppLane[{i}]',
+                offset = (i*0x0008_0000),
+                expand = True,
+            ))
