@@ -181,6 +181,9 @@ architecture mapping of TimingRx is
    signal appTimingBus           : TimingBusType;
    signal appTimingMode          : sl;
 
+   signal gtRxControlReset    : sl;
+   signal gtRxControlPllReset : sl;
+
    -----------------------------------------------
    -- Event Header Cache signals
    -----------------------------------------------
@@ -514,11 +517,33 @@ begin
    -----------------------
    -- Insert user RX reset
    -----------------------
-   gtRxControl.reset       <= timingRxControl.reset or rxUserRst;
+   gtRxControlReset        <= timingRxControl.reset or rxUserRst;
+   gtRxControlPllReset     <= timingRxControl.pllReset or rxUserRst;
    gtRxControl.inhibit     <= timingRxControl.inhibit;
    gtRxControl.polarity    <= timingRxControl.polarity;
    gtRxControl.bufferByRst <= timingRxControl.bufferByRst;
-   gtRxControl.pllReset    <= timingRxControl.pllReset or rxUserRst;
+
+   U_gtRxControlReset : entity surf.SynchronizerOneShot
+      generic map (
+         TPD_G          => TPD_G,
+         IN_POLARITY_G  => '1',
+         OUT_POLARITY_G => '1',
+         PULSE_WIDTH_G  => 100)
+      port map (
+         clk     => axilClk,
+         dataIn  => gtRxControlReset,
+         dataOut => gtRxControl.reset);
+
+   U_gtRxControlPllReset : entity surf.SynchronizerOneShot
+      generic map (
+         TPD_G          => TPD_G,
+         IN_POLARITY_G  => '1',
+         OUT_POLARITY_G => '1',
+         PULSE_WIDTH_G  => 100)
+      port map (
+         clk     => axilClk,
+         dataIn  => gtRxControlPllReset,
+         dataOut => gtRxControl.pllReset);
 
    gtTxControl.reset       <= temTimingTxPhy.control.reset or txPhyReset;
    gtTxControl.pllReset    <= temTimingTxPhy.control.pllReset or txPhyPllReset;
