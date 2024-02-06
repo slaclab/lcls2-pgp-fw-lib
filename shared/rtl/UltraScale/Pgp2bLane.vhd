@@ -39,6 +39,7 @@ entity Pgp2bLane is
       -- Trigger Interface
       trigger         : in  sl;
       triggerCode     : in  slv(7 downto 0) := (others => '0');
+      triggerPause    : in  sl;
       -- PGP Serial Ports
       pgpTxP          : out sl;
       pgpTxN          : out sl;
@@ -95,7 +96,19 @@ architecture mapping of Pgp2bLane is
    signal pgpRxCtrl    : AxiStreamCtrlArray(3 downto 0);
    signal pgpRxSlaves  : AxiStreamSlaveArray(3 downto 0);
 
+   signal triggerPauseVec  : slv(7 downto 0);
+
 begin
+
+   triggerPauseVec <= (others => triggerPause);
+   U_triggerPause : entity surf.SynchronizerVector
+      generic map (
+         TPD_G   => TPD_G,
+         WIDTH_G => 8)
+      port map (
+         clk     => pgpTxClk,
+         dataIn  => triggerPauseVec,
+         dataOut => locTxIn.locData);
 
    U_Trig : entity surf.SynchronizerOneShot
       generic map (

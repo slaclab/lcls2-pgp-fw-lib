@@ -36,7 +36,8 @@ entity Pgp4Lane is
    port (
       -- Trigger Interface
       trigger         : in  sl;
-      triggerCode     : in  slv(7 downto 0);
+      triggerCode     : in  slv(7 downto 0) := (others => '0');
+      triggerPause    : in  sl;
       -- QPLL Interface
       qpllLock        : in  slv(1 downto 0);
       qpllClk         : in  slv(1 downto 0);
@@ -95,7 +96,19 @@ architecture mapping of Pgp4Lane is
    signal pgpRxCtrl    : AxiStreamCtrlArray(3 downto 0);
    signal pgpRxSlaves  : AxiStreamSlaveArray(3 downto 0);
 
+   signal triggerPauseVec  : slv(47 downto 0);
+
 begin
+
+   triggerPauseVec <= (others => triggerPause);
+   U_triggerPause : entity surf.SynchronizerVector
+      generic map (
+         TPD_G   => TPD_G,
+         WIDTH_G => 48)
+      port map (
+         clk     => pgpClk,
+         dataIn  => triggerPauseVec,
+         dataOut => pgpTxIn.locData);
 
    U_Trig : entity surf.SynchronizerOneShot
       generic map (
