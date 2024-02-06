@@ -243,6 +243,7 @@ begin
                -- Trigger Interface
                trigger         => remoteTriggers(i),
                triggerCode     => triggerCodes(i),
+               triggerPause    => eventTrigMsgCtrl(0).pause,
                -- QPLL Interface
                qpllLock        => qpllLock(i),
                qpllClk         => qpllClk(i),
@@ -280,6 +281,7 @@ begin
                -- Trigger Interface
                trigger         => remoteTriggers(i),
                triggerCode     => triggerCodes(i),
+               triggerPause    => eventTrigMsgCtrl(0).pause,
                -- PGP Serial Ports
                pgpRxP          => qsfp0RxP(i),
                pgpRxN          => qsfp0RxN(i),
@@ -323,7 +325,7 @@ begin
    U_TimingRx : entity lcls2_pgp_fw_lib.TimingRx
       generic map (
          TPD_G               => TPD_G,
-         USE_GT_REFCLK_G     => true,  -- TRUE: refClkP/N
+         USE_GT_REFCLK_G     => true,                     -- TRUE: refClkP/N
          SIMULATION_G        => ROGUE_SIM_EN_G,
          DMA_AXIS_CONFIG_G   => DMA_AXIS_CONFIG_G,
          AXIL_CLK_FREQ_G     => AXIL_CLK_FREQ_G,

@@ -254,6 +254,7 @@ begin
                -- Trigger Interface
                trigger         => remoteTriggers(i),
                triggerCode     => triggerCodes(i),
+               triggerPause    => eventTrigMsgCtrl(0).pause,
                -- QPLL Interface
                qpllLock        => qpllLock(i),
                qpllClk         => qpllClk(i),
@@ -291,6 +292,7 @@ begin
                -- Trigger Interface
                trigger         => remoteTriggers(i),
                triggerCode     => triggerCodes(i),
+               triggerPause    => eventTrigMsgCtrl(0).pause,
                -- PGP Serial Ports
                pgpRxP          => qsfp0RxP(i),
                pgpRxN          => qsfp0RxN(i),
