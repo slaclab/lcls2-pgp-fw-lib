@@ -42,7 +42,7 @@ entity TimingRx is
       AXIL_CLK_FREQ_G     : real    := 156.25E+6;  -- units of Hz
       DMA_AXIS_CONFIG_G   : AxiStreamConfigType;
       AXI_BASE_ADDR_G     : slv(31 downto 0);
-      NUM_DETECTORS_G     : integer range 1 to 4;
+      NUM_DETECTORS_G     : integer range 1 to 8;
       EN_LCLS_I_TIMING_G  : boolean := false;
       EN_LCLS_II_TIMING_G : boolean := true);
    port (
