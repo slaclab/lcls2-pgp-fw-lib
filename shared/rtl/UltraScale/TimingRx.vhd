@@ -184,6 +184,9 @@ architecture mapping of TimingRx is
    signal gtRxControlReset    : sl;
    signal gtRxControlPllReset : sl;
 
+   signal stableClk : sl;
+   signal stableRst : sl;
+
    -----------------------------------------------
    -- Event Header Cache signals
    -----------------------------------------------
@@ -348,6 +351,23 @@ begin
          mAxiReadMasters     => axilReadMasters,
          mAxiReadSlaves      => axilReadSlaves);
 
+   U_stableClk : BUFGCE_DIV
+      generic map (
+         BUFGCE_DIVIDE => 2)
+      port map (
+         I   => axilClk,
+         CE  => '1',
+         CLR => '0',
+         O   => stableClk);
+
+   U_stableRst : entity surf.RstSync
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         clk      => stableClk,
+         asyncRst => axilRst,
+         syncRst  => stableRst);
+
    -------------
    -- GTH Module
    -------------
@@ -405,8 +425,8 @@ begin
                axilReadSlave   => axilReadSlaves(RX_PHY0_INDEX_C+i),
                axilWriteMaster => axilWriteMasters(RX_PHY0_INDEX_C+i),
                axilWriteSlave  => axilWriteSlaves(RX_PHY0_INDEX_C+i),
-               stableClk       => axilClk,
-               stableRst       => axilRst,
+               stableClk       => stableClk,
+               stableRst       => stableRst,
                -- GTH FPGA IO
                gtRefClk        => '0',          -- Using GTGREFCLK instead
                gtRefClkDiv2    => refClkDiv2(i),
