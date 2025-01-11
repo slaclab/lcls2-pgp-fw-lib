@@ -4,8 +4,8 @@ source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
 # Get the family type
 set family [getFpgaArch]
 
-# Check for Vivado version 2021.2 (or later)
-if { [VersionCheck 2021.2 ] < 0 } {
+# Check for Vivado version 2021.1 (or later)
+if { [VersionCheck 2021.1 ] < 0 } {
    exit -1
 }
 
