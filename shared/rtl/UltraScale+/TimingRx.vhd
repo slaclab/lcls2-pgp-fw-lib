@@ -414,6 +414,7 @@ begin
             generic map (
                TPD_G            => TPD_G,
                EXTREF_G         => false,
+               LCLS1_ONLY_G     => ite(i=0, true, false),
                AXI_CLK_FREQ_G   => AXIL_CLK_FREQ_G,
                AXIL_BASE_ADDR_G => AXIL_CONFIG_C(RX_PHY0_INDEX_C+i).baseAddr,
                GTY_DRP_OFFSET_G => x"00001000")
