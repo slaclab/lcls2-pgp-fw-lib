@@ -80,7 +80,7 @@ architecture rtl of TimingPhyMonitor is
       remTrigDropCnt => (others => (others => '0')),
       loopback       => "000",
       cntRst         => '0',
-      mmcmRst        => '0',
+      mmcmRst        => '1',
       rxUserRst      => '0',
       txUserRst      => '0',
       txPhyReset     => '0',

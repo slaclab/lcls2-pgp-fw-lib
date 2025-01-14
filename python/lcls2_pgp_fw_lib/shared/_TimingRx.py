@@ -16,6 +16,7 @@ import LclsTimingCore
 import l2si_core
 
 import lcls2_pgp_fw_lib.shared as shared
+import surf.xilinx             as xil
 
 class TimingRx(pr.Device):
     def __init__(
@@ -26,15 +27,15 @@ class TimingRx(pr.Device):
             **kwargs):
         super().__init__(**kwargs)
 
-        self.add(LclsTimingCore.GthRxAlignCheck(
-            name   = "GthRxAlignCheck[0]",
+        self.add(xil.GtRxAlignCheck(
+            name   = "GtRxAlignCheck[0]",
             offset = 0x0000_0000,
             expand = False,
             hidden = False,
         ))
 
-        self.add(LclsTimingCore.GthRxAlignCheck(
-            name   = "GthRxAlignCheck[1]",
+        self.add(xil.GtRxAlignCheck(
+            name   = "GtRxAlignCheck[1]",
             offset = 0x0001_0000,
             expand = False,
             hidden = False,
@@ -76,6 +77,7 @@ class TimingRx(pr.Device):
             self.TimingFrameRx.RxPllReset.set(0)
             self.TimingFrameRx.ClkSel.set(0x0)
             self.TimingFrameRx.C_RxReset()
+            self.TimingPhyMonitor.RxUserRst()
             time.sleep(1.0)
             self.TimingFrameRx.RxDown.set(0) # Reset the latching register
 
@@ -90,6 +92,7 @@ class TimingRx(pr.Device):
             self.TimingFrameRx.RxPllReset.set(0)
             self.TimingFrameRx.ClkSel.set(0x1)
             self.TimingFrameRx.C_RxReset()
+            self.TimingPhyMonitor.RxUserRst()
             time.sleep(1.0)
             self.TimingFrameRx.RxDown.set(0) # Reset the latching register
 
