@@ -90,6 +90,10 @@ end TimingRx;
 
 architecture mapping of TimingRx is
 
+   constant EN_LCLS_TIMING_G : BooleanArray(1 downto 0) := (
+      0 => EN_LCLS_I_TIMING_G,
+      1 => EN_LCLS_II_TIMING_G);
+
    constant NUM_AXIL_MASTERS_C : positive := 6;
 
    constant RX_PHY0_INDEX_C  : natural := 0;
@@ -186,6 +190,8 @@ architecture mapping of TimingRx is
 
    signal stableClk : sl;
    signal stableRst : sl;
+
+   signal timingClkSelect : sl;
 
    -----------------------------------------------
    -- Event Header Cache signals
@@ -409,7 +415,7 @@ begin
             S  => useMiniTpg);          -- 1-bit input: Clock select
       --
 
-      REAL_PCIE : if (not BYP_GT_SIM_G) generate
+      REAL_PCIE : if (not BYP_GT_SIM_G) and EN_LCLS_TIMING_G(i) generate
          U_GTY : entity lcls_timing_core.TimingGtCoreWrapper
             generic map (
                TPD_G            => TPD_G,
@@ -461,7 +467,7 @@ begin
       end generate;
 
 
-      SIM_PCIE : if (BYP_GT_SIM_G) generate
+      SIM_PCIE : if (BYP_GT_SIM_G) or (not EN_LCLS_TIMING_G(i)) generate
 
          axilReadSlaves(RX_PHY0_INDEX_C+i)  <= AXI_LITE_READ_SLAVE_EMPTY_OK_C;
          axilWriteSlaves(RX_PHY0_INDEX_C+i) <= AXI_LITE_WRITE_SLAVE_EMPTY_OK_C;
@@ -595,7 +601,7 @@ begin
          gtRxControl      => timingRxControl,
          gtRxStatus       => rxStatus,
          tpgMiniTimingPhy => open,
-         timingClkSel     => timingClkSel,
+         timingClkSel     => timingClkSelect,
          -- Decoded timing message interface
          appTimingClk     => timingRxClk,
          appTimingRst     => timingRxRst,
@@ -608,6 +614,8 @@ begin
          axilReadSlave    => axilReadSlaves(TIMING_INDEX_C),
          axilWriteMaster  => axilWriteMasters(TIMING_INDEX_C),
          axilWriteSlave   => axilWriteSlaves(TIMING_INDEX_C));
+
+   timingClkSel <= '1' when (not EN_LCLS_I_TIMING_G) else '0' when (not EN_LCLS_II_TIMING_G) else timingClkSelect;
 
    ---------------------
    -- XPM Mini Wrapper
@@ -683,8 +691,8 @@ begin
    U_TriggerEventManager_1 : entity l2si_core.TriggerEventManager
       generic map (
          TPD_G                          => TPD_G,
-         EN_LCLS_I_TIMING_G             => EN_LCLS_I_TIMING_G,
-         EN_LCLS_II_TIMING_G            => EN_LCLS_II_TIMING_G,
+         EN_LCLS_I_TIMING_G             => true,
+         EN_LCLS_II_TIMING_G            => true,
          NUM_DETECTORS_G                => NUM_DETECTORS_G,
          AXIL_BASE_ADDR_G               => AXIL_CONFIG_C(TEM_INDEX_C).baseAddr,
          EVENT_AXIS_CONFIG_G            => DMA_AXIS_CONFIG_G,
