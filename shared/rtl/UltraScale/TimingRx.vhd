@@ -520,25 +520,37 @@ begin
       end if;
    end process;
 
-   U_RXCLK : BUFGMUX
-      generic map (
-         CLK_SEL_TYPE => "ASYNC")       -- ASYNC, SYNC
-      port map (
-         O  => timingRxClk,             -- 1-bit output: Clock output
-         I0 => gtRxClk(0),              -- 1-bit input: Clock input (S=0)
-         I1 => gtRxClk(1),              -- 1-bit input: Clock input (S=1)
-         S  => timingClkSel);           -- 1-bit input: Clock select
+   GEN_BOTH_RXCLK : if (EN_LCLS_I_TIMING_G) and (EN_LCLS_II_TIMING_G) generate
 
-   -- NEED to do the same thing as RX!!!!
-   -- NEED TXOUTCLKs switched in here
-   U_TXCLK : BUFGMUX
-      generic map (
-         CLK_SEL_TYPE => "ASYNC")       -- ASYNC, SYNC
-      port map (
-         O  => timingTxClk,             -- 1-bit output: Clock output
-         I0 => gtTxClk(0),              -- 1-bit input: Clock input (S=0)
-         I1 => gtTxClk(1),              -- 1-bit input: Clock input (S=1)
-         S  => timingClkSel);           -- 1-bit input: Clock select
+      U_RXCLK : BUFGMUX
+         generic map (
+            CLK_SEL_TYPE => "ASYNC")       -- ASYNC, SYNC
+         port map (
+            O  => timingRxClk,             -- 1-bit output: Clock output
+            I0 => gtRxClk(0),              -- 1-bit input: Clock input (S=0)
+            I1 => gtRxClk(1),              -- 1-bit input: Clock input (S=1)
+            S  => timingClkSel);           -- 1-bit input: Clock select
+
+      U_TXCLK : BUFGMUX
+         generic map (
+            CLK_SEL_TYPE => "ASYNC")       -- ASYNC, SYNC
+         port map (
+            O  => timingTxClk,             -- 1-bit output: Clock output
+            I0 => gtTxClk(0),              -- 1-bit input: Clock input (S=0)
+            I1 => gtTxClk(1),              -- 1-bit input: Clock input (S=1)
+            S  => timingClkSel);           -- 1-bit input: Clock select
+
+   end generate;
+
+   GEN_RXCLK_I_ONLY : if (EN_LCLS_I_TIMING_G) and (not EN_LCLS_II_TIMING_G) generate
+      timingRxClk <= gtRxClk(0);
+      timingTxClk <= gtTxClk(0);
+   end generate;
+
+   GEN_RXCLK_II_ONLY : if (not EN_LCLS_I_TIMING_G) and (EN_LCLS_II_TIMING_G) generate
+      timingRxClk <= gtRxClk(1);
+      timingTxClk <= gtTxClk(1);
+   end generate;
 
    -----------------------
    -- Insert user RX reset
