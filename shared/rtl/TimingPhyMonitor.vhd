@@ -81,8 +81,8 @@ architecture rtl of TimingPhyMonitor is
       loopback       => "000",
       cntRst         => '0',
       mmcmRst        => '1',
-      rxUserRst      => '0',
-      txUserRst      => '0',
+      rxUserRst      => '1',
+      txUserRst      => '1',
       txPhyReset     => '0',
       txPhyPllReset  => '0',
       useMiniTpg     => '0',
@@ -248,8 +248,14 @@ begin
       v := r;
 
       -- Reset the strobes
-      v.rxUserRst := '0';
-      v.txUserRst := '0';
+      if (mmcmLocked = "11") then
+          v.rxUserRst := '0';
+          v.txUserRst := '0';
+      else
+          v.rxUserRst := '1';
+          v.txUserRst := '1';
+      end if;
+      
       v.mmcmRst   := '0';
       v.cntRst    := '0';
 
