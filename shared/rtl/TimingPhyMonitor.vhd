@@ -117,7 +117,7 @@ begin
          TPD_G   => TPD_G,
          WIDTH_G => 2)
       port map (
-         clk     => pgpTxClk,
+         clk     => axilClk,
          dataIn  => mmcmLocked,
          dataOut => mmcmLockedSync);
 
