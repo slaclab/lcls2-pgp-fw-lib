@@ -81,8 +81,10 @@ architecture rtl of TimingPhyMonitor is
       loopback       => "000",
       cntRst         => '0',
       mmcmRst        => '1',
-      rxUserRst      => '1',
-      txUserRst      => '1',
+      rxUserRst      => '0',
+      txUserRst      => '0',
+      rxUserReset    => '1',
+      txUserReset    => '1',
       txPhyReset     => '0',
       txPhyPllReset  => '0',
       useMiniTpg     => '0',
@@ -106,7 +108,18 @@ architecture rtl of TimingPhyMonitor is
    signal rxReset   : sl;
    signal rxClkFreq : slv(31 downto 0);
 
+   signal mmcmLockedSync : slv(1 downto 0);
+
 begin
+
+   U_mmcmLocked : entity surf.SynchronizerVector
+      generic map (
+         TPD_G   => TPD_G,
+         WIDTH_G => 2)
+      port map (
+         clk     => pgpTxClk,
+         dataIn  => mmcmLocked,
+         dataOut => mmcmLockedSync);
 
    GEN_TRIG_FREQ :
    for i in 3 downto 0 generate
@@ -238,9 +251,10 @@ begin
    -- AXI Lite Interface
    ---------------------
    comb : process (axilReadMaster, axilRst, axilWriteMaster, locTrig,
-                   locTrigDrop, locTrigDropFreq, locTrigFreq, mmcmLocked, r,
-                   refClkFreq, refRst, remTrig, remTrigDrop, remTrigDropFreq,
-                   remTrigFreq, rxClkFreq, rxReset, txClkFreq, txReset) is
+                   locTrigDrop, locTrigDropFreq, locTrigFreq, mmcmLockedSync,
+                   r, refClkFreq, refRst, remTrig, remTrigDrop,
+                   remTrigDropFreq, remTrigFreq, rxClkFreq, rxReset, txClkFreq,
+                   txReset) is
       variable v      : RegType;
       variable regCon : AxiLiteEndPointType;
    begin
@@ -248,19 +262,21 @@ begin
       v := r;
 
       -- Reset the strobes
-      if (mmcmLocked = "11") then
-          v.rxUserRst := '0';
-          v.txUserRst := '0';
-      else
-          v.rxUserRst := '1';
-          v.txUserRst := '1';
-      end if;
-      
-      v.mmcmRst   := '0';
-      v.cntRst    := '0';
-
+      v.mmcmRst       := '0';
+      v.cntRst        := '0';
       v.txPhyReset    := '0';
       v.txPhyPllReset := '0';
+
+      -- Check if both MMCM are not locked
+      if (mmcmLockedSync /= "11") then
+         -- Force the reset by on MMCM locks
+         v.rxUserReset := '1';
+         v.txUserReset := '1';
+      else
+         -- Force a user defined reset by registers
+         v.rxUserReset := r.rxUserRst;
+         v.txUserReset := r.txUserRst;
+      end if;
 
       -- Check for counter reset
       if (r.cntRst = '1') then
@@ -291,7 +307,7 @@ begin
 
       -- Map the read registers
       axiSlaveRegister (regCon, x"00", 0, v.mmcmRst);
-      axiSlaveRegisterR(regCon, x"04", 0, mmcmLocked);
+      axiSlaveRegisterR(regCon, x"04", 0, mmcmLockedSync);
       axiSlaveRegisterR(regCon, x"08", 0, refRst);
       axiSlaveRegister (regCon, x"0C", 0, v.loopback);
 
@@ -396,7 +412,7 @@ begin
          SIM_SPEEDUP_G => SIMULATION_G,
          DURATION_G    => 125000000)
       port map (
-         arst   => r.rxUserRst,
+         arst   => r.rxUserReset,
          clk    => axilClk,
          rstOut => rxUserRst);
 
@@ -406,7 +422,7 @@ begin
          SIM_SPEEDUP_G => SIMULATION_G,
          DURATION_G    => 125000000)
       port map (
-         arst   => r.txUserRst,
+         arst   => r.txUserReset,
          clk    => axilClk,
          rstOut => txUserRst);
 
