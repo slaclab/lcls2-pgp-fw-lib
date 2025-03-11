@@ -66,6 +66,8 @@ architecture rtl of TimingPhyMonitor is
       mmcmRst        : sl;
       rxUserRst      : sl;
       txUserRst      : sl;
+      rxUserReset    : sl;
+      txUserReset    : sl;
       txPhyReset     : sl;
       txPhyPllReset  : sl;
       useMiniTpg     : sl;
