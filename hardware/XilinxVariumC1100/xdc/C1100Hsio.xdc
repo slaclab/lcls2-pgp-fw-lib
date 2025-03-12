@@ -29,8 +29,8 @@ create_generated_clock -name timingGtRxOutClk0 \
 create_generated_clock -name timingGtTxOutClk0 \
     [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[0].GEN_GT.U_GTY/*/TXOUTCLK}]
 
-#create_generated_clock -name timingTxOutClk0 \
-#    [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[0].GEN_GT.U_GTY/LOCREF_G.TIMING_TXCLK_BUFG_GT/O}]
+create_generated_clock -name timingGtTxOutClkPcs0 \
+    [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[0].GEN_GT.U_GTY/*/TXOUTCLKPCS}]
 
 #### GT[1] Clocks
 create_generated_clock -name timingGtRxOutClk1 \
@@ -39,8 +39,11 @@ create_generated_clock -name timingGtRxOutClk1 \
 create_generated_clock -name timingGtTxOutClk1 \
     [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[1].GEN_GT.U_GTY/*/TXOUTCLK}]
 
-#create_generated_clock -name timingTxOutClk1 \
-#    [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[1].GEN_GT.U_GTY/LOCREF_G.TIMING_TXCLK_BUFG_GT/O}]
+create_generated_clock -name timingGtTxOutClkPcs1 \
+    [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[1].GEN_GT.U_GTY/*/TXOUTCLKPCS}]
+
+
+
 
 ##############################################################################
 # https://docs.amd.com/r/en-US/ug949-vivado-design-methodology/Overlapping-Clocks-Driven-by-a-Clock-Multiplexer
@@ -62,12 +65,12 @@ set_false_path -to [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_RXCLK/CE*}]
 
 ###### TX MUX
 create_generated_clock -name muxTimingGtTxOutClk0 \
-    -divide_by 2 -add -master_clock timingGtTxOutClk0 \
+    -divide_by 2 -add -master_clock clk238 \
     -source [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/I0}] \
     [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/O}]
 
 create_generated_clock -name muxTimingGtTxOutClk1 \
-    -divide_by 2 -add -master_clock timingGtTxOutClk1 \
+    -divide_by 2 -add -master_clock clk371 \
     -source [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/I1}] \
     [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/O}]
 
@@ -86,7 +89,14 @@ set_clock_groups -asynchronous \
     -group [get_clocks -include_generated_clocks {clk371}] \
     -group [get_clocks -include_generated_clocks {dmaClk}]
 
-set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins {U_HSIO/U_TimingRx/GEN_VEC[0].GEN_GT.U_GTY/LOCREF_LCLS1_ONLY_G.U_TimingGtyCore/inst/gen_gtwizard_gtye4_top.TimingGty_fixedlat_Lcls1Only_gtwizard_gtye4_inst/gen_gtwizard_gtye4.gen_channel_container[3].gen_enabled_channel.gtye4_channel_wrapper_inst/channel_inst/gtye4_channel_gen.gen_gtye4_channel_inst[0].GTYE4_CHANNEL_PRIM_INST/TXOUTCLKPCS}]] -group [get_clocks -of_objects [get_pins {U_HSIO/U_TimingRx/GEN_VEC[0].U_refClkDiv2/O}]]
-set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins {U_HSIO/U_TimingRx/GEN_VEC[1].GEN_GT.U_GTY/LOCREF_G.U_TimingGtyCore/inst/gen_gtwizard_gtye4_top.TimingGty_fixedlat_gtwizard_gtye4_inst/gen_gtwizard_gtye4.gen_channel_container[3].gen_enabled_channel.gtye4_channel_wrapper_inst/channel_inst/gtye4_channel_gen.gen_gtye4_channel_inst[0].GTYE4_CHANNEL_PRIM_INST/TXOUTCLKPCS}]] -group [get_clocks -of_objects [get_pins {U_HSIO/U_TimingRx/GEN_VEC[1].U_refClkDiv2/O}]]
+set_clock_groups -asynchronous \
+    -group [get_clocks -include_generated_clocks {clk119}] \
+    -group [get_clocks -include_generated_clocks {timingGtTxOutClkPcs0}]
 
-set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins U_HSIO/U_TimingRx/U_stableClk/O]] -group [get_clocks -include_generated_clocks {clk156}]
+set_clock_groups -asynchronous \
+    -group [get_clocks -include_generated_clocks {clk186}] \
+    -group [get_clocks -include_generated_clocks {timingGtTxOutClkPcs1}]
+
+set_clock_groups -asynchronous \
+    -group [get_clocks -include_generated_clocks {clk156}] \
+    -group [get_clocks -of_objects [get_pins {*/U_TimingRx/U_stableClk/O}]]
