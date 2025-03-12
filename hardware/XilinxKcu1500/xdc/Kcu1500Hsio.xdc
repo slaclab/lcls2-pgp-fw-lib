@@ -14,11 +14,11 @@ create_generated_clock -name clk25  [get_pins {U_axilClk/PllGen.U_Pll/CLKOUT1}]
 
 set_property CLOCK_DEDICATED_ROUTE BACKBONE [get_nets U_axilClk/clkOut[1]]
 
-create_generated_clock -name clk238 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_MMCM.U_238MHz/MmcmGen.U_Mmcm/CLKOUT0}]
-create_generated_clock -name clk371 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_MMCM.U_371MHz/MmcmGen.U_Mmcm/CLKOUT0}]
+create_generated_clock -name clk238 [get_pins {U_HSIO/U_TimingRx/GEN_MMCM.U_238MHz/MmcmGen.U_Mmcm/CLKOUT0}]
+create_generated_clock -name clk371 [get_pins {U_HSIO/U_TimingRx/GEN_MMCM.U_371MHz/MmcmGen.U_Mmcm/CLKOUT0}]
 
-create_generated_clock -name clk119 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[0].U_refClkDiv2/O}]
-create_generated_clock -name clk186 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[1].U_refClkDiv2/O}]
+create_generated_clock -name clk119 [get_pins {U_HSIO/U_TimingRx/GEN_VEC[0].U_refClkDiv2/O}]
+create_generated_clock -name clk186 [get_pins {U_HSIO/U_TimingRx/GEN_VEC[1].U_refClkDiv2/O}]
 
 create_generated_clock -name timingStableClk [get_pins {U_HSIO/U_TimingRx/U_stableClk/O}]
 
@@ -142,6 +142,9 @@ set_clock_groups -physically_exclusive \
 
 set_false_path -to [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_RXCLK/CE*}]
 
+set_clock_groups -asynchronous -group [get_clocks {casMuxRxClk119}] -group [get_clocks {timingGtRxOutClk0}]
+set_clock_groups -asynchronous -group [get_clocks {casMuxRxClk186}] -group [get_clocks {timingGtRxOutClk1}]
+
 ###### Cascaded clock muxing - Final TX mux
 create_generated_clock -name casMuxTxClk119 \
     -divide_by 1 -add -master_clock muxTxClk119 \
@@ -171,16 +174,37 @@ set_clock_groups -physically_exclusive \
 
 set_false_path -to [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/CE*}]
 
+set_clock_groups -asynchronous -group [get_clocks {casMuxTxClk119}] -group [get_clocks {timingTxOutClk0}]
+set_clock_groups -asynchronous -group [get_clocks {casMuxTxClk186}] -group [get_clocks {timingTxOutClk1}]
+
 ##############################################################################
 
 set_clock_groups -asynchronous -group [get_clocks {clk156}] -group [get_clocks {timingStableClk}]
 
 set_clock_groups -asynchronous \
     -group [get_clocks -include_generated_clocks {clk156}] \
-    -group [get_clocks -include_generated_clocks {timingGtRxOutClk0}] \
-    -group [get_clocks -include_generated_clocks {timingGtRxOutClk1}] \
-    -group [get_clocks -include_generated_clocks {timingGtTxOutClk0}] \
-    -group [get_clocks -include_generated_clocks {timingGtTxOutClk1}] \
-    -group [get_clocks -include_generated_clocks {clk238}]  \
+    -group [get_clocks -include_generated_clocks {clk238}] \
     -group [get_clocks -include_generated_clocks {clk371}] \
     -group [get_clocks -include_generated_clocks {dmaClk}]
+
+##############################################################################
+
+#set_clock_groups -asynchronous -group [get_clocks {casMuxRxClk119}] -group [get_clocks {casMuxTxClk119}]
+set_clock_groups -asynchronous -group [get_clocks {casMuxRxClk119}] -group [get_clocks {casMuxTimingTxOutClk0}]
+
+set_clock_groups -asynchronous -group [get_clocks {casMuxTxClk119}] -group [get_clocks {casMuxTimingGtRxOutClk0}]
+set_clock_groups -asynchronous -group [get_clocks {casMuxTxClk119}] -group [get_clocks {casMuxTimingTxOutClk0}]
+
+set_clock_groups -asynchronous -group [get_clocks {casMuxTimingGtRxOutClk0}] -group [get_clocks {casMuxTimingTxOutClk0}]
+
+##############################################################################
+
+#set_clock_groups -asynchronous -group [get_clocks {casMuxRxClk186}] -group [get_clocks {casMuxTxClk186}]
+set_clock_groups -asynchronous -group [get_clocks {casMuxRxClk186}] -group [get_clocks {casMuxTimingTxOutClk1}]
+
+set_clock_groups -asynchronous -group [get_clocks {casMuxTxClk186}] -group [get_clocks {casMuxTimingGtRxOutClk1}]
+set_clock_groups -asynchronous -group [get_clocks {casMuxTxClk186}] -group [get_clocks {casMuxTimingTxOutClk1}]
+
+set_clock_groups -asynchronous -group [get_clocks {casMuxTimingGtRxOutClk1}] -group [get_clocks {casMuxTimingTxOutClk1}]
+
+##############################################################################
