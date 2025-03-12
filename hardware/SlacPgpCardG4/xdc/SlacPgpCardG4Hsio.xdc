@@ -14,6 +14,9 @@ create_generated_clock -name clk156 [get_pins {U_axilClk/PllGen.U_Pll/CLKOUT0}]
 create_generated_clock -name clk119 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[0].U_refClkDiv2/O}]
 create_generated_clock -name clk186 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[1].U_refClkDiv2/O}]
 
+create_clock -period 4.201 -name clk238 [get_ports {sfpRefClkP[0]}]
+create_clock -period 2.691 -name clk371 [get_ports {sfpRefClkP[1]}]
+
 ##############################################################################
 
 #### GT[0] Clocks
@@ -165,6 +168,6 @@ set_clock_groups -asynchronous \
     -group [get_clocks -include_generated_clocks {timingGtRxOutClk1}] \
     -group [get_clocks -include_generated_clocks {timingGtTxOutClk0}] \
     -group [get_clocks -include_generated_clocks {timingGtTxOutClk1}] \
-    -group [get_clocks -include_generated_clocks {sfpRefClkP0}]  \
-    -group [get_clocks -include_generated_clocks {sfpRefClkP1}] \
+    -group [get_clocks -include_generated_clocks {clk238}]  \
+    -group [get_clocks -include_generated_clocks {clk371}] \
     -group [get_clocks -include_generated_clocks {dmaClk}]
