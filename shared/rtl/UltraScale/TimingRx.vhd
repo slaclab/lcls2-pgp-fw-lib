@@ -147,7 +147,9 @@ architecture mapping of TimingRx is
    signal refRstDiv2   : slv(1 downto 0);
    signal mmcmLocked   : slv(1 downto 0);
    signal timingClkSel : sl;
-   signal useMiniTpg   : sl;
+   signal useMiniTpgRx : sl;
+   signal useMiniTpgTx : sl;
+   signal useMiniTpgMux: sl;
    signal loopback     : slv(2 downto 0);
 
    signal rxUserRst       : sl;
@@ -207,16 +209,22 @@ begin
    timingRxClkOut <= timingRxClk;
    timingRxRstOut <= timingRxRst;
 
-   timingTxRst    <= txUserRst;
-   timingRxRstTmp <= rxUserRst or not rxStatus.resetDone;
-
-   U_RstSync_1 : entity surf.RstSync
+   U_timingTxRst : entity surf.RstSync
       generic map (
          TPD_G => TPD_G)
       port map (
-         clk      => timingRxClk,       -- [in]
-         asyncRst => timingRxRstTmp,    -- [in]
-         syncRst  => timingRxRst);      -- [out]
+         clk      => timingTxClk,
+         asyncRst => txUserRst,
+         syncRst  => timingTxRst);
+
+   timingRxRstTmp <= rxUserRst or not rxStatus.resetDone;
+   U_timingRxRst : entity surf.RstSync
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         clk      => timingRxClk,
+         asyncRst => timingRxRstTmp,
+         syncRst  => timingRxRst);
 
    GEN_MMCM : if (not USE_GT_REFCLK_G) generate
 
@@ -403,7 +411,7 @@ begin
             O  => gtRxClk(i),           -- 1-bit output: Clock output
             I0 => gtRxOutClk(i),        -- 1-bit input: Clock input (S=0)
             I1 => refClkDiv2(i),        -- 1-bit input: Clock input (S=1)
-            S  => useMiniTpg);          -- 1-bit input: Clock select
+            S  => useMiniTpgMux);       -- 1-bit input: Clock select
       --
       U_TXCLK : BUFGMUX
          generic map (
@@ -412,7 +420,7 @@ begin
             O  => gtTxClk(i),           -- 1-bit output: Clock output
             I0 => gtTxOutClk(i),        -- 1-bit input: Clock input (S=0)
             I1 => refClkDiv2(i),        -- 1-bit input: Clock input (S=1)
-            S  => useMiniTpg);          -- 1-bit input: Clock select
+            S  => useMiniTpgMux);       -- 1-bit input: Clock select
       --
 
       REAL_PCIE : if (not BYP_GT_SIM_G) and EN_LCLS_TIMING_G(i) generate
@@ -488,7 +496,7 @@ begin
    begin
       -- Register to help meet timing
       if rising_edge(timingRxClk) then
-         if (useMiniTpg = '1') then
+         if (useMiniTpgRx = '1') then
             if (timingClkSel = '1' and EN_LCLS_II_TIMING_G) then
                rxStatus  <= TIMING_PHY_STATUS_FORCE_C after TPD_G;
                rxData    <= xpmMiniTimingPhy.data     after TPD_G;
@@ -661,7 +669,9 @@ begin
          txUserRst       => txUserRst,
          txPhyReset      => txPhyReset,
          txPhyPllReset   => txPhyPllReset,
-         useMiniTpg      => useMiniTpg,
+         useMiniTpgRx    => useMiniTpgRx,
+         useMiniTpgTx    => useMiniTpgTx,
+         useMiniTpgMux   => useMiniTpgMux,
          mmcmRst         => mmcmRst,
          loopback        => loopback,
          remTrig         => (others => '0'),  --remTrig,
