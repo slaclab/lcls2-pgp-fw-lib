@@ -33,6 +33,7 @@ entity TimingPhyMonitor is
       txPhyPllReset   : out sl;
       useMiniTpgRx    : out Sl;
       useMiniTpgTx    : out Sl;
+      useMiniTpgMux   : out Sl;
       mmcmRst         : out sl;
       loopback        : out slv(2 downto 0);
       remTrig         : in  slv(3 downto 0);

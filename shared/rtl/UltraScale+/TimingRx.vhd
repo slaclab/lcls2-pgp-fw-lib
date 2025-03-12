@@ -413,14 +413,15 @@ begin
             I1 => refClkDiv2(i),        -- 1-bit input: Clock input (S=1)
             S  => useMiniTpgMux);       -- 1-bit input: Clock select
       --
-      U_TXCLK : BUFGMUX
-         generic map (
-            CLK_SEL_TYPE => "ASYNC")    -- ASYNC, SYNC
-         port map (
-            O  => gtTxClk(i),           -- 1-bit output: Clock output
-            I0 => gtTxOutClk(i),        -- 1-bit input: Clock input (S=0)
-            I1 => refClkDiv2(i),        -- 1-bit input: Clock input (S=1)
-            S  => useMiniTpgMux);       -- 1-bit input: Clock select
+--      U_TXCLK : BUFGMUX
+--         generic map (
+--            CLK_SEL_TYPE => "ASYNC")    -- ASYNC, SYNC
+--         port map (
+--            O  => gtTxClk(i),           -- 1-bit output: Clock output
+--            I0 => gtTxOutClk(i),        -- 1-bit input: Clock input (S=0)
+--            I1 => refClkDiv2(i),        -- 1-bit input: Clock input (S=1)
+--            S  => useMiniTpgMux);       -- 1-bit input: Clock select
+      gtTxClk(i) <= refClkDiv2(i); -- refClkDiv2=txOutClk inside TimingGtCoreWrapper for GTY+ implementation
       --
 
       REAL_PCIE : if (not BYP_GT_SIM_G) and EN_LCLS_TIMING_G(i) generate
