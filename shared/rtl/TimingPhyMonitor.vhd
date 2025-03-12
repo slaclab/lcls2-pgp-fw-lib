@@ -31,7 +31,8 @@ entity TimingPhyMonitor is
       txUserRst       : out sl;
       txPhyReset      : out sl;
       txPhyPllReset   : out sl;
-      useMiniTpg      : out Sl;
+      useMiniTpgRx    : out Sl;
+      useMiniTpgTx    : out Sl;
       mmcmRst         : out sl;
       loopback        : out slv(2 downto 0);
       remTrig         : in  slv(3 downto 0);
@@ -61,6 +62,7 @@ architecture rtl of TimingPhyMonitor is
       locTrigDropCnt : Slv16Array(3 downto 0);
       remTrigCnt     : Slv16Array(3 downto 0);
       remTrigDropCnt : Slv16Array(3 downto 0);
+      loopbackReg    : slv(2 downto 0);
       loopback       : slv(2 downto 0);
       cntRst         : sl;
       mmcmRst        : sl;
@@ -80,6 +82,7 @@ architecture rtl of TimingPhyMonitor is
       locTrigDropCnt => (others => (others => '0')),
       remTrigCnt     => (others => (others => '0')),
       remTrigDropCnt => (others => (others => '0')),
+      loopbackReg    => "000",
       loopback       => "000",
       cntRst         => '0',
       mmcmRst        => '1',
@@ -311,7 +314,7 @@ begin
       axiSlaveRegister (regCon, x"00", 0, v.mmcmRst);
       axiSlaveRegisterR(regCon, x"04", 0, mmcmLockedSync);
       axiSlaveRegisterR(regCon, x"08", 0, refRst);
-      axiSlaveRegister (regCon, x"0C", 0, v.loopback);
+      axiSlaveRegister (regCon, x"0C", 0, v.loopbackReg);
 
       axiSlaveRegister (regCon, x"10", 0, v.useMiniTpg);
       axiSlaveRegister (regCon, x"14", 0, v.rxUserRst);
@@ -372,10 +375,15 @@ begin
       -- Closeout the transaction
       axiSlaveDefault(regCon, v.axilWriteSlave, v.axilReadSlave, AXI_RESP_DECERR_C);
 
+      if (r.useMiniTpg = '1') then
+         v.loopback := "010";           -- Force Near-End PMA loopback
+      else
+         v.loopback := r.loopbackReg;
+      end if;
+
       -- Outputs
       axilWriteSlave <= r.axilWriteSlave;
       axilReadSlave  <= r.axilReadSlave;
-      useMiniTpg     <= r.useMiniTpg;
       loopback       <= r.loopback;
 
       txPhyPllReset <= r.txPhyPllReset;
@@ -427,5 +435,21 @@ begin
          arst   => r.txUserReset,
          clk    => axilClk,
          rstOut => txUserRst);
+
+   U_useMiniTpgRx : entity surf.Synchronizer
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         clk     => rxClk,
+         dataIn  => r.useMiniTpg,
+         dataOut => useMiniTpgRx);
+
+   U_useMiniTpgTx : entity surf.Synchronizer
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         clk     => txClk,
+         dataIn  => r.useMiniTpg,
+         dataOut => useMiniTpgTx);
 
 end rtl;
