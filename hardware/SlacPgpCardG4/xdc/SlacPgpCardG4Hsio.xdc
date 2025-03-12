@@ -14,6 +14,8 @@ create_generated_clock -name clk156 [get_pins {U_axilClk/PllGen.U_Pll/CLKOUT0}]
 create_generated_clock -name clk119 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[0].U_refClkDiv2/O}]
 create_generated_clock -name clk186 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[1].U_refClkDiv2/O}]
 
+##############################################################################
+
 #### GT Out Clocks
 create_clock -name timingGtRxOutClk0  -period 8.403 \
     [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[0].REAL_PCIE.U_GTH/*/RXOUTCLK}]
@@ -95,23 +97,23 @@ set_false_path -to [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[1].U_TX
 ###### Cascaded clock muxing - Final RX mux
 create_generated_clock -name casMuxRxClk119 \
     -divide_by 1 -add -master_clock muxRxClk119 \
-    -source [get_pins {*/U_TimingRx/U_RXCLK/I0}] \
-    [get_pins {*/U_TimingRx/U_RXCLK/O}]
+    -source [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_RXCLK/I0}] \
+    [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_RXCLK/O}]
 
 create_generated_clock -name casMuxTimingGtRxOutClk0 \
     -divide_by 1 -add -master_clock muxTimingGtRxOutClk0 \
-    -source [get_pins {*/U_TimingRx/U_RXCLK/I0}] \
-    [get_pins {*/U_TimingRx/U_RXCLK/O}]
+    -source [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_RXCLK/I0}] \
+    [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_RXCLK/O}]
 
 create_generated_clock -name casMuxRxClk186 \
     -divide_by 1 -add -master_clock muxRxClk186 \
-    -source [get_pins {*/U_TimingRx/U_RXCLK/I1}] \
-    [get_pins {*/U_TimingRx/U_RXCLK/O}]
+    -source [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_RXCLK/I1}] \
+    [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_RXCLK/O}]
 
 create_generated_clock -name casMuxTimingGtRxOutClk1 \
     -divide_by 1 -add -master_clock muxTimingGtRxOutClk1 \
-    -source [get_pins {*/U_TimingRx/U_RXCLK/I1}] \
-    [get_pins {*/U_TimingRx/U_RXCLK/O}]
+    -source [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_RXCLK/I1}] \
+    [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_RXCLK/O}]
 
 set_clock_groups -physically_exclusive \
     -group casMuxRxClk119 \
@@ -119,28 +121,28 @@ set_clock_groups -physically_exclusive \
     -group casMuxRxClk186 \
     -group casMuxTimingGtRxOutClk1
 
-set_false_path -to [get_pins {*/U_TimingRx/U_RXCLK/CE*}]
+set_false_path -to [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_RXCLK/CE*}]
 
 ###### Cascaded clock muxing - Final TX mux
 create_generated_clock -name casMuxTxClk119 \
     -divide_by 1 -add -master_clock muxTxClk119 \
-    -source [get_pins {*/U_TimingRx/U_TXCLK/I0}] \
-    [get_pins {*/U_TimingRx/U_TXCLK/O}]
+    -source [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/I0}] \
+    [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/O}]
 
 create_generated_clock -name casMuxTimingTxOutClk0 \
     -divide_by 1 -add -master_clock muxTimingTxOutClk0 \
-    -source [get_pins {*/U_TimingRx/U_TXCLK/I0}] \
-    [get_pins {*/U_TimingRx/U_TXCLK/O}]
+    -source [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/I0}] \
+    [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/O}]
 
 create_generated_clock -name casMuxTxClk186 \
     -divide_by 1 -add -master_clock muxTxClk186 \
-    -source [get_pins {*/U_TimingRx/U_TXCLK/I1}] \
-    [get_pins {*/U_TimingRx/U_TXCLK/O}]
+    -source [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/I1}] \
+    [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/O}]
 
 create_generated_clock -name casMuxTimingTxOutClk1 \
     -divide_by 1 -add -master_clock muxTimingTxOutClk1 \
-    -source [get_pins {*/U_TimingRx/U_TXCLK/I1}] \
-    [get_pins {*/U_TimingRx/U_TXCLK/O}]
+    -source [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/I1}] \
+    [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/O}]
 
 set_clock_groups -physically_exclusive \
     -group casMuxTxClk119 \
@@ -148,14 +150,15 @@ set_clock_groups -physically_exclusive \
     -group casMuxTxClk186 \
     -group casMuxTimingTxOutClk1
 
-set_false_path -to [get_pins {*/U_TimingRx/U_TXCLK/CE*}]
+set_false_path -to [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/CE*}]
 
+##############################################################################
 
 
 # set_case_analysis 1 [get_pins {*/U_TimingRx/GEN_VEC[0].U_RXCLK/S}]
 # set_case_analysis 1 [get_pins {*/U_TimingRx/GEN_VEC[1].U_RXCLK/S}]
-# set_case_analysis 1 [get_pins {*/U_TimingRx/U_RXCLK/S}]
-# set_case_analysis 1 [get_pins {*/U_TimingRx/U_TXCLK/S}]
+# set_case_analysis 1 [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_RXCLK/S}]
+# set_case_analysis 1 [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/S}]
 
 set_clock_groups -asynchronous \
     -group [get_clocks -include_generated_clocks {clk156}] \

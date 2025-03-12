@@ -521,7 +521,7 @@ begin
       end if;
    end process;
 
-   GEN_BOTH_RXCLK : if (EN_LCLS_I_TIMING_G) and (EN_LCLS_II_TIMING_G) generate
+   GEN_BOTH_CLK : if (EN_LCLS_I_TIMING_G) and (EN_LCLS_II_TIMING_G) generate
 
       U_RXCLK : BUFGMUX
          generic map (
@@ -543,12 +543,12 @@ begin
 
    end generate;
 
-   GEN_RXCLK_I_ONLY : if (EN_LCLS_I_TIMING_G) and (not EN_LCLS_II_TIMING_G) generate
+   GEN_CLK_I_ONLY : if (EN_LCLS_I_TIMING_G) and (not EN_LCLS_II_TIMING_G) generate
       timingRxClk <= gtRxClk(0);
       timingTxClk <= gtTxClk(0);
    end generate;
 
-   GEN_RXCLK_II_ONLY : if (not EN_LCLS_I_TIMING_G) and (EN_LCLS_II_TIMING_G) generate
+   GEN_CLK_II_ONLY : if (not EN_LCLS_I_TIMING_G) and (EN_LCLS_II_TIMING_G) generate
       timingRxClk <= gtRxClk(1);
       timingTxClk <= gtTxClk(1);
    end generate;
