@@ -51,14 +51,14 @@ create_generated_clock -name muxTimingGtRxOutClk1 \
 set_clock_groups -physically_exclusive -group [get_clocks {muxTimingGtRxOutClk0}] -group [get_clocks {muxTimingGtRxOutClk1}]
 set_false_path -to [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_RXCLK/CE*}]
 
-###### RX MUX
+###### TX MUX
 create_generated_clock -name muxTimingGtTxOutClk0 \
-    -divide_by 1 -add -master_clock timingGtTxOutClk0 \
+    -divide_by 2 -add -master_clock timingGtTxOutClk0 \
     -source [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/I0}] \
     [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/O}]
 
 create_generated_clock -name muxTimingGtTxOutClk1 \
-    -divide_by 1 -add -master_clock timingGtTxOutClk1 \
+    -divide_by 2 -add -master_clock timingGtTxOutClk1 \
     -source [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/I1}] \
     [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/O}]
 
