@@ -132,7 +132,7 @@ set_clock_groups -physically_exclusive \
     -group casMuxRxClk186 \
     -group casMuxTimingGtRxOutClk1
 
-set_false_path -to [get_pins {*/U_TimingRx/U_RXCLK/CE*}]
+set_false_path -to [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_RXCLK/CE*}]
 
 ###### Cascaded clock muxing - Final TX mux
 create_generated_clock -name casMuxTxClk119 \
@@ -161,7 +161,7 @@ set_clock_groups -physically_exclusive \
     -group casMuxTxClk186 \
     -group casMuxTimingTxOutClk1
 
-set_false_path -to [get_pins {*/U_TimingRx/U_TXCLK/CE*}]
+set_false_path -to [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/CE*}]
 
 ##############################################################################
 

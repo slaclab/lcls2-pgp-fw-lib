@@ -134,7 +134,7 @@ set_clock_groups -physically_exclusive \
     -group casMuxRxClk186 \
     -group casMuxTimingGtRxOutClk1
 
-set_false_path -to [get_pins {*/U_TimingRx/U_RXCLK/CE*}]
+set_false_path -to [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_RXCLK/CE*}]
 
 ###### Cascaded clock muxing - Final TX mux --> refClkDiv2=txOutClk inside TimingGtCoreWrapper for GTY+ implementation
 
