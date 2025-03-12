@@ -137,8 +137,8 @@ set_false_path -to [get_pins {*/U_TimingRx/U_RXCLK/CE*}]
 ###### Cascaded clock muxing - Final TX mux
 create_generated_clock -name casMuxTxClk119 \
     -divide_by 1 -add -master_clock muxTxClk119 \
-    -source [get_pins {*/U_TimingRx/U_TXCLK/I0}] \
-    [get_pins {*/U_TimingRx/U_TXCLK/O}]
+    -source [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/I0}] \
+    [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/O}]
 
 create_generated_clock -name casMuxTimingTxOutClk0 \
     -divide_by 1 -add -master_clock muxTimingTxOutClk0 \
