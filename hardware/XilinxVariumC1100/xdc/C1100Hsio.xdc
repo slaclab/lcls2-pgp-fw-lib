@@ -20,6 +20,8 @@ create_generated_clock -name clk371 [get_pins -hier -filter {name =~ */U_TimingR
 create_generated_clock -name clk119 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[0].U_refClkDiv2/O}]
 create_generated_clock -name clk186 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[1].U_refClkDiv2/O}]
 
+create_generated_clock -name timingStableClk [get_pins {U_HSIO/U_TimingRx/U_stableClk/O}]
+
 ##############################################################################
 
 #### GT[0] Clocks
@@ -178,6 +180,8 @@ set_clock_groups -physically_exclusive -group [get_clocks {muxTimingGtTxOutClk0}
 set_false_path -to [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/CE*}]
 
 ##############################################################################
+
+set_clock_groups -asynchronous -group [get_clocks {clk156}] -group [get_clocks {timingStableClk}]
 
 set_clock_groups -asynchronous \
     -group [get_clocks -include_generated_clocks {clk156}] \

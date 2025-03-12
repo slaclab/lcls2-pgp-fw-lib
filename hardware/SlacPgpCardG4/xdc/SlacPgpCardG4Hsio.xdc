@@ -17,6 +17,8 @@ create_generated_clock -name clk186 [get_pins -hier -filter {name =~ */U_TimingR
 create_clock -period 4.201 -name clk238 [get_ports {sfpRefClkP[0]}]
 create_clock -period 2.691 -name clk371 [get_ports {sfpRefClkP[1]}]
 
+create_generated_clock -name timingStableClk [get_pins {U_HSIO/U_TimingRx/U_stableClk/O}]
+
 ##############################################################################
 
 #### GT[0] Clocks
@@ -29,6 +31,9 @@ create_generated_clock -name timingGtTxOutClk0 \
 create_generated_clock -name timingTxOutClk0 \
     [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[0].REAL_PCIE.U_GTH/LOCREF_G.TIMING_TXCLK_BUFG_GT/O}]
 
+create_generated_clock -name timingGtTxOutClkPcs0 \
+    [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[0].REAL_PCIE.U_GTH/*/TXOUTCLKPCS}]
+
 #### GT[1] Clocks
 create_generated_clock -name timingGtRxOutClk1 \
     [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[1].REAL_PCIE.U_GTH/*/RXOUTCLK}]
@@ -38,6 +43,9 @@ create_generated_clock -name timingGtTxOutClk1 \
 
 create_generated_clock -name timingTxOutClk1 \
     [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[1].REAL_PCIE.U_GTH/LOCREF_G.TIMING_TXCLK_BUFG_GT/O}]
+
+create_generated_clock -name timingGtTxOutClkPcs1 \
+    [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[1].REAL_PCIE.U_GTH/*/TXOUTCLKPCS}]
 
 ##############################################################################
 # https://docs.amd.com/r/en-US/ug949-vivado-design-methodology/Overlapping-Clocks-Driven-by-a-Clock-Multiplexer
@@ -161,6 +169,8 @@ set_clock_groups -physically_exclusive \
 set_false_path -to [get_pins {*/U_TimingRx/GEN_BOTH_CLK.U_TXCLK/CE*}]
 
 ##############################################################################
+
+set_clock_groups -asynchronous -group [get_clocks {clk156}] -group [get_clocks {timingStableClk}]
 
 set_clock_groups -asynchronous \
     -group [get_clocks -include_generated_clocks {clk156}] \
