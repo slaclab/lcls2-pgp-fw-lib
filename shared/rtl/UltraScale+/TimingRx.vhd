@@ -47,9 +47,9 @@ entity TimingRx is
       EN_LCLS_II_TIMING_G : boolean := true);
    port (
       -- Reference Clock and Reset
-      userClk156     : in  sl := '0';      -- USE_GT_REFCLK_G = FALSE
-      userClk25      : in  sl := '0';      -- USE_GT_REFCLK_G = FALSE
-      userRst25      : in  sl := '1';      -- USE_GT_REFCLK_G = FALSE
+      userClk156     : in  sl := '0';   -- USE_GT_REFCLK_G = FALSE
+      userClk25      : in  sl := '0';   -- USE_GT_REFCLK_G = FALSE
+      userRst25      : in  sl := '1';   -- USE_GT_REFCLK_G = FALSE
       timingRxClkOut : out sl;
       timingRxRstOut : out sl;
 
@@ -139,16 +139,21 @@ architecture mapping of TimingRx is
    signal initWriteMaster : AxiLiteWriteMasterType;
    signal initWriteSlave  : AxiLiteWriteSlaveType;
 
-   signal mmcmRst      : sl;
-   signal gtediv2      : slv(1 downto 0);
-   signal refClk       : slv(1 downto 0);
-   signal refClkDiv2   : slv(1 downto 0);
-   signal refRst       : slv(1 downto 0);
-   signal refRstDiv2   : slv(1 downto 0);
-   signal mmcmLocked   : slv(1 downto 0);
-   signal timingClkSel : sl;
-   signal useMiniTpg   : sl;
-   signal loopback     : slv(2 downto 0);
+   signal mmcmRst    : sl;
+   signal gtediv2    : slv(1 downto 0);
+   signal refClk     : slv(1 downto 0);
+   signal refClkDiv2 : slv(1 downto 0);
+   signal refRst     : slv(1 downto 0);
+   signal refRstDiv2 : slv(1 downto 0);
+   signal mmcmLocked : slv(1 downto 0);
+   signal loopback   : slv(2 downto 0);
+
+   signal timingClkSelect : sl;
+   signal timingClkSelMux : sl;
+   signal timingClkSelRx  : sl;
+
+   signal useMiniTpgMux : sl;
+   signal useMiniTpgRx  : sl;
 
    signal rxUserRst       : sl;
    signal gtRxOutClk      : slv(1 downto 0);
@@ -191,8 +196,6 @@ architecture mapping of TimingRx is
    signal stableClk : sl;
    signal stableRst : sl;
 
-   signal timingClkSelect : sl;
-
    -----------------------------------------------
    -- Event Header Cache signals
    -----------------------------------------------
@@ -234,8 +237,8 @@ begin
             NUM_CLOCKS_G       => 1,
             -- MMCM attributes
             BANDWIDTH_G        => "OPTIMIZED",
-            CLKIN_PERIOD_G     => 40.0,    -- 25 MHz
-            DIVCLK_DIVIDE_G    => 1,       -- 25 MHz = 25MHz/1
+            CLKIN_PERIOD_G     => 40.0,   -- 25 MHz
+            DIVCLK_DIVIDE_G    => 1,      -- 25 MHz = 25MHz/1
             CLKFBOUT_MULT_F_G  => 59.50,  -- 1487.5 MHz = 25 MHz x 59.50
             CLKOUT0_DIVIDE_F_G => 6.25)   -- 238 MHz = 1487.5 MHz/6.25
          port map(
@@ -403,7 +406,7 @@ begin
             O  => gtRxClk(i),           -- 1-bit output: Clock output
             I0 => gtRxOutClk(i),        -- 1-bit input: Clock input (S=0)
             I1 => refClkDiv2(i),        -- 1-bit input: Clock input (S=1)
-            S  => useMiniTpg);          -- 1-bit input: Clock select
+            S  => useMiniTpgMux);       -- 1-bit input: Clock select
       --
       U_TXCLK : BUFGMUX
          generic map (
@@ -412,7 +415,7 @@ begin
             O  => gtTxClk(i),           -- 1-bit output: Clock output
             I0 => gtTxOutClk(i),        -- 1-bit input: Clock input (S=0)
             I1 => refClkDiv2(i),        -- 1-bit input: Clock input (S=1)
-            S  => useMiniTpg);          -- 1-bit input: Clock select
+            S  => useMiniTpgMux);       -- 1-bit input: Clock select
       --
 
       REAL_PCIE : if (not BYP_GT_SIM_G) and EN_LCLS_TIMING_G(i) generate
@@ -420,7 +423,7 @@ begin
             generic map (
                TPD_G            => TPD_G,
                EXTREF_G         => false,
-               LCLS1_ONLY_G     => ite(i=0, true, false),
+               LCLS1_ONLY_G     => ite(i = 0, true, false),
                AXI_CLK_FREQ_G   => AXIL_CLK_FREQ_G,
                AXIL_BASE_ADDR_G => AXIL_CONFIG_C(RX_PHY0_INDEX_C+i).baseAddr,
                GTY_DRP_OFFSET_G => x"00001000")
@@ -489,21 +492,21 @@ begin
    begin
       -- Register to help meet timing
       if rising_edge(timingRxClk) then
-         if (useMiniTpg = '1') then
-            if (timingClkSel = '1' and EN_LCLS_II_TIMING_G) then
+         if (useMiniTpgRx = '1') then
+            if (timingClkSelRx = '1' and EN_LCLS_II_TIMING_G) then
                rxStatus  <= TIMING_PHY_STATUS_FORCE_C after TPD_G;
                rxData    <= xpmMiniTimingPhy.data     after TPD_G;
                rxDataK   <= xpmMiniTimingPhy.dataK    after TPD_G;
                rxDispErr <= "00"                      after TPD_G;
                rxDecErr  <= "00"                      after TPD_G;
-            elsif (timingClkSel = '0' and EN_LCLS_I_TIMING_G) then
+            elsif (timingClkSelRx = '0' and EN_LCLS_I_TIMING_G) then
                rxStatus  <= TIMING_PHY_STATUS_FORCE_C    after TPD_G;
                rxData    <= tpgMiniStreamTimingPhy.data  after TPD_G;
                rxDataK   <= tpgMiniStreamTimingPhy.dataK after TPD_G;
                rxDispErr <= "00"                         after TPD_G;
                rxDecErr  <= "00"                         after TPD_G;
             end if;
-         elsif (timingClkSel = '1') then
+         elsif (timingClkSelRx = '1') then
 --            txStatus  <= gtTxStatus(1)  after TPD_G;
             rxStatus  <= gtRxStatus(1)  after TPD_G;
             rxData    <= gtRxData(1)    after TPD_G;
@@ -528,7 +531,7 @@ begin
          O  => timingRxClk,             -- 1-bit output: Clock output
          I0 => gtRxClk(0),              -- 1-bit input: Clock input (S=0)
          I1 => gtRxClk(1),              -- 1-bit input: Clock input (S=1)
-         S  => timingClkSel);           -- 1-bit input: Clock select
+         S  => timingClkSelMux);        -- 1-bit input: Clock select
 
    -- NEED to do the same thing as RX!!!!
    -- NEED TXOUTCLKs switched in here
@@ -539,7 +542,7 @@ begin
          O  => timingTxClk,             -- 1-bit output: Clock output
          I0 => gtTxClk(0),              -- 1-bit input: Clock input (S=0)
          I1 => gtTxClk(1),              -- 1-bit input: Clock input (S=1)
-         S  => timingClkSel);           -- 1-bit input: Clock select
+         S  => timingClkSelMux);        -- 1-bit input: Clock select
 
    -----------------------
    -- Insert user RX reset
@@ -615,7 +618,24 @@ begin
          axilWriteMaster  => axilWriteMasters(TIMING_INDEX_C),
          axilWriteSlave   => axilWriteSlaves(TIMING_INDEX_C));
 
-   timingClkSel <= '1' when (not EN_LCLS_I_TIMING_G) else '0' when (not EN_LCLS_II_TIMING_G) else timingClkSelect;
+   process(timingClkSelect)
+   begin
+      if (not EN_LCLS_I_TIMING_G) then
+         timingClkSelMux <= '1';
+      elsif (not EN_LCLS_II_TIMING_G) then
+         timingClkSelMux <= '0';
+      else
+         timingClkSelMux <= timingClkSelect;
+      end if;
+   end process;
+
+   U_timingClkSelRx : entity surf.Synchronizer
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         clk     => timingRxClk,
+         dataIn  => timingClkSelMux,
+         dataOut => timingClkSelRx);
 
    ---------------------
    -- XPM Mini Wrapper
@@ -662,7 +682,8 @@ begin
          txUserRst       => txUserRst,
          txPhyReset      => txPhyReset,
          txPhyPllReset   => txPhyPllReset,
-         useMiniTpg      => useMiniTpg,
+         useMiniTpgMux   => useMiniTpgMux,
+         useMiniTpgRx    => useMiniTpgRx,
          mmcmRst         => mmcmRst,
          loopback        => loopback,
          remTrig         => (others => '0'),  --remTrig,
