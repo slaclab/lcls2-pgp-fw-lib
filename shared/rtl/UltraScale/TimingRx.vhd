@@ -218,7 +218,7 @@ begin
          asyncRst => txUserRst,
          syncRst  => timingTxRst);
 
-   timingRxRstTmp <= rxUserRst or not rxStatus.bufferByDone;
+   timingRxRstTmp <= rxUserRst or not rxStatus.resetDone;
    U_timingRxRst : entity surf.RstSync
       generic map (
          TPD_G => TPD_G)
