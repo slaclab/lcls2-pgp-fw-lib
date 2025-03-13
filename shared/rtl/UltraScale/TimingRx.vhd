@@ -210,16 +210,22 @@ begin
    timingRxClkOut <= timingRxClk;
    timingRxRstOut <= timingRxRst;
 
-   timingTxRst    <= txUserRst;
-   timingRxRstTmp <= rxUserRst or not rxStatus.resetDone;
-
-   U_RstSync_1 : entity surf.RstSync
+   U_timingTxRst : entity surf.RstSync
       generic map (
          TPD_G => TPD_G)
       port map (
-         clk      => timingRxClk,       -- [in]
-         asyncRst => timingRxRstTmp,    -- [in]
-         syncRst  => timingRxRst);      -- [out]
+         clk      => timingTxClk,
+         asyncRst => txUserRst,
+         syncRst  => timingTxRst);
+
+   timingRxRstTmp <= rxUserRst or not rxStatus.bufferByDone;
+   U_timingRxRst : entity surf.RstSync
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         clk      => timingRxClk,
+         asyncRst => timingRxRstTmp,
+         syncRst  => timingRxRst);
 
    GEN_MMCM : if (not USE_GT_REFCLK_G) generate
 

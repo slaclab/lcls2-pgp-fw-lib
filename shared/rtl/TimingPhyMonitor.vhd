@@ -266,6 +266,8 @@ begin
       v := r;
 
       -- Reset the strobes
+      v.rxUserRst     := '0';
+      v.txUserRst     := '0';
       v.mmcmRst       := '0';
       v.cntRst        := '0';
       v.txPhyReset    := '0';
