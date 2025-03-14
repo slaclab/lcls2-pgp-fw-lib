@@ -31,7 +31,9 @@ entity TimingPhyMonitor is
       txUserRst       : out sl;
       txPhyReset      : out sl;
       txPhyPllReset   : out sl;
-      useMiniTpg      : out Sl;
+      useMiniTpgRx    : out Sl;
+      useMiniTpgTx    : out Sl;
+      useMiniTpgMux   : out Sl;
       mmcmRst         : out sl;
       loopback        : out slv(2 downto 0);
       remTrig         : in  slv(3 downto 0);
@@ -264,6 +266,8 @@ begin
       v := r;
 
       -- Reset the strobes
+      v.rxUserRst     := '0';
+      v.txUserRst     := '0';
       v.mmcmRst       := '0';
       v.cntRst        := '0';
       v.txPhyReset    := '0';
@@ -375,7 +379,7 @@ begin
       -- Outputs
       axilWriteSlave <= r.axilWriteSlave;
       axilReadSlave  <= r.axilReadSlave;
-      useMiniTpg     <= r.useMiniTpg;
+      useMiniTpgMux  <= r.useMiniTpg;
       loopback       <= r.loopback;
 
       txPhyPllReset <= r.txPhyPllReset;
@@ -427,5 +431,21 @@ begin
          arst   => r.txUserReset,
          clk    => axilClk,
          rstOut => txUserRst);
+
+   U_useMiniTpgRx : entity surf.Synchronizer
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         clk     => rxClk,
+         dataIn  => r.useMiniTpg,
+         dataOut => useMiniTpgRx);
+
+   U_useMiniTpgTx : entity surf.Synchronizer
+      generic map (
+         TPD_G => TPD_G)
+      port map (
+         clk     => txClk,
+         dataIn  => r.useMiniTpg,
+         dataOut => useMiniTpgTx);
 
 end rtl;

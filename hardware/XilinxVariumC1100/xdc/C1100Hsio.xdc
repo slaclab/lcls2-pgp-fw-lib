@@ -39,6 +39,10 @@ create_generated_clock -name timingGtTxOutClk1 \
 # create_generated_clock -name timingTxOutClk1 \
     # [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[1].U_refClkDiv2/O}]
 
+##############################################################################
+# https://docs.amd.com/r/en-US/ug949-vivado-design-methodology/Overlapping-Clocks-Driven-by-a-Clock-Multiplexer
+# https://adaptivesupport.amd.com/s/article/59484?language=en_US
+##############################################################################
 
 #### Cascaded clock muxing - GEN_VEC[0] RX mux
 create_generated_clock -name muxRxClk119 \
