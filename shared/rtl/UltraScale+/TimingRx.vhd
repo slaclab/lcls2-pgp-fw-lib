@@ -175,11 +175,8 @@ architecture mapping of TimingRx is
    signal gtRxControl     : TimingPhyControlType;
 
    signal txUserRst     : sl;
-   signal gtTxOutClk    : slv(1 downto 0);
-   signal gtTxClk       : slv(1 downto 0);
    signal timingTxClk   : sl;
    signal timingTxRst   : sl;
---   signal txStatus   : TimingPhyStatusType := TIMING_PHY_STATUS_FORCE_C;
    signal gtTxStatus    : TimingPhyStatusArray(1 downto 0);
    signal gtTxControl   : TimingPhyControlType;
    signal txPhyReset    : sl;
@@ -413,16 +410,6 @@ begin
             I0 => gtRxOutClk(i),        -- 1-bit input: Clock input (S=0)
             I1 => refClkDiv2(i),        -- 1-bit input: Clock input (S=1)
             S  => useMiniTpgMux);       -- 1-bit input: Clock select
-      --
-      U_TXCLK : BUFGMUX
-         generic map (
-            CLK_SEL_TYPE => "ASYNC")    -- ASYNC, SYNC
-         port map (
-            O  => gtTxClk(i),           -- 1-bit output: Clock output
-            I0 => gtTxOutClk(i),        -- 1-bit input: Clock input (S=0)
-            I1 => refClkDiv2(i),        -- 1-bit input: Clock input (S=1)
-            S  => useMiniTpgMux);       -- 1-bit input: Clock select
-      --
 
       REAL_PCIE : if (not BYP_GT_SIM_G) and EN_LCLS_TIMING_G(i) generate
          U_GTY : entity lcls_timing_core.TimingGtCoreWrapper
@@ -466,11 +453,10 @@ begin
                -- Tx Ports
                txControl       => gtTxControl,  --temTimingTxPhy.control,
                txStatus        => gtTxStatus(i),
-               txUsrClk        => gtTxOutClk(i),
+               txUsrClk        => refClkDiv2(i),
                txUsrClkActive  => mmcmLocked(i),
                txData          => temTimingTxPhy.data,
                txDataK         => temTimingTxPhy.dataK,
-               txOutClk        => gtTxOutClk(i),
                -- Misc.
                loopback        => loopback);
       end generate;
@@ -482,7 +468,6 @@ begin
          axilWriteSlaves(RX_PHY0_INDEX_C+i) <= AXI_LITE_WRITE_SLAVE_EMPTY_OK_C;
 
          gtRxOutClk(i) <= refClkDiv2(i);
-         gtTxOutClk(i) <= refClkDiv2(i);
 
          gtTxStatus(i)  <= TIMING_PHY_STATUS_FORCE_C;
          gtRxStatus(i)  <= TIMING_PHY_STATUS_FORCE_C;
@@ -513,14 +498,12 @@ begin
                rxDecErr  <= "00"                         after TPD_G;
             end if;
          elsif (timingClkSelRx = '1') then
---            txStatus  <= gtTxStatus(1)  after TPD_G;
             rxStatus  <= gtRxStatus(1)  after TPD_G;
             rxData    <= gtRxData(1)    after TPD_G;
             rxDataK   <= gtRxDataK(1)   after TPD_G;
             rxDispErr <= gtRxDispErr(1) after TPD_G;
             rxDecErr  <= gtRxDecErr(1)  after TPD_G;
          else
---            txStatus  <= gtTxStatus(0)  after TPD_G;
             rxStatus  <= gtRxStatus(0)  after TPD_G;
             rxData    <= gtRxData(0)    after TPD_G;
             rxDataK   <= gtRxDataK(0)   after TPD_G;
@@ -539,15 +522,13 @@ begin
          I1 => gtRxClk(1),              -- 1-bit input: Clock input (S=1)
          S  => timingClkSelMux);        -- 1-bit input: Clock select
 
-   -- NEED to do the same thing as RX!!!!
-   -- NEED TXOUTCLKs switched in here
    U_TXCLK : BUFGMUX
       generic map (
          CLK_SEL_TYPE => "ASYNC")       -- ASYNC, SYNC
       port map (
          O  => timingTxClk,             -- 1-bit output: Clock output
-         I0 => gtTxClk(0),              -- 1-bit input: Clock input (S=0)
-         I1 => gtTxClk(1),              -- 1-bit input: Clock input (S=1)
+         I0 => refClkDiv2(0),           -- 1-bit input: Clock input (S=0)
+         I1 => refClkDiv2(1),           -- 1-bit input: Clock input (S=1)
          S  => timingClkSelMux);        -- 1-bit input: Clock select
 
    -----------------------
