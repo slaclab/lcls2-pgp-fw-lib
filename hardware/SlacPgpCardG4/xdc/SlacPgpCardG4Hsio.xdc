@@ -142,4 +142,6 @@ set_clock_groups -asynchronous \
     -group [get_clocks -include_generated_clocks {sfpRefClkP1}] \
     -group [get_clocks -include_generated_clocks {dmaClk}]
 
+set_clock_groups -asynchronous -group [get_clocks casMuxRxClk119] -group [get_clocks muxTxClk119]
+
 ##############################################################################
