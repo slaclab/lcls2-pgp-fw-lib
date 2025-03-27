@@ -1,5 +1,5 @@
 # Load RUCKUS environment and library
-source -quiet $::env(RUCKUS_DIR)/vivado_proc.tcl
+source $::env(RUCKUS_PROC_TCL)
 
 # Load local source Code
 loadSource      -lib lcls2_pgp_fw_lib -dir  "$::DIR_PATH/rtl"
