@@ -485,26 +485,22 @@ begin
       if rising_edge(timingRxClk) then
          if (useMiniTpgRx = '1') then
             if (timingClkSelRx = '1' and EN_LCLS_II_TIMING_G) then
-               rxStatus  <= TIMING_PHY_STATUS_FORCE_C after TPD_G;
                rxData    <= xpmMiniTimingPhy.data     after TPD_G;
                rxDataK   <= xpmMiniTimingPhy.dataK    after TPD_G;
                rxDispErr <= "00"                      after TPD_G;
                rxDecErr  <= "00"                      after TPD_G;
             elsif (timingClkSelRx = '0' and EN_LCLS_I_TIMING_G) then
-               rxStatus  <= TIMING_PHY_STATUS_FORCE_C    after TPD_G;
                rxData    <= tpgMiniStreamTimingPhy.data  after TPD_G;
                rxDataK   <= tpgMiniStreamTimingPhy.dataK after TPD_G;
                rxDispErr <= "00"                         after TPD_G;
                rxDecErr  <= "00"                         after TPD_G;
             end if;
          elsif (timingClkSelRx = '1') then
-            rxStatus  <= gtRxStatus(1)  after TPD_G;
             rxData    <= gtRxData(1)    after TPD_G;
             rxDataK   <= gtRxDataK(1)   after TPD_G;
             rxDispErr <= gtRxDispErr(1) after TPD_G;
             rxDecErr  <= gtRxDecErr(1)  after TPD_G;
          else
-            rxStatus  <= gtRxStatus(0)  after TPD_G;
             rxData    <= gtRxData(0)    after TPD_G;
             rxDataK   <= gtRxDataK(0)   after TPD_G;
             rxDispErr <= gtRxDispErr(0) after TPD_G;
@@ -512,6 +508,21 @@ begin
          end if;
       end if;
    end process;
+
+   process(useMiniTpgRx, timingClkSelRx, gtRxStatus)
+   begin
+      if (useMiniTpgRx = '1') then
+         if (timingClkSelRx = '1' and EN_LCLS_II_TIMING_G) then
+            rxStatus  <= TIMING_PHY_STATUS_FORCE_C after TPD_G;
+         elsif (timingClkSelRx = '0' and EN_LCLS_I_TIMING_G) then
+            rxStatus  <= TIMING_PHY_STATUS_FORCE_C    after TPD_G;
+         end if;
+      elsif (timingClkSelRx = '1') then
+         rxStatus  <= gtRxStatus(1)  after TPD_G;
+      else
+         rxStatus  <= gtRxStatus(0)  after TPD_G;
+      end if;
+   end process;   
 
    U_RXCLK : BUFGMUX
       generic map (
