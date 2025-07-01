@@ -92,8 +92,8 @@ class TimingRx(pr.Device):
             self.ConfigLclsTimingBase(ClkSel=0, UseMiniTpg=True)
 
     def LockProc(self, cmd, var, lockValue, stable10ms=10, timeout10ms=500, retry=1):
-        retryCnt=0
-        while(retryCnt<retry):
+        retryCnt = 0
+        while retryCnt < retry:
 
             # Execute the command
             cmd()
