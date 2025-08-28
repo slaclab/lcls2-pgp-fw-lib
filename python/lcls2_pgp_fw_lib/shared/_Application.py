@@ -50,6 +50,14 @@ class AppLane(pr.Device):
             mode         = 'RW',
         ))
 
+        self.add(pr.RemoteVariable(
+            name         = 'ClinkDecaMode',
+            description  = '0: normal mode (no touching data), 1: cameralink-gateway DECA mode data that needs PCIe FW to add zero padding',
+            offset       = 0x1_0108,
+            bitSize      = 1,
+            mode         = 'RW',
+        ))
+
 class Application(pr.Device):
     def __init__(   self,
             name        = "Application",

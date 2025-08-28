@@ -18,10 +18,10 @@ use ieee.std_logic_unsigned.all;
 
 library surf;
 use surf.StdRtlPkg.all;
-use surf.AxiPkg.all;
 use surf.AxiLitePkg.all;
 use surf.AxiStreamPkg.all;
-use surf.Pgp3Pkg.all;
+
+library lcls2_pgp_fw_lib;
 
 entity AppLane is
    generic (
@@ -58,9 +58,10 @@ end AppLane;
 
 architecture mapping of AppLane is
 
-   constant INI_WRITE_REG_C : Slv32Array(1 downto 0) := (
+   constant INI_WRITE_REG_C : Slv32Array(2 downto 0) := (
       0 => x"0000_0001",                -- default to VC1 as data path VC
-      1 => x"0000_0001");               -- eventTrigPauseThresh
+      1 => x"0000_0001",                -- eventTrigPauseThresh
+      2 => x"0000_0000");               -- decaMode
 
    constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(1 downto 0) := genAxiLiteConfig(2, AXI_BASE_ADDR_G, 19, 16);
 
@@ -69,12 +70,17 @@ architecture mapping of AppLane is
    signal axilReadMasters  : AxiLiteReadMasterArray(1 downto 0);
    signal axilReadSlaves   : AxiLiteReadSlaveArray(1 downto 0);
 
-   signal wrRegs               : Slv32Array(1 downto 0);
+   signal wrRegs               : Slv32Array(2 downto 0);
    signal tap                  : slv(1 downto 0);
    signal eventTrigPauseThresh : slv(8 downto 0);
+   signal decaMode             : sl;
+   signal blowoff              : sl;
 
    signal trigMsgMaster : AxiStreamMasterType;
    signal trigMsgSlave  : AxiStreamSlaveType;
+
+   signal dataMaster : AxiStreamMasterType;
+   signal dataSlave  : AxiStreamSlaveType;
 
    signal tapMaster : AxiStreamMasterType;
    signal tapSlave  : AxiStreamSlaveType;
@@ -114,14 +120,13 @@ begin
          mAxiReadMasters     => axilReadMasters,
          mAxiReadSlaves      => axilReadSlaves);
 
-
    ----------------------
    -- Local Configuration
    ----------------------
    U_AxiLiteRegs : entity surf.AxiLiteRegs
       generic map (
          TPD_G           => TPD_G,
-         NUM_WRITE_REG_G => 2,
+         NUM_WRITE_REG_G => 3,
          INI_WRITE_REG_G => INI_WRITE_REG_C)
       port map (
          -- AXI-Lite Bus
@@ -136,6 +141,7 @@ begin
 
    tap                  <= wrRegs(0)(1 downto 0);
    eventTrigPauseThresh <= wrRegs(1)(8 downto 0);
+   decaMode             <= wrRegs(2)(0);
 
    -------------------
    -- XPM Backpressure
@@ -222,12 +228,14 @@ begin
          axilReadSlave   => axilReadSlaves(0),
          axilWriteMaster => axilWriteMasters(0),
          axilWriteSlave  => axilWriteSlaves(0),
+         -- Misc
+         blowoffInt      => blowoff,
          -- AXIS Interfaces
          sAxisMasters(0) => trigMsgMaster,
-         sAxisMasters(1) => tapMaster,   -- PGP[tap]
+         sAxisMasters(1) => dataMaster,  -- PGP[tap]
          sAxisMasters(2) => eventTimingMsgMaster,
          sAxisSlaves(0)  => trigMsgSlave,
-         sAxisSlaves(1)  => tapSlave,    -- PGP[tap]
+         sAxisSlaves(1)  => dataSlave,   -- PGP[tap]
          sAxisSlaves(2)  => eventTimingMsgSlave,
          mAxisMaster     => eventMaster,
          mAxisSlave      => eventSlave);
@@ -291,6 +299,24 @@ begin
       pgpObSlaves  <= pgpObSlavesTmp;
       appObMasters <= appObMastersTmp;
    end process;
+
+   U_ClinkDecaMode : entity lcls2_pgp_fw_lib.ClinkDecaMode
+      generic map (
+         TPD_G             => TPD_G,
+         DMA_AXIS_CONFIG_G => DMA_AXIS_CONFIG_G)
+      port map (
+         -- Clock and Reset
+         axilClk    => axilClk,
+         axilRst    => axilRst,
+         -- Configuration
+         decaMode   => decaMode,
+         blowoff    => blowoff,
+         -- Inbound stream
+         tapMaster  => tapMaster,
+         tapSlave   => tapSlave,
+         -- Outbound stream
+         dataMaster => dataMaster,
+         dataSlave  => dataSlave);
 
    -----------------
    -- AXI Stream MUX
