@@ -374,10 +374,10 @@ begin
       generic map (
          BUFGCE_DIVIDE => 2)
       port map (
-         I   => axilClk,
+         I   => userClk156,
          CE  => '1',
          CLR => '0',
-         O   => stableClk);
+         O   => stableClk);  -- IP core configured for stableClk = 156.25MHz/2
 
    U_stableRst : entity surf.RstSync
       generic map (
@@ -435,10 +435,10 @@ begin
                axilReadSlave   => axilReadSlaves(RX_PHY0_INDEX_C+i),
                axilWriteMaster => axilWriteMasters(RX_PHY0_INDEX_C+i),
                axilWriteSlave  => axilWriteSlaves(RX_PHY0_INDEX_C+i),
-               stableClk       => stableClk,
+               stableClk       => stableClk,  -- IP core configured for stableClk = 156.25MHz/2
                stableRst       => stableRst,
                -- GTH FPGA IO
-               gtRefClk        => '0',          -- Using GTGREFCLK instead
+               gtRefClk        => '0',  -- Using GTGREFCLK instead
                gtRefClkDiv2    => refClkDiv2(i),
                gtRxP           => timingRxP(i),
                gtRxN           => timingRxN(i),
