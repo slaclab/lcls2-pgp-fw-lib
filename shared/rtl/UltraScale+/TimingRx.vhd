@@ -53,6 +53,10 @@ entity TimingRx is
       timingRxClkOut : out sl;
       timingRxRstOut : out sl;
 
+      -- Timing link up status
+      v1LinkUp : out sl;
+      v2LinkUp : out sl;
+
       -- Trigger Interface
       triggerClk  : in  sl;
       triggerRst  : in  sl;
@@ -203,6 +207,9 @@ architecture mapping of TimingRx is
    signal eventTimingMessagesRd    : slv(NUM_DETECTORS_G-1 downto 0);
 
 begin
+
+   v2LinkUp <= appTimingBus.v2.linkUp;
+   v1LinkUp <= appTimingBus.v1.linkUp;
 
    timingRxClkOut <= timingRxClk;
    timingRxRstOut <= timingRxRst;
