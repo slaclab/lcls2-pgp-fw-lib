@@ -677,6 +677,7 @@ begin
       generic map (
          TPD_G           => TPD_G,
          SIMULATION_G    => SIMULATION_G,
+         BYP_GT_SIM_G    => BYP_GT_SIM_G,
          AXIL_CLK_FREQ_G => AXIL_CLK_FREQ_G)
       port map (
          rxUserRst       => rxUserRst,
