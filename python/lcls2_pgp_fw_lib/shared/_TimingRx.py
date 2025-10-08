@@ -24,7 +24,7 @@ class TimingRx(pr.Device):
             self,
             enLclsI  = False,
             enLclsII = True,
-            numDetectors = 4,
+            numDetectors = 8,
             **kwargs):
         super().__init__(**kwargs)
 

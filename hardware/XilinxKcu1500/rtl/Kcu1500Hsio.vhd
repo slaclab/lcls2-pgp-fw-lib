@@ -161,7 +161,7 @@ architecture mapping of Kcu1500Hsio is
    signal refClk    : slv(3 downto 0);
    signal refClkDiv : slv(3 downto 0);
 
-   signal iTriggerData       : TriggerEventDataArray(NUM_PGP_LANES_G-1 downto 0);
+   signal iTriggerData       : TriggerEventDataArray(7 downto 0);
    signal remoteTriggersComb : slv(NUM_PGP_LANES_G-1 downto 0);
    signal remoteTriggers     : slv(NUM_PGP_LANES_G-1 downto 0);
    signal triggerCodes       : slv8Array(NUM_PGP_LANES_G-1 downto 0);
@@ -352,31 +352,42 @@ begin
          DMA_AXIS_CONFIG_G   => DMA_AXIS_CONFIG_G,
          AXIL_CLK_FREQ_G     => AXIL_CLK_FREQ_G,
          AXI_BASE_ADDR_G     => AXIL_CONFIG_C(TIMING_INDEX_C).baseAddr,
-         NUM_DETECTORS_G     => NUM_PGP_LANES_G,
+         NUM_DETECTORS_G     => 8,
          EN_LCLS_I_TIMING_G  => EN_LCLS_I_TIMING_G,
          EN_LCLS_II_TIMING_G => EN_LCLS_II_TIMING_G)
       port map (
          -- Reference Clock and Reset
-         userClk156            => userClk156,
-         userClk25             => userClk25,
-         userRst25             => userRst25,
+         userClk156 => userClk156,
+         userClk25  => userClk25,
+         userRst25  => userRst25,
+
          -- Trigger interface
-         triggerClk            => triggerClk,             -- [in]
-         triggerRst            => triggerRst,             -- [in]
-         triggerData           => iTriggerData,           -- [out]
-         l1Clk                 => l1Clk,                  -- [in]
-         l1Rst                 => l1Rst,                  -- [in]
-         l1Feedbacks           => l1Feedbacks,            -- [in]
-         l1Acks                => l1Acks,                 -- [out]
+         triggerClk              => triggerClk,    -- [in]
+         triggerRst              => triggerRst,    -- [in]
+         triggerData             => iTriggerData,  -- [out]
+         l1Clk                   => l1Clk,         -- [in]
+         l1Rst                   => l1Rst,         -- [in]
+         l1Feedbacks(3 downto 0) => l1Feedbacks,   -- [in]
+         l1Feedbacks(7 downto 4) => (others => TRIGGER_L1_FEEDBACK_INIT_C),  -- [in]
+         l1Acks(3 downto 0)      => l1Acks,        -- [out]
+         l1Acks(7 downto 4)      => open,          -- [out]
+
          -- Event interface
-         eventClk              => eventClk,               -- [in]
-         eventRst              => eventRst,               -- [in]
-         eventTrigMsgMasters   => eventTrigMsgMasters,    -- [out]
-         eventTrigMsgSlaves    => eventTrigMsgSlaves,     -- [in]
-         eventTrigMsgCtrl      => eventTrigMsgCtrl,       -- [in]
-         eventTimingMsgMasters => eventTimingMsgMasters,  -- [out]
-         eventTimingMsgSlaves  => eventTimingMsgSlaves,   -- [in]
-         clearReadout          => clearReadout,           -- [out]
+         eventClk                          => eventClk,               -- [in]
+         eventRst                          => eventRst,               -- [in]
+         eventTrigMsgMasters(3 downto 0)   => eventTrigMsgMasters,    -- [out]
+         eventTrigMsgMasters(7 downto 4)   => open,                   -- [out]
+         eventTrigMsgSlaves(3 downto 0)    => eventTrigMsgSlaves,     -- [in]
+         eventTrigMsgSlaves(7 downto 4)    => (others => AXI_STREAM_SLAVE_FORCE_C),  -- [in]
+         eventTrigMsgCtrl(3 downto 0)      => eventTrigMsgCtrl,       -- [in]
+         eventTrigMsgCtrl(7 downto 4)      => (others => AXI_STREAM_CTRL_UNUSED_C),  -- [in]
+         eventTimingMsgMasters(3 downto 0) => eventTimingMsgMasters,  -- [out]
+         eventTimingMsgMasters(7 downto 4) => open,                   -- [out]
+         eventTimingMsgSlaves(3 downto 0)  => eventTimingMsgSlaves,   -- [in]
+         eventTimingMsgSlaves(7 downto 4)  => (others => AXI_STREAM_SLAVE_FORCE_C),  -- [in]
+         clearReadout(3 downto 0)          => clearReadout,           -- [out]
+         clearReadout(7 downto 4)          => open,                   -- [out]
+
          -- AXI-Lite Interface (axilClk domain)
          axilClk               => axilClk,
          axilRst               => axilRst,
@@ -393,10 +404,16 @@ begin
    --------------------------------
    -- Feed triggers directly to PGP
    --------------------------------
-   TRIGGER_GEN : for i in NUM_PGP_LANES_G-1 downto 0 generate
-      remoteTriggersComb(i) <= iTriggerData(i).valid and iTriggerData(i).l0Accept;
-      triggerCodes(i)       <= "000" & iTriggerData(i).l0Tag;
-   end generate TRIGGER_GEN;
+   process(iTriggerData)
+   begin
+      for i in 3 downto 0 loop
+         remoteTriggersComb(i)       <= (iTriggerData(i+0).valid and iTriggerData(i+0).l0Accept) or (iTriggerData(i+4).valid and iTriggerData(i+4).l0Accept);
+         triggerCodes(i)(7 downto 5) <= (others => '0');
+         for j in 4 downto 0 loop
+            triggerCodes(i)(j) <= iTriggerData(i+0).l0Tag(j) or iTriggerData(i+4).l0Tag(j);
+         end loop;
+      end loop;
+   end process;
    U_RegisterVector_1 : entity surf.RegisterVector
       generic map (
          TPD_G   => TPD_G,
@@ -406,7 +423,7 @@ begin
          sig_i => remoteTriggersComb,   -- [in]
          reg_o => remoteTriggers);      -- [out]
 
-   triggerData <= iTriggerData;
+   triggerData <= iTriggerData(NUM_PGP_LANES_G-1 downto 0);
 
    --------------------
    -- Unused QSFP Links
