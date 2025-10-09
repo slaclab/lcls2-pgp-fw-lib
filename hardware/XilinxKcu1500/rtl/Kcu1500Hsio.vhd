@@ -389,17 +389,17 @@ begin
          clearReadout(7 downto 4)          => open,                   -- [out]
 
          -- AXI-Lite Interface (axilClk domain)
-         axilClk               => axilClk,
-         axilRst               => axilRst,
-         axilReadMaster        => axilReadMasters(TIMING_INDEX_C),
-         axilReadSlave         => axilReadSlaves(TIMING_INDEX_C),
-         axilWriteMaster       => axilWriteMasters(TIMING_INDEX_C),
-         axilWriteSlave        => axilWriteSlaves(TIMING_INDEX_C),
+         axilClk         => axilClk,
+         axilRst         => axilRst,
+         axilReadMaster  => axilReadMasters(TIMING_INDEX_C),
+         axilReadSlave   => axilReadSlaves(TIMING_INDEX_C),
+         axilWriteMaster => axilWriteMasters(TIMING_INDEX_C),
+         axilWriteSlave  => axilWriteSlaves(TIMING_INDEX_C),
          -- GT Serial Ports
-         timingRxP             => qsfp1RxP(1 downto 0),
-         timingRxN             => qsfp1RxN(1 downto 0),
-         timingTxP             => qsfp1TxP(1 downto 0),
-         timingTxN             => qsfp1TxN(1 downto 0));
+         timingRxP       => qsfp1RxP(1 downto 0),
+         timingRxN       => qsfp1RxN(1 downto 0),
+         timingTxP       => qsfp1TxP(1 downto 0),
+         timingTxN       => qsfp1TxN(1 downto 0));
 
    --------------------------------
    -- Feed triggers directly to PGP
@@ -407,11 +407,10 @@ begin
    process(iTriggerData)
    begin
       for i in 3 downto 0 loop
-         remoteTriggersComb(i)       <= (iTriggerData(i+0).valid and iTriggerData(i+0).l0Accept) or (iTriggerData(i+4).valid and iTriggerData(i+4).l0Accept);
-         triggerCodes(i)(7 downto 5) <= (others => '0');
-         for j in 4 downto 0 loop
-            triggerCodes(i)(j) <= iTriggerData(i+0).l0Tag(j) or iTriggerData(i+4).l0Tag(j);
-         end loop;
+         remoteTriggersComb(i)       <= (iTriggerData(i+0).valid and iTriggerData(i+0).l0Accept) or (iTriggerData(i+4).valid and iTriggerData(i+4).l0Accept);  -- daqTrigger or runTrigger
+         triggerCodes(i)(7 downto 2) <= (others => '0');
+         triggerCodes(i)(1)          <= (iTriggerData(i+4).valid and iTriggerData(i+4).l0Accept);  -- runTrigger
+         triggerCodes(i)(0)          <= (iTriggerData(i+0).valid and iTriggerData(i+0).l0Accept);  -- daqTrigger
       end loop;
    end process;
    U_RegisterVector_1 : entity surf.RegisterVector

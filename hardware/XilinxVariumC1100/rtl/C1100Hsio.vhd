@@ -396,11 +396,10 @@ begin
    process(iTriggerData)
    begin
       for i in 3 downto 0 loop
-         remoteTriggersComb(i)       <= (iTriggerData(i+0).valid and iTriggerData(i+0).l0Accept) or (iTriggerData(i+4).valid and iTriggerData(i+4).l0Accept);
-         triggerCodes(i)(7 downto 5) <= (others => '0');
-         for j in 4 downto 0 loop
-            triggerCodes(i)(j) <= iTriggerData(i+0).l0Tag(j) or iTriggerData(i+4).l0Tag(j);
-         end loop;
+         remoteTriggersComb(i)       <= (iTriggerData(i+0).valid and iTriggerData(i+0).l0Accept) or (iTriggerData(i+4).valid and iTriggerData(i+4).l0Accept);  -- daqTrigger or runTrigger
+         triggerCodes(i)(7 downto 2) <= (others => '0');
+         triggerCodes(i)(1)          <= (iTriggerData(i+4).valid and iTriggerData(i+4).l0Accept);  -- runTrigger
+         triggerCodes(i)(0)          <= (iTriggerData(i+0).valid and iTriggerData(i+0).l0Accept);  -- daqTrigger
       end loop;
    end process;
    U_RegisterVector_1 : entity surf.RegisterVector
