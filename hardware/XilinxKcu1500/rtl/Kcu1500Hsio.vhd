@@ -161,10 +161,9 @@ architecture mapping of Kcu1500Hsio is
    signal refClk    : slv(3 downto 0);
    signal refClkDiv : slv(3 downto 0);
 
-   signal iTriggerData       : TriggerEventDataArray(7 downto 0);
-   signal remoteTriggersComb : slv(NUM_PGP_LANES_G-1 downto 0);
-   signal remoteTriggers     : slv(NUM_PGP_LANES_G-1 downto 0);
-   signal triggerCodes       : slv8Array(NUM_PGP_LANES_G-1 downto 0);
+   signal iTriggerData   : TriggerEventDataArray(7 downto 0);
+   signal remoteTriggers : slv(NUM_PGP_LANES_G-1 downto 0)       := (others => '0');
+   signal triggerCodes   : slv8Array(NUM_PGP_LANES_G-1 downto 0) := (others => x"00");
 
    attribute dont_touch              : string;
    attribute dont_touch of refClk    : signal is "TRUE";
@@ -263,6 +262,7 @@ begin
                AXI_BASE_ADDR_G      => AXIL_CONFIG_C(i).baseAddr)
             port map (
                -- Trigger Interface
+               triggerClk      => triggerClk,
                trigger         => remoteTriggers(i),
                triggerCode     => triggerCodes(i),
                triggerPause    => eventTrigMsgCtrl(0).pause,
@@ -301,6 +301,7 @@ begin
                AXI_BASE_ADDR_G      => AXIL_CONFIG_C(i).baseAddr)
             port map (
                -- Trigger Interface
+               triggerClk      => triggerClk,
                trigger         => remoteTriggers(i),
                triggerCode     => triggerCodes(i),
                triggerPause    => eventTrigMsgCtrl(0).pause,
@@ -404,23 +405,26 @@ begin
    --------------------------------
    -- Feed triggers directly to PGP
    --------------------------------
-   process(iTriggerData)
+   process(triggerClk)
    begin
-      for i in 3 downto 0 loop
-         remoteTriggersComb(i)       <= (iTriggerData(i+0).valid and iTriggerData(i+0).l0Accept) or (iTriggerData(i+4).valid and iTriggerData(i+4).l0Accept);  -- daqTrigger or runTrigger
-         triggerCodes(i)(7 downto 2) <= (others => '0');
-         triggerCodes(i)(1)          <= (iTriggerData(i+0).valid and iTriggerData(i+0).l0Accept);  -- daqTrigger
-         triggerCodes(i)(0)          <= (iTriggerData(i+4).valid and iTriggerData(i+4).l0Accept);  -- runTrigger
-      end loop;
+      if rising_edge(triggerClk) then
+         for i in 3 downto 0 loop
+
+            -- daqTrigger or runTrigger
+            remoteTriggers(i) <= (iTriggerData(i+0).valid and iTriggerData(i+0).l0Accept) or (iTriggerData(i+4).valid and iTriggerData(i+4).l0Accept) after TPD_G;
+
+            -- Usued bits
+            triggerCodes(i)(7 downto 2) <= (others => '0') after TPD_G;
+
+            -- daqTrigger
+            triggerCodes(i)(1) <= (iTriggerData(i+0).valid and iTriggerData(i+0).l0Accept) after TPD_G;
+
+            -- runTrigger
+            triggerCodes(i)(0) <= (iTriggerData(i+4).valid and iTriggerData(i+4).l0Accept) after TPD_G;
+
+         end loop;
+      end if;
    end process;
-   U_RegisterVector_1 : entity surf.RegisterVector
-      generic map (
-         TPD_G   => TPD_G,
-         WIDTH_G => NUM_PGP_LANES_G)
-      port map (
-         clk   => triggerClk,           -- [in]
-         sig_i => remoteTriggersComb,   -- [in]
-         reg_o => remoteTriggers);      -- [out]
 
    triggerData <= iTriggerData(NUM_PGP_LANES_G-1 downto 0);
 
