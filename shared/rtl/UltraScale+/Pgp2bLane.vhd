@@ -123,7 +123,7 @@ begin
          -- Read Interface
          rd_clk => pgpTxClk,
          valid  => locTxIn.opCodeEn,
-         dout   => locTxIn.opCodeData(7 downto 0));
+         dout   => locTxIn.opCode(7 downto 0));
 
    U_Wtd : entity surf.WatchDogRst
       generic map(
