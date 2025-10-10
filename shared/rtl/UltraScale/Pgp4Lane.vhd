@@ -36,6 +36,7 @@ entity Pgp4Lane is
       AXI_BASE_ADDR_G      : slv(31 downto 0)            := (others => '0'));
    port (
       -- Trigger Interface
+      triggerClk      : in  sl;
       trigger         : in  sl;
       triggerCode     : in  slv(7 downto 0) := (others => '0');
       triggerPause    : in  sl;
@@ -111,22 +112,19 @@ begin
          dataIn  => triggerPauseVec,
          dataOut => pgpTxIn.locData);
 
-   U_Trig : entity surf.SynchronizerOneShot
+   U_TxOpCode : entity surf.SynchronizerFifo
       generic map (
-         TPD_G => TPD_G)
+         TPD_G        => TPD_G,
+         DATA_WIDTH_G => 8)
       port map (
-         clk     => pgpClk,
-         dataIn  => trigger,
-         dataOut => pgpTxIn.opCodeEn);
-
-   U_TrigCode : entity surf.SynchronizerVector
-      generic map (
-         TPD_G   => TPD_G,
-         WIDTH_G => 8)
-      port map (
-         clk     => pgpClk,
-         dataIn  => triggerCode,
-         dataOut => pgpTxIn.opCodeData(7 downto 0));
+         -- Write Interface
+         wr_clk => triggerClk,
+         wr_en  => trigger,
+         din    => triggerCode,
+         -- Read Interface
+         rd_clk => pgpClk,
+         valid  => pgpTxIn.opCodeEn,
+         dout   => pgpTxIn.opCodeData(7 downto 0));
 
    U_Wtd : entity surf.WatchDogRst
       generic map(
