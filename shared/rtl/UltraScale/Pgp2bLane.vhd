@@ -38,6 +38,7 @@ entity Pgp2bLane is
    port (
       -- Trigger Interface
       triggerClk      : in  sl;
+      triggerRst      : in  sl;
       trigger         : in  sl;
       triggerCode     : in  slv(7 downto 0) := (others => '0');
       triggerPause    : in  sl;
@@ -116,6 +117,8 @@ begin
          TPD_G        => TPD_G,
          DATA_WIDTH_G => 8)
       port map (
+         -- Asynchronous Reset
+         rst    => triggerRst,
          -- Write Interface
          wr_clk => triggerClk,
          wr_en  => trigger,

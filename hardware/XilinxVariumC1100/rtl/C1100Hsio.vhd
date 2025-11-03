@@ -251,6 +251,7 @@ begin
             port map (
                -- Trigger Interface
                triggerClk      => triggerClk,
+               triggerRst      => triggerRst,
                trigger         => remoteTriggers(i),
                triggerCode     => triggerCodes(i),
                triggerPause    => eventTrigMsgCtrl(0).pause,
@@ -290,6 +291,7 @@ begin
             port map (
                -- Trigger Interface
                triggerClk      => triggerClk,
+               triggerRst      => triggerRst,
                trigger         => remoteTriggers(i),
                triggerCode     => triggerCodes(i),
                triggerPause    => eventTrigMsgCtrl(0).pause,
