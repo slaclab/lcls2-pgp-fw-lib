@@ -77,10 +77,6 @@ entity SlacPgpCardG4Hsio is
       pgpIbSlaves           : out AxiStreamSlaveArray(NUM_PGP_LANES_G-1 downto 0);
       pgpObMasters          : out AxiStreamQuadMasterArray(NUM_PGP_LANES_G-1 downto 0);
       pgpObSlaves           : in  AxiStreamQuadSlaveArray(NUM_PGP_LANES_G-1 downto 0);
-      -- Trigger Interface
-      triggerClk            : in  sl;
-      triggerRst            : in  sl;
-      triggerData           : out TriggerEventDataArray(NUM_PGP_LANES_G-1 downto 0);
       -- L1 trigger feedback (optional)
       l1Clk                 : in  sl                                                 := '0';
       l1Rst                 : in  sl                                                 := '0';
@@ -163,6 +159,9 @@ architecture mapping of SlacPgpCardG4Hsio is
    signal iTriggerData   : TriggerEventDataArray(7 downto 0);
    signal remoteTriggers : slv(NUM_PGP_LANES_G-1 downto 0)       := (others => '0');
    signal triggerCodes   : slv8Array(NUM_PGP_LANES_G-1 downto 0) := (others => x"00");
+
+   signal triggerClk : sl;
+   signal triggerRst : sl;
 
 begin
 
@@ -336,8 +335,8 @@ begin
          EN_LCLS_II_TIMING_G => EN_LCLS_II_TIMING_G)
       port map (
          -- Trigger interface
-         triggerClk              => triggerClk,    -- [in]
-         triggerRst              => triggerRst,    -- [in]
+         timingRxClkOut          => triggerClk,    -- [out]
+         timingRxRstOut          => triggerRst,    -- [out]
          triggerData             => iTriggerData,  -- [out]
          l1Clk                   => l1Clk,         -- [in]
          l1Rst                   => l1Rst,         -- [in]
@@ -400,8 +399,6 @@ begin
          end loop;
       end if;
    end process;
-
-   triggerData <= iTriggerData(NUM_PGP_LANES_G-1 downto 0);
 
    --------------------
    -- Unused QSFP Links
