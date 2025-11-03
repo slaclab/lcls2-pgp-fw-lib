@@ -47,20 +47,18 @@ entity TimingRx is
       EN_LCLS_II_TIMING_G : boolean := true);
    port (
       -- Reference Clock and Reset
-      userClk156     : in  sl := '0';   -- USE_GT_REFCLK_G = FALSE
-      userClk25      : in  sl := '0';   -- USE_GT_REFCLK_G = FALSE
-      userRst25      : in  sl := '1';   -- USE_GT_REFCLK_G = FALSE
-      timingRxClkOut : out sl;
-      timingRxRstOut : out sl;
+      userClk156 : in sl := '0';        -- USE_GT_REFCLK_G = FALSE
+      userClk25  : in sl := '0';        -- USE_GT_REFCLK_G = FALSE
+      userRst25  : in sl := '1';        -- USE_GT_REFCLK_G = FALSE
 
       -- Timing link up status
       v1LinkUp : out sl;
       v2LinkUp : out sl;
 
-      -- Trigger Interface
-      triggerClk  : in  sl;
-      triggerRst  : in  sl;
-      triggerData : out TriggerEventDataArray(NUM_DETECTORS_G-1 downto 0);
+      -- Trigger Interface (timingRxClkOut domain)
+      timingRxClkOut : out sl;
+      timingRxRstOut : out sl;
+      triggerData    : out TriggerEventDataArray(NUM_DETECTORS_G-1 downto 0);
 
       -- L1 trigger feedback (optional)
       l1Clk                 : in  sl                                                 := '0';
@@ -747,7 +745,7 @@ begin
          AXIL_BASE_ADDR_G               => AXIL_CONFIG_C(TEM_INDEX_C).baseAddr,
          EVENT_AXIS_CONFIG_G            => DMA_AXIS_CONFIG_G,
          L1_CLK_IS_TIMING_TX_CLK_G      => false,
-         TRIGGER_CLK_IS_TIMING_RX_CLK_G => false,
+         TRIGGER_CLK_IS_TIMING_RX_CLK_G => true,  -- triggerClk = timingRxClk
          EVENT_CLK_IS_TIMING_RX_CLK_G   => false)
       port map (
          timingRxClk              => timingRxClk,                    -- [in]
@@ -757,8 +755,8 @@ begin
          timingTxClk              => timingTxClk,                    -- [in]
          timingTxRst              => timingTxRst,                    -- [in]
          timingTxPhy              => temTimingTxPhy,                 -- [out]
-         triggerClk               => triggerClk,                     -- [in]
-         triggerRst               => triggerRst,                     -- [in]
+         triggerClk               => timingRxClk,                    -- [in]
+         triggerRst               => timingRxRst,                    -- [in]
          triggerData              => triggerData,                    -- [out]
          clearReadout             => clearReadout,                   -- [out]
          l1Clk                    => l1Clk,                          -- [in]
