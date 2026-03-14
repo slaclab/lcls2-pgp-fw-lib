@@ -81,10 +81,6 @@ entity Kcu1500Hsio is
       pgpIbSlaves           : out AxiStreamSlaveArray(NUM_PGP_LANES_G-1 downto 0);
       pgpObMasters          : out AxiStreamQuadMasterArray(NUM_PGP_LANES_G-1 downto 0);
       pgpObSlaves           : in  AxiStreamQuadSlaveArray(NUM_PGP_LANES_G-1 downto 0);
-      -- Trigger Interface
-      triggerClk            : in  sl;
-      triggerRst            : in  sl;
-      triggerData           : out TriggerEventDataArray(NUM_PGP_LANES_G-1 downto 0);
       -- L1 trigger feedback (optional)
       l1Clk                 : in  sl                                                 := '0';
       l1Rst                 : in  sl                                                 := '0';
@@ -161,14 +157,16 @@ architecture mapping of Kcu1500Hsio is
    signal refClk    : slv(3 downto 0);
    signal refClkDiv : slv(3 downto 0);
 
-   signal iTriggerData       : TriggerEventDataArray(NUM_PGP_LANES_G-1 downto 0);
-   signal remoteTriggersComb : slv(NUM_PGP_LANES_G-1 downto 0);
-   signal remoteTriggers     : slv(NUM_PGP_LANES_G-1 downto 0);
-   signal triggerCodes       : slv8Array(NUM_PGP_LANES_G-1 downto 0);
+   signal iTriggerData   : TriggerEventDataArray(7 downto 0);
+   signal remoteTriggers : slv(NUM_PGP_LANES_G-1 downto 0)       := (others => '0');
+   signal triggerCodes   : slv8Array(NUM_PGP_LANES_G-1 downto 0) := (others => x"00");
 
    attribute dont_touch              : string;
    attribute dont_touch of refClk    : signal is "TRUE";
    attribute dont_touch of refClkDiv : signal is "TRUE";
+
+   signal triggerClk : sl;
+   signal triggerRst : sl;
 
 begin
 
@@ -263,6 +261,8 @@ begin
                AXI_BASE_ADDR_G      => AXIL_CONFIG_C(i).baseAddr)
             port map (
                -- Trigger Interface
+               triggerClk      => triggerClk,
+               triggerRst      => triggerRst,
                trigger         => remoteTriggers(i),
                triggerCode     => triggerCodes(i),
                triggerPause    => eventTrigMsgCtrl(0).pause,
@@ -301,6 +301,8 @@ begin
                AXI_BASE_ADDR_G      => AXIL_CONFIG_C(i).baseAddr)
             port map (
                -- Trigger Interface
+               triggerClk      => triggerClk,
+               triggerRst      => triggerRst,
                trigger         => remoteTriggers(i),
                triggerCode     => triggerCodes(i),
                triggerPause    => eventTrigMsgCtrl(0).pause,
@@ -352,61 +354,78 @@ begin
          DMA_AXIS_CONFIG_G   => DMA_AXIS_CONFIG_G,
          AXIL_CLK_FREQ_G     => AXIL_CLK_FREQ_G,
          AXI_BASE_ADDR_G     => AXIL_CONFIG_C(TIMING_INDEX_C).baseAddr,
-         NUM_DETECTORS_G     => NUM_PGP_LANES_G,
+         NUM_DETECTORS_G     => 8,
          EN_LCLS_I_TIMING_G  => EN_LCLS_I_TIMING_G,
          EN_LCLS_II_TIMING_G => EN_LCLS_II_TIMING_G)
       port map (
          -- Reference Clock and Reset
-         userClk156            => userClk156,
-         userClk25             => userClk25,
-         userRst25             => userRst25,
+         userClk156 => userClk156,
+         userClk25  => userClk25,
+         userRst25  => userRst25,
+
          -- Trigger interface
-         triggerClk            => triggerClk,             -- [in]
-         triggerRst            => triggerRst,             -- [in]
-         triggerData           => iTriggerData,           -- [out]
-         l1Clk                 => l1Clk,                  -- [in]
-         l1Rst                 => l1Rst,                  -- [in]
-         l1Feedbacks           => l1Feedbacks,            -- [in]
-         l1Acks                => l1Acks,                 -- [out]
+         timingRxClkOut          => triggerClk,    -- [out]
+         timingRxRstOut          => triggerRst,    -- [out]
+         triggerData             => iTriggerData,  -- [out]
+         l1Clk                   => l1Clk,         -- [in]
+         l1Rst                   => l1Rst,         -- [in]
+         l1Feedbacks(3 downto 0) => l1Feedbacks,   -- [in]
+         l1Feedbacks(7 downto 4) => (others => TRIGGER_L1_FEEDBACK_INIT_C),  -- [in]
+         l1Acks(3 downto 0)      => l1Acks,        -- [out]
+         l1Acks(7 downto 4)      => open,          -- [out]
+
          -- Event interface
-         eventClk              => eventClk,               -- [in]
-         eventRst              => eventRst,               -- [in]
-         eventTrigMsgMasters   => eventTrigMsgMasters,    -- [out]
-         eventTrigMsgSlaves    => eventTrigMsgSlaves,     -- [in]
-         eventTrigMsgCtrl      => eventTrigMsgCtrl,       -- [in]
-         eventTimingMsgMasters => eventTimingMsgMasters,  -- [out]
-         eventTimingMsgSlaves  => eventTimingMsgSlaves,   -- [in]
-         clearReadout          => clearReadout,           -- [out]
+         eventClk                          => eventClk,               -- [in]
+         eventRst                          => eventRst,               -- [in]
+         eventTrigMsgMasters(3 downto 0)   => eventTrigMsgMasters,    -- [out]
+         eventTrigMsgMasters(7 downto 4)   => open,                   -- [out]
+         eventTrigMsgSlaves(3 downto 0)    => eventTrigMsgSlaves,     -- [in]
+         eventTrigMsgSlaves(7 downto 4)    => (others => AXI_STREAM_SLAVE_FORCE_C),  -- [in]
+         eventTrigMsgCtrl(3 downto 0)      => eventTrigMsgCtrl,       -- [in]
+         eventTrigMsgCtrl(7 downto 4)      => (others => AXI_STREAM_CTRL_UNUSED_C),  -- [in]
+         eventTimingMsgMasters(3 downto 0) => eventTimingMsgMasters,  -- [out]
+         eventTimingMsgMasters(7 downto 4) => open,                   -- [out]
+         eventTimingMsgSlaves(3 downto 0)  => eventTimingMsgSlaves,   -- [in]
+         eventTimingMsgSlaves(7 downto 4)  => (others => AXI_STREAM_SLAVE_FORCE_C),  -- [in]
+         clearReadout(3 downto 0)          => clearReadout,           -- [out]
+         clearReadout(7 downto 4)          => open,                   -- [out]
+
          -- AXI-Lite Interface (axilClk domain)
-         axilClk               => axilClk,
-         axilRst               => axilRst,
-         axilReadMaster        => axilReadMasters(TIMING_INDEX_C),
-         axilReadSlave         => axilReadSlaves(TIMING_INDEX_C),
-         axilWriteMaster       => axilWriteMasters(TIMING_INDEX_C),
-         axilWriteSlave        => axilWriteSlaves(TIMING_INDEX_C),
+         axilClk         => axilClk,
+         axilRst         => axilRst,
+         axilReadMaster  => axilReadMasters(TIMING_INDEX_C),
+         axilReadSlave   => axilReadSlaves(TIMING_INDEX_C),
+         axilWriteMaster => axilWriteMasters(TIMING_INDEX_C),
+         axilWriteSlave  => axilWriteSlaves(TIMING_INDEX_C),
          -- GT Serial Ports
-         timingRxP             => qsfp1RxP(1 downto 0),
-         timingRxN             => qsfp1RxN(1 downto 0),
-         timingTxP             => qsfp1TxP(1 downto 0),
-         timingTxN             => qsfp1TxN(1 downto 0));
+         timingRxP       => qsfp1RxP(1 downto 0),
+         timingRxN       => qsfp1RxN(1 downto 0),
+         timingTxP       => qsfp1TxP(1 downto 0),
+         timingTxN       => qsfp1TxN(1 downto 0));
 
    --------------------------------
    -- Feed triggers directly to PGP
    --------------------------------
-   TRIGGER_GEN : for i in NUM_PGP_LANES_G-1 downto 0 generate
-      remoteTriggersComb(i) <= iTriggerData(i).valid and iTriggerData(i).l0Accept;
-      triggerCodes(i)       <= "000" & iTriggerData(i).l0Tag;
-   end generate TRIGGER_GEN;
-   U_RegisterVector_1 : entity surf.RegisterVector
-      generic map (
-         TPD_G   => TPD_G,
-         WIDTH_G => NUM_PGP_LANES_G)
-      port map (
-         clk   => triggerClk,           -- [in]
-         sig_i => remoteTriggersComb,   -- [in]
-         reg_o => remoteTriggers);      -- [out]
+   process(triggerClk)
+   begin
+      if rising_edge(triggerClk) then
+         for i in 3 downto 0 loop
 
-   triggerData <= iTriggerData;
+            -- daqTrigger or runTrigger
+            remoteTriggers(i) <= (iTriggerData(i+0).valid and iTriggerData(i+0).l0Accept) or (iTriggerData(i+4).valid and iTriggerData(i+4).l0Accept) after TPD_G;
+
+            -- Usued bits
+            triggerCodes(i)(7 downto 2) <= (others => '0') after TPD_G;
+
+            -- daqTrigger
+            triggerCodes(i)(1) <= (iTriggerData(i+0).valid and iTriggerData(i+0).l0Accept) after TPD_G;
+
+            -- runTrigger
+            triggerCodes(i)(0) <= (iTriggerData(i+4).valid and iTriggerData(i+4).l0Accept) after TPD_G;
+
+         end loop;
+      end if;
+   end process;
 
    --------------------
    -- Unused QSFP Links

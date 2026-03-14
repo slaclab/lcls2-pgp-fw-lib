@@ -47,16 +47,18 @@ entity TimingRx is
       EN_LCLS_II_TIMING_G : boolean := true);
    port (
       -- Reference Clock and Reset
-      userClk156     : in  sl := '0';   -- USE_GT_REFCLK_G = FALSE
-      userClk25      : in  sl := '0';   -- USE_GT_REFCLK_G = FALSE
-      userRst25      : in  sl := '1';   -- USE_GT_REFCLK_G = FALSE
+      userClk156 : in sl := '0';        -- USE_GT_REFCLK_G = FALSE
+      userClk25  : in sl := '0';        -- USE_GT_REFCLK_G = FALSE
+      userRst25  : in sl := '1';        -- USE_GT_REFCLK_G = FALSE
+
+      -- Timing link up status
+      v1LinkUp : out sl;
+      v2LinkUp : out sl;
+
+      -- Trigger Interface (timingRxClkOut domain)
       timingRxClkOut : out sl;
       timingRxRstOut : out sl;
-
-      -- Trigger Interface
-      triggerClk  : in  sl;
-      triggerRst  : in  sl;
-      triggerData : out TriggerEventDataArray(NUM_DETECTORS_G-1 downto 0);
+      triggerData    : out TriggerEventDataArray(NUM_DETECTORS_G-1 downto 0);
 
       -- L1 trigger feedback (optional)
       l1Clk                 : in  sl                                                 := '0';
@@ -139,36 +141,36 @@ architecture mapping of TimingRx is
    signal initWriteMaster : AxiLiteWriteMasterType;
    signal initWriteSlave  : AxiLiteWriteSlaveType;
 
-   signal mmcmRst    : sl;
-   signal gtediv2    : slv(1 downto 0);
-   signal refClk     : slv(1 downto 0);
-   signal refClkDiv2 : slv(1 downto 0);
-   signal refRst     : slv(1 downto 0);
-   signal refRstDiv2 : slv(1 downto 0);
-   signal mmcmLocked : slv(1 downto 0);
-   signal loopback   : slv(2 downto 0);
+   signal mmcmRst    : sl              := '0';
+   signal gtediv2    : slv(1 downto 0) := (others => '0');
+   signal refClk     : slv(1 downto 0) := (others => '0');
+   signal refClkDiv2 : slv(1 downto 0) := (others => '0');
+   signal refRst     : slv(1 downto 0) := (others => '0');
+   signal refRstDiv2 : slv(1 downto 0) := (others => '0');
+   signal mmcmLocked : slv(1 downto 0) := (others => '0');
+   signal loopback   : slv(2 downto 0) := (others => '0');
 
-   signal timingClkSelect : sl;
-   signal timingClkSelMux : sl;
-   signal timingClkSelRx  : sl;
+   signal timingClkSelect : sl := '0';
+   signal timingClkSelMux : sl := '0';
+   signal timingClkSelRx  : sl := '0';
 
-   signal useMiniTpgMux : sl;
-   signal useMiniTpgRx  : sl;
+   signal useMiniTpgMux : sl := '0';
+   signal useMiniTpgRx  : sl := '0';
 
-   signal rxUserRst       : sl;
-   signal gtRxOutClk      : slv(1 downto 0);
-   signal gtRxClk         : slv(1 downto 0);
-   signal timingRxClk     : sl;
-   signal timingRxRst     : sl;
-   signal timingRxRstTmp  : sl;
-   signal gtRxData        : Slv16Array(1 downto 0);
-   signal rxData          : slv(15 downto 0);
-   signal gtRxDataK       : Slv2Array(1 downto 0);
-   signal rxDataK         : slv(1 downto 0);
-   signal gtRxDispErr     : Slv2Array(1 downto 0);
-   signal rxDispErr       : slv(1 downto 0);
-   signal gtRxDecErr      : Slv2Array(1 downto 0);
-   signal rxDecErr        : slv(1 downto 0);
+   signal rxUserRst       : sl                     := '0';
+   signal gtRxOutClk      : slv(1 downto 0)        := (others => '0');
+   signal gtRxClk         : slv(1 downto 0)        := (others => '0');
+   signal timingRxClk     : sl                     := '0';
+   signal timingRxRst     : sl                     := '0';
+   signal timingRxRstTmp  : sl                     := '0';
+   signal gtRxData        : Slv16Array(1 downto 0) := (others => (others => '0'));
+   signal rxData          : slv(15 downto 0)       := (others => '0');
+   signal gtRxDataK       : Slv2Array(1 downto 0)  := (others => (others => '0'));
+   signal rxDataK         : slv(1 downto 0)        := (others => '0');
+   signal gtRxDispErr     : Slv2Array(1 downto 0)  := (others => (others => '0'));
+   signal rxDispErr       : slv(1 downto 0)        := (others => '0');
+   signal gtRxDecErr      : Slv2Array(1 downto 0)  := (others => (others => '0'));
+   signal rxDecErr        : slv(1 downto 0)        := (others => '0');
    signal gtRxStatus      : TimingPhyStatusArray(1 downto 0);
    signal rxStatus        : TimingPhyStatusType;
    signal timingRxControl : TimingPhyControlType;
@@ -204,6 +206,9 @@ architecture mapping of TimingRx is
 
 begin
 
+   v2LinkUp <= appTimingBus.v2.linkUp;
+   v1LinkUp <= appTimingBus.v1.linkUp;
+
    timingRxClkOut <= timingRxClk;
    timingRxRstOut <= timingRxRst;
 
@@ -224,7 +229,7 @@ begin
          asyncRst => timingRxRstTmp,
          syncRst  => timingRxRst);
 
-   GEN_MMCM : if (not USE_GT_REFCLK_G) generate
+   GEN_MMCM : if (not USE_GT_REFCLK_G) and (not SIMULATION_G) generate
 
       -------------------------
       -- Reference LCLS-I Clock
@@ -232,7 +237,6 @@ begin
       U_238MHz : entity surf.ClockManagerUltraScale
          generic map(
             TPD_G              => TPD_G,
-            SIMULATION_G       => SIMULATION_G,
             TYPE_G             => "MMCM",
             INPUT_BUFG_G       => false,
             FB_BUFG_G          => true,
@@ -257,7 +261,6 @@ begin
       U_371MHz : entity surf.ClockManagerUltraScale
          generic map(
             TPD_G              => TPD_G,
-            SIMULATION_G       => SIMULATION_G,
             TYPE_G             => "MMCM",
             INPUT_BUFG_G       => false,
             FB_BUFG_G          => true,
@@ -278,7 +281,7 @@ begin
 
    end generate GEN_MMCM;
 
-   GEN_REFCLK : if (USE_GT_REFCLK_G) generate
+   GEN_REFCLK : if (USE_GT_REFCLK_G) and (not SIMULATION_G) generate
 
       GEN_GT_VEC :
       for i in 1 downto 0 generate
@@ -318,6 +321,32 @@ begin
       end generate GEN_GT_VEC;
 
    end generate GEN_REFCLK;
+
+   SIM_PLL : if (SIMULATION_G) generate
+
+      U_238MHz : entity surf.ClkRst
+         generic map (
+            CLK_PERIOD_G      => 4.2 ns,  -- 238 MHz
+            RST_START_DELAY_G => 0 ns,
+            RST_HOLD_TIME_G   => 1000 ns)
+         port map (
+            clkP => refClk(0),
+            rst  => refRst(0));
+
+      mmcmLocked(0) <= not(refRst(0));
+
+      U_371MHz : entity surf.ClkRst
+         generic map (
+            CLK_PERIOD_G      => 2.692 ns,  -- 371.429 MHz
+            RST_START_DELAY_G => 0 ns,
+            RST_HOLD_TIME_G   => 1000 ns)
+         port map (
+            clkP => refClk(1),
+            rst  => refRst(1));
+
+      mmcmLocked(1) <= not(refRst(1));
+
+   end generate SIM_PLL;
 
    -----------------------------------------------
    -- Power Up Initialization of the Timing RX PHY
@@ -367,10 +396,10 @@ begin
       generic map (
          BUFGCE_DIVIDE => 2)
       port map (
-         I   => axilClk,
+         I   => userClk156,
          CE  => '1',
          CLR => '0',
-         O   => stableClk);
+         O   => stableClk);  -- IP core configured for stableClk = 156.25MHz/2
 
    U_stableRst : entity surf.RstSync
       generic map (
@@ -427,10 +456,10 @@ begin
                axilReadSlave   => axilReadSlaves(RX_PHY0_INDEX_C+i),
                axilWriteMaster => axilWriteMasters(RX_PHY0_INDEX_C+i),
                axilWriteSlave  => axilWriteSlaves(RX_PHY0_INDEX_C+i),
-               stableClk       => stableClk,
+               stableClk       => stableClk,  -- IP core configured for stableClk = 156.25MHz/2
                stableRst       => stableRst,
                -- GTH FPGA IO
-               gtRefClk        => '0',          -- Using GTGREFCLK instead
+               gtRefClk        => '0',  -- Using GTGREFCLK instead
                gtRefClkDiv2    => refClkDiv2(i),
                gtRxP           => timingRxP(i),
                gtRxN           => timingRxN(i),
@@ -474,6 +503,9 @@ begin
          gtRxDataK(i)   <= (others => '0');  --temTimingTxPhy.dataK;
          gtRxDispErr(i) <= "00";
          gtRxDecErr(i)  <= "00";
+
+         timingTxP(i) <= '0';
+         timingTxN(i) <= '1';
 
       end generate;
    end generate GEN_VEC;
@@ -669,6 +701,7 @@ begin
       generic map (
          TPD_G           => TPD_G,
          SIMULATION_G    => SIMULATION_G,
+         BYP_GT_SIM_G    => BYP_GT_SIM_G,
          AXIL_CLK_FREQ_G => AXIL_CLK_FREQ_G)
       port map (
          rxUserRst       => rxUserRst,
@@ -711,7 +744,7 @@ begin
          AXIL_BASE_ADDR_G               => AXIL_CONFIG_C(TEM_INDEX_C).baseAddr,
          EVENT_AXIS_CONFIG_G            => DMA_AXIS_CONFIG_G,
          L1_CLK_IS_TIMING_TX_CLK_G      => false,
-         TRIGGER_CLK_IS_TIMING_RX_CLK_G => false,
+         TRIGGER_CLK_IS_TIMING_RX_CLK_G => true,  -- triggerClk = timingRxClk
          EVENT_CLK_IS_TIMING_RX_CLK_G   => false)
       port map (
          timingRxClk              => timingRxClk,                    -- [in]
@@ -721,8 +754,8 @@ begin
          timingTxClk              => timingTxClk,                    -- [in]
          timingTxRst              => timingTxRst,                    -- [in]
          timingTxPhy              => temTimingTxPhy,                 -- [out]
-         triggerClk               => triggerClk,                     -- [in]
-         triggerRst               => triggerRst,                     -- [in]
+         triggerClk               => timingRxClk,                    -- [in]
+         triggerRst               => timingRxRst,                    -- [in]
          triggerData              => triggerData,                    -- [out]
          clearReadout             => clearReadout,                   -- [out]
          l1Clk                    => l1Clk,                          -- [in]

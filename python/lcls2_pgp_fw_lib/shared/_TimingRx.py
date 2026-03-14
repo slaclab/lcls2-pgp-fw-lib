@@ -25,7 +25,7 @@ class TimingRx(pr.Device):
             enLclsI      = False,
             enLclsII     = True,
             clkselMode   = "SELECT",
-            numDetectors = 4,
+            numDetectors = 8,
             **kwargs):
         super().__init__(**kwargs)
 

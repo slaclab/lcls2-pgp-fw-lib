@@ -25,6 +25,7 @@ entity TimingPhyMonitor is
    generic (
       TPD_G           : time    := 1 ns;
       SIMULATION_G    : boolean := false;
+      BYP_GT_SIM_G    : boolean := false;
       AXIL_CLK_FREQ_G : real    := 156.25E+6);  -- units of Hz
    port (
       rxUserRst       : out sl;
@@ -379,11 +380,15 @@ begin
       -- Outputs
       axilWriteSlave <= r.axilWriteSlave;
       axilReadSlave  <= r.axilReadSlave;
-      useMiniTpgMux  <= r.useMiniTpg;
       loopback       <= r.loopback;
+      txPhyPllReset  <= r.txPhyPllReset;
+      txPhyReset     <= r.txPhyReset;
 
-      txPhyPllReset <= r.txPhyPllReset;
-      txPhyReset    <= r.txPhyReset;
+      if BYP_GT_SIM_G then
+         useMiniTpgMux <= '1';
+      else
+         useMiniTpgMux <= r.useMiniTpg;
+      end if;
 
       -- Reset
       if (axilRst = '1') then
@@ -432,20 +437,29 @@ begin
          clk    => axilClk,
          rstOut => txUserRst);
 
-   U_useMiniTpgRx : entity surf.Synchronizer
-      generic map (
-         TPD_G => TPD_G)
-      port map (
-         clk     => rxClk,
-         dataIn  => r.useMiniTpg,
-         dataOut => useMiniTpgRx);
+   GEN_PHY : if (not BYP_GT_SIM_G) generate
 
-   U_useMiniTpgTx : entity surf.Synchronizer
-      generic map (
-         TPD_G => TPD_G)
-      port map (
-         clk     => txClk,
-         dataIn  => r.useMiniTpg,
-         dataOut => useMiniTpgTx);
+      U_useMiniTpgRx : entity surf.Synchronizer
+         generic map (
+            TPD_G => TPD_G)
+         port map (
+            clk     => rxClk,
+            dataIn  => r.useMiniTpg,
+            dataOut => useMiniTpgRx);
+
+      U_useMiniTpgTx : entity surf.Synchronizer
+         generic map (
+            TPD_G => TPD_G)
+         port map (
+            clk     => txClk,
+            dataIn  => r.useMiniTpg,
+            dataOut => useMiniTpgTx);
+
+   end generate;
+
+   SIM_PHY : if (BYP_GT_SIM_G) generate
+      useMiniTpgRx <= '1';
+      useMiniTpgTx <= '1';
+   end generate;
 
 end rtl;
