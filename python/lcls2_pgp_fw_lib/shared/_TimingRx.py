@@ -22,8 +22,9 @@ import surf.xilinx             as xil
 class TimingRx(pr.Device):
     def __init__(
             self,
-            enLclsI  = False,
-            enLclsII = True,
+            enLclsI      = False,
+            enLclsII     = True,
+            clkselMode   = "SELECT",
             numDetectors = 8,
             **kwargs):
         super().__init__(**kwargs)
@@ -44,8 +45,9 @@ class TimingRx(pr.Device):
 
         # TimingCore
         self.add(LclsTimingCore.TimingFrameRx(
-            offset = 0x0008_0000,
-            expand = False,
+            offset     = 0x0008_0000,
+            clkselMode = clkselMode,
+            expand     = False,
         ))
 
         # XPM Mini Core
