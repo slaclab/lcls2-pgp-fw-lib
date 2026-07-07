@@ -215,14 +215,29 @@ begin
          asyncRst => txUserRst,
          syncRst  => timingTxRst);
 
-   timingRxRstTmp <= rxUserRst or not rxStatus.resetDone;
-   U_timingRxRst : entity surf.RstSync
+   -- rxStatus.resetDone@timingRxClk
+   -- rxUserRst@axilClk
+   -- timingRxRstTmp could be a problemtic
+   -- timingRxRstTmp <= rxUserRst or not rxStatus.resetDone;
+   -- U_timingRxRst : entity surf.RstSync
+   --    generic map (
+   --       TPD_G => TPD_G)
+   --    port map (
+   --       clk      => timingRxClk,
+   --       asyncRst => timingRxRstTmp,
+   --       syncRst  => timingRxRst);
+
+   U_rxUserRstSync : entity surf.RstSync
       generic map (
          TPD_G => TPD_G)
       port map (
          clk      => timingRxClk,
-         asyncRst => timingRxRstTmp,
-         syncRst  => timingRxRst);
+         asyncRst => rxUserRst,
+         syncRst  => timingRxRstTmp);
+
+   -- rxStatus.resetDone@timingRxClk
+   -- timingRxRstTmp@timingRxClk
+   timingRxRst <= timingRxRstTmp or not rxStatus.resetDone;
 
    GEN_MMCM : if (not USE_GT_REFCLK_G) generate
 
@@ -440,7 +455,7 @@ begin
                gtgRefClk       => refClk(i),
                cpllRefClkSel   => "111",
                -- Rx ports
-               rxControl       => gtRxControl,
+               rxControl       => gtRxControl, -- input signal@axilClk
                rxStatus        => gtRxStatus(i),
                rxUsrClkActive  => mmcmLocked(i),
                rxUsrClk        => timingRxClk,
@@ -533,6 +548,8 @@ begin
    -----------------------
    -- Insert user RX reset
    -----------------------
+   -- timingRxControl@axilClk
+   -- rxUserRst@axiClk
    gtRxControlReset        <= timingRxControl.reset or rxUserRst;
    gtRxControlPllReset     <= timingRxControl.pllReset or rxUserRst;
    gtRxControl.inhibit     <= timingRxControl.inhibit;
@@ -587,7 +604,7 @@ begin
          gtRxDataK        => rxDataK,
          gtRxDispErr      => rxDispErr,
          gtRxDecErr       => rxDecErr,
-         gtRxControl      => timingRxControl,
+         gtRxControl      => timingRxControl, --output signal@axilClk
          gtRxStatus       => rxStatus,
          tpgMiniTimingPhy => open,
          timingClkSel     => timingClkSelect,
@@ -664,7 +681,7 @@ begin
          SIMULATION_G    => SIMULATION_G,
          AXIL_CLK_FREQ_G => AXIL_CLK_FREQ_G)
       port map (
-         rxUserRst       => rxUserRst,
+         rxUserRst       => rxUserRst, -- output signal@axilClk
          txUserRst       => txUserRst,
          txPhyReset      => txPhyReset,
          txPhyPllReset   => txPhyPllReset,
