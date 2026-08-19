@@ -586,7 +586,7 @@ begin
          TPD_G          => TPD_G,
          IN_POLARITY_G  => '1',
          OUT_POLARITY_G => '1',
-         PULSE_WIDTH_G  => 100)
+         PULSE_WIDTH_G  => 1000)
       port map (
          clk     => axilClk,
          dataIn  => gtRxControlReset,
@@ -597,7 +597,7 @@ begin
          TPD_G          => TPD_G,
          IN_POLARITY_G  => '1',
          OUT_POLARITY_G => '1',
-         PULSE_WIDTH_G  => 100)
+         PULSE_WIDTH_G  => 1000)
       port map (
          clk     => axilClk,
          dataIn  => gtRxControlPllReset,
