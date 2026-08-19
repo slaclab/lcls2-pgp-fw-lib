@@ -220,14 +220,17 @@ begin
          asyncRst => txUserRst,
          syncRst  => timingTxRst);
 
-   timingRxRstTmp <= rxUserRst or not rxStatus.resetDone;
-   U_timingRxRst : entity surf.RstSync
+   U_timingRxRstTmp : entity surf.SynchronizerOneShot
       generic map (
-         TPD_G => TPD_G)
+         TPD_G          => TPD_G,
+         IN_POLARITY_G  => '1',
+         OUT_POLARITY_G => '1',
+         PULSE_WIDTH_G  => 1)
       port map (
-         clk      => timingRxClk,
-         asyncRst => timingRxRstTmp,
-         syncRst  => timingRxRst);
+         clk     => timingRxClk,
+         dataIn  => rxUserRst,
+         dataOut => timingRxRstTmp);
+   timingRxRst <= timingRxRstTmp or not rxStatus.resetDone;
 
    GEN_MMCM : if (not USE_GT_REFCLK_G) and (not SIMULATION_G) generate
 
