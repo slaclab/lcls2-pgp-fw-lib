@@ -162,6 +162,6 @@ set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins U_HSIO/U
 set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins U_HSIO/U_TimingRx/U_stableClk/O]] -group [get_clocks -of_objects [get_pins {U_HSIO/U_TimingRx/GEN_VEC[1].REAL_PCIE.U_GTY/LOCREF_G.U_TimingGtyCore/inst/gen_gtwizard_gtye4_top.TimingGty_fixedlat_gtwizard_gtye4_inst/gen_gtwizard_gtye4.gen_channel_container[3].gen_enabled_channel.gtye4_channel_wrapper_inst/channel_inst/gtye4_channel_gen.gen_gtye4_channel_inst[0].GTYE4_CHANNEL_PRIM_INST/TXOUTCLK}]]
 set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins U_HSIO/U_TimingRx/U_stableClk/O]] -group [get_clocks -of_objects [get_pins {U_HSIO/U_TimingRx/GEN_VEC[1].REAL_PCIE.U_GTY/LOCREF_G.U_TimingGtyCore/inst/gen_gtwizard_gtye4_top.TimingGty_fixedlat_gtwizard_gtye4_inst/gen_gtwizard_gtye4.gen_channel_container[3].gen_enabled_channel.gtye4_channel_wrapper_inst/channel_inst/gtye4_channel_gen.gen_gtye4_channel_inst[0].GTYE4_CHANNEL_PRIM_INST/TXOUTCLKPCS}]]
 
-set_clock_groups -asynchronous -group [get_clocks casMuxRxClk119] -group [get_clocks muxTxClk119]
+set_clock_groups -asynchronous -group [get_clocks casMuxRxClk119] -group [get_clocks muxTxClk119] -group [get_clocks casMuxTimingGtRxOutClk1] -group [get_clocks casMuxRxClk186] -group [get_clocks sysClk]
 
 ##############################################################################
