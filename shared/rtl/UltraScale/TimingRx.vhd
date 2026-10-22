@@ -80,8 +80,10 @@ entity TimingRx is
       axilWriteMaster       : in  AxiLiteWriteMasterType;
       axilWriteSlave        : out AxiLiteWriteSlaveType;
       -- GT Serial Ports
-      refClkP               : in  slv(1 downto 0)                                    := "00";  -- USE_GT_REFCLK_G = TRUE
-      refClkN               : in  slv(1 downto 0)                                    := "11";  -- USE_GT_REFCLK_G = TRUE
+      --refClkP               : in  slv(1 downto 0)                                    := "00";  -- USE_GT_REFCLK_G = TRUE
+      --refClkN               : in  slv(1 downto 0)                                    := "11";  -- USE_GT_REFCLK_G = TRUE
+      timingRefClkInP       : in  sl;
+      timingRefClkInN       : in  sl; 
       timingRxP             : in  slv(1 downto 0);
       timingRxN             : in  slv(1 downto 0);
       timingTxP             : out slv(1 downto 0);
@@ -140,13 +142,15 @@ architecture mapping of TimingRx is
    signal initWriteSlave  : AxiLiteWriteSlaveType;
 
    signal mmcmRst    : sl;
-   signal gtediv2    : slv(1 downto 0);
+   signal gtediv2    : sl;
+   --signal gtediv2    : slv(1 downto 0);
    signal refClk     : slv(1 downto 0);
    signal refClkDiv2 : slv(1 downto 0);
    signal refRst     : slv(1 downto 0);
    signal refRstDiv2 : slv(1 downto 0);
    signal mmcmLocked : slv(1 downto 0);
    signal loopback   : slv(2 downto 0);
+   signal gtrefClk   : sl;
 
    signal timingClkSelect : sl;
    signal timingClkSelMux : sl;
@@ -280,24 +284,36 @@ begin
 
    GEN_REFCLK : if (USE_GT_REFCLK_G) generate
 
-      GEN_GT_VEC :
-      for i in 1 downto 0 generate
-
          U_IBUFDS_GTE3 : IBUFDS_GTE3
             generic map (
                REFCLK_EN_TX_PATH  => '0',
                REFCLK_HROW_CK_SEL => "00",  -- 2'b00: ODIV2 = O
                REFCLK_ICNTL_RX    => "00")
             port map (
-               I     => refClkP(i),
-               IB    => refClkN(i),
+            I     => timingRefClkInP, --refClkP(i),
+            IB    => timingRefClkInN, --refClkN(i),
                CEB   => '0',
-               ODIV2 => gtediv2(i),
-               O     => open);
+            ODIV2 => gtediv2,
+            O     => gtrefClk);
+
+      GEN_GT_VEC :
+      for i in 1 downto 0 generate
+
+         -- U_IBUFDS_GTE3 : IBUFDS_GTE3
+         --    generic map (
+         --       REFCLK_EN_TX_PATH  => '0',
+         --       REFCLK_HROW_CK_SEL => "00",  -- 2'b00: ODIV2 = O
+         --       REFCLK_ICNTL_RX    => "00")
+         --    port map (
+         --       I     => refClkP(i),
+         --       IB    => refClkN(i),
+         --       CEB   => '0',
+         --       ODIV2 => gtediv2(i),
+         --       O     => open);
 
          U_BUFG_GT : BUFG_GT
             port map (
-               I       => gtediv2(i),
+               I       => gtediv2,
                CE      => '1',
                CEMASK  => '1',
                CLR     => '0',
@@ -385,6 +401,11 @@ begin
    -------------
    GEN_VEC : for i in 1 downto 0 generate
 
+      GEN_VEC_REFCLK : if (USE_GT_REFCLK_G) generate
+         refClkDiv2(i) <= refClk(i);
+      end generate;
+
+      GEN_GTG_REFCLK : if (not USE_GT_REFCLK_G) generate             
       U_refClkDiv2 : BUFGCE_DIV
          generic map (
             BUFGCE_DIVIDE => 2)
@@ -393,6 +414,7 @@ begin
             CE  => '1',
             CLR => '0',
             O   => refClkDiv2(i));
+      end generate;
 
       U_refRstDiv2 : entity surf.RstSync
          generic map (
@@ -415,7 +437,8 @@ begin
          U_GTH : entity lcls_timing_core.TimingGtCoreWrapper
             generic map (
                TPD_G            => TPD_G,
-               EXTREF_G         => false,
+               EXTREF_G         => true, --false,
+               AXI_CLK_FREQ_G   => AXIL_CLK_FREQ_G,
                AXIL_BASE_ADDR_G => AXIL_CONFIG_C(RX_PHY0_INDEX_C+i).baseAddr,
                ADDR_BITS_G      => 12,
                GTH_DRP_OFFSET_G => x"00001000")
@@ -430,7 +453,7 @@ begin
                stableClk       => stableClk,
                stableRst       => stableRst,
                -- GTH FPGA IO
-               gtRefClk        => '0',          -- Using GTGREFCLK instead
+               gtRefClk        => gtrefClk,     -- MGT_SI570_CLOCK1
                gtRefClkDiv2    => refClkDiv2(i),
                gtRxP           => timingRxP(i),
                gtRxN           => timingRxN(i),
@@ -438,7 +461,7 @@ begin
                gtTxN           => timingTxN(i),
                -- GTGREFCLK Interface Option
                gtgRefClk       => refClk(i),
-               cpllRefClkSel   => "111",
+               cpllRefClkSel   => "001", -- "111" for gtgRefclk (internal), others for gtRefClk (external)
                -- Rx ports
                rxControl       => gtRxControl,
                rxStatus        => gtRxStatus(i),
@@ -541,7 +564,7 @@ begin
    -- Insert user RX reset
    -----------------------
    gtRxControlReset        <= timingRxControl.reset or rxUserRst;
-   gtRxControlPllReset     <= timingRxControl.pllReset or rxUserRst;
+   gtRxControlPllReset     <= timingRxControl.pllReset; --or rxUserRst;
    gtRxControl.inhibit     <= timingRxControl.inhibit;
    gtRxControl.polarity    <= timingRxControl.polarity;
    gtRxControl.bufferByRst <= timingRxControl.bufferByRst;
@@ -551,7 +574,7 @@ begin
          TPD_G          => TPD_G,
          IN_POLARITY_G  => '1',
          OUT_POLARITY_G => '1',
-         PULSE_WIDTH_G  => 100)
+         PULSE_WIDTH_G  => 1000)
       port map (
          clk     => axilClk,
          dataIn  => gtRxControlReset,
@@ -562,7 +585,7 @@ begin
          TPD_G          => TPD_G,
          IN_POLARITY_G  => '1',
          OUT_POLARITY_G => '1',
-         PULSE_WIDTH_G  => 100)
+         PULSE_WIDTH_G  => 1000)
       port map (
          clk     => axilClk,
          dataIn  => gtRxControlPllReset,

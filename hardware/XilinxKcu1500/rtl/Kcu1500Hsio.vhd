@@ -214,17 +214,17 @@ begin
             ODIV2 => open,
             O     => refClk((2*i)+0));
 
-      U_QsfpRef1 : IBUFDS_GTE3
-         generic map (
-            REFCLK_EN_TX_PATH  => '0',
-            REFCLK_HROW_CK_SEL => "00",  -- 2'b00: ODIV2 = O
-            REFCLK_ICNTL_RX    => "00")
-         port map (
-            I     => qsfp1RefClkP(i),
-            IB    => qsfp1RefClkN(i),
-            CEB   => '0',
-            ODIV2 => open,
-            O     => refClk((2*i)+1));
+      -- U_QsfpRef1 : IBUFDS_GTE3
+      --    generic map (
+      --       REFCLK_EN_TX_PATH  => '0',
+      --       REFCLK_HROW_CK_SEL => "00",  -- 2'b00: ODIV2 = O
+      --       REFCLK_ICNTL_RX    => "00")
+      --    port map (
+      --       I     => qsfp1RefClkP(i),
+      --       IB    => qsfp1RefClkN(i),
+      --       CEB   => '0',
+      --       ODIV2 => open,
+      --       O     => refClk((2*i)+1));
 
    end generate GEN_REFCLK;
 
@@ -238,7 +238,7 @@ begin
             stableClk  => axilClk,
             stableRst  => axilRst,
             -- QPLL Clocking
-            pgpRefClk  => refClk(0),
+            pgpRefClk  => refClk(2), --QSFP0_CLOCK (156.25 MHz, fixed) refClk(0),
             qpllLock   => qpllLock,
             qpllClk    => qpllClk,
             qpllRefclk => qpllRefclk,
@@ -309,7 +309,7 @@ begin
                pgpRxN          => qsfp0RxN(i),
                pgpTxP          => qsfp0TxP(i),
                pgpTxN          => qsfp0TxN(i),
-               pgpRefClk       => refClk(0),
+               pgpRefClk       => refClk(2), --QSFP0_CLOCK (156.25 MHz, fixed) refClk(0),
                -- Streaming Interface (axilClk domain)
                pgpIbMaster     => pgpIbMasters(i),
                pgpIbSlave      => pgpIbSlaves(i),
@@ -347,7 +347,7 @@ begin
    U_TimingRx : entity lcls2_pgp_fw_lib.TimingRx
       generic map (
          TPD_G               => TPD_G,
-         USE_GT_REFCLK_G     => false,  -- FALSE: userClk25/userRst25
+         USE_GT_REFCLK_G     => true, --false,  -- FALSE: userClk25/userRst25
          SIMULATION_G        => ROGUE_SIM_EN_G,
          DMA_AXIS_CONFIG_G   => DMA_AXIS_CONFIG_G,
          AXIL_CLK_FREQ_G     => AXIL_CLK_FREQ_G,
@@ -385,6 +385,8 @@ begin
          axilWriteMaster       => axilWriteMasters(TIMING_INDEX_C),
          axilWriteSlave        => axilWriteSlaves(TIMING_INDEX_C),
          -- GT Serial Ports
+         timingRefClkInP       => qsfp1RefClkP(0), -- (0) si570 clock is only used for timing
+         timingRefClkInN       => qsfp1RefClkN(0),            
          timingRxP             => qsfp1RxP(1 downto 0),
          timingRxN             => qsfp1RxN(1 downto 0),
          timingTxP             => qsfp1TxP(1 downto 0),

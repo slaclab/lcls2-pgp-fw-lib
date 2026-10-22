@@ -23,6 +23,10 @@ create_generated_clock -name clk371 [get_pins -hier -filter {name =~ */U_TimingR
 create_generated_clock -name clk119 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[0].U_refClkDiv2/O}]
 create_generated_clock -name clk186 [get_pins -hier -filter {name =~ */U_TimingRx/GEN_VEC[1].U_refClkDiv2/O}]
 
+set_clock_groups -asynchronous -group [get_clocks -include_generated_clocks {clk156}] -group [get_clocks -include_generated_clocks {qsfp0RefClkP0}]
+set_clock_groups -asynchronous -group [get_clocks -include_generated_clocks {clk156}] -group [get_clocks -include_generated_clocks {qsfp0RefClkP1}]
+set_clock_groups -asynchronous -group [get_clocks -include_generated_clocks {clk156}] -group [get_clocks -include_generated_clocks {qsfp1RefClkP0}]
+set_clock_groups -asynchronous -group [get_clocks -include_generated_clocks {clk156}] -group [get_clocks -include_generated_clocks {qsfp1RefClkP1}]
 ##############################################################################
 #### GT Out Clocks
 ##############################################################################
@@ -116,6 +120,7 @@ set_clock_groups -physically_exclusive \
 
 set_false_path -to [get_pins {*/U_TimingRx/U_RXCLK/CE*}]
 
+set_clock_groups -asynchronous -group [get_clocks -include_generated_clocks {casMuxTimingGtRxOutClk0}] -group [get_clocks -include_generated_clocks {qsfp1RefClkP0}]
 ##############################################################################
 ###### Final (and only) TX mux
 ##############################################################################
@@ -146,7 +151,8 @@ set_clock_groups -asynchronous \
     -group [get_clocks -include_generated_clocks {timingGtTxOutClk1}] \
     -group [get_clocks -include_generated_clocks {clk238}]  \
     -group [get_clocks -include_generated_clocks {clk371}] \
-    -group [get_clocks -include_generated_clocks {dmaClk}]
+    -group [get_clocks -include_generated_clocks {dmaClk}] \
+    -group [get_clocks -include_generated_clocks {qsfp1RefClkP0}]
 
 set_clock_groups -asynchronous -group [get_clocks casMuxRxClk119] -group [get_clocks muxTxClk119]
 
