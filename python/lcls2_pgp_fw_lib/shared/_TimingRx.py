@@ -22,9 +22,10 @@ import surf.xilinx             as xil
 class TimingRx(pr.Device):
     def __init__(
             self,
-            enLclsI  = False,
-            enLclsII = True,
-            numDetectors = 4,
+            enLclsI      = False,
+            enLclsII     = True,
+            clkselMode   = "SELECT",
+            numDetectors = 8,
             **kwargs):
         super().__init__(**kwargs)
 
@@ -44,8 +45,9 @@ class TimingRx(pr.Device):
 
         # TimingCore
         self.add(LclsTimingCore.TimingFrameRx(
-            offset = 0x0008_0000,
-            expand = False,
+            offset     = 0x0008_0000,
+            clkselMode = clkselMode,
+            expand     = False,
         ))
 
         # XPM Mini Core
@@ -92,8 +94,8 @@ class TimingRx(pr.Device):
             self.ConfigLclsTimingBase(ClkSel=0, UseMiniTpg=True)
 
     def LockProc(self, cmd, var, lockValue, stable10ms=10, timeout10ms=500, retry=1):
-        retryCnt=0
-        while(retryCnt<retry):
+        retryCnt = 0
+        while retryCnt < retry:
 
             # Execute the command
             cmd()

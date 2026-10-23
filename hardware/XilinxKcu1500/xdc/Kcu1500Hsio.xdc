@@ -155,5 +155,6 @@ set_clock_groups -asynchronous \
     -group [get_clocks -include_generated_clocks {qsfp1RefClkP0}]
 
 set_clock_groups -asynchronous -group [get_clocks casMuxRxClk119] -group [get_clocks muxTxClk119]
+set_clock_groups -asynchronous -group [get_clocks -of_objects [get_pins U_HSIO/U_TimingRx/U_stableClk/O]] -group [get_clocks -of_objects [get_pins U_axilClk/PllGen.U_Pll/CLKOUT0]]
 
 ##############################################################################
