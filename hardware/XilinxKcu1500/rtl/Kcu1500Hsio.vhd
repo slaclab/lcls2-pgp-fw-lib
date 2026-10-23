@@ -60,7 +60,8 @@ entity Kcu1500Hsio is
       EN_LCLS_II_TIMING_G            : boolean                     := true;
       L1_CLK_IS_TIMING_TX_CLK_G      : boolean                     := false;
       TRIGGER_CLK_IS_TIMING_RX_CLK_G : boolean                     := false;
-      EVENT_CLK_IS_TIMING_RX_CLK_G   : boolean                     := false);
+      EVENT_CLK_IS_TIMING_RX_CLK_G   : boolean                     := false;
+      EXTREF_G                       : boolean                     := false);
    port (
       ------------------------
       --  Top Level Interfaces
@@ -354,7 +355,8 @@ begin
          AXI_BASE_ADDR_G     => AXIL_CONFIG_C(TIMING_INDEX_C).baseAddr,
          NUM_DETECTORS_G     => NUM_PGP_LANES_G,
          EN_LCLS_I_TIMING_G  => EN_LCLS_I_TIMING_G,
-         EN_LCLS_II_TIMING_G => EN_LCLS_II_TIMING_G)
+         EN_LCLS_II_TIMING_G => EN_LCLS_II_TIMING_G,
+         EXTREF_G            => EXTREF_G)
       port map (
          -- Reference Clock and Reset
          userClk156            => userClk156,

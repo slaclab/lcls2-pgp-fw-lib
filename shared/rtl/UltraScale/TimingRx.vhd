@@ -44,7 +44,8 @@ entity TimingRx is
       AXI_BASE_ADDR_G     : slv(31 downto 0);
       NUM_DETECTORS_G     : integer range 1 to 8;
       EN_LCLS_I_TIMING_G  : boolean := false;
-      EN_LCLS_II_TIMING_G : boolean := true);
+      EN_LCLS_II_TIMING_G : boolean := true;
+      EXTREF_G            : boolean := false);
    port (
       -- Reference Clock and Reset
       userClk156     : in  sl := '0';   -- USE_GT_REFCLK_G = FALSE
@@ -80,10 +81,10 @@ entity TimingRx is
       axilWriteMaster       : in  AxiLiteWriteMasterType;
       axilWriteSlave        : out AxiLiteWriteSlaveType;
       -- GT Serial Ports
-      --refClkP               : in  slv(1 downto 0)                                    := "00";  -- USE_GT_REFCLK_G = TRUE
-      --refClkN               : in  slv(1 downto 0)                                    := "11";  -- USE_GT_REFCLK_G = TRUE
-      timingRefClkInP       : in  sl;
-      timingRefClkInN       : in  sl; 
+      refClkP               : in  slv(1 downto 0)                                    := "00";  -- only valid when EXTREF_G=False
+      refClkN               : in  slv(1 downto 0)                                    := "11";  -- only valid when EXTREF_G=False
+      timingRefClkInP       : in  sl;  -- two inputs are value when EXTREF_G=True
+      timingRefClkInN       : in  sl;   
       timingRxP             : in  slv(1 downto 0);
       timingRxN             : in  slv(1 downto 0);
       timingTxP             : out slv(1 downto 0);
@@ -290,11 +291,11 @@ begin
                REFCLK_HROW_CK_SEL => "00",  -- 2'b00: ODIV2 = O
                REFCLK_ICNTL_RX    => "00")
             port map (
-            I     => timingRefClkInP, --refClkP(i),
-            IB    => timingRefClkInN, --refClkN(i),
+               I     => timingRefClkInP, --refClkP(i),
+               IB    => timingRefClkInN, --refClkN(i),
                CEB   => '0',
-            ODIV2 => gtediv2,
-            O     => gtrefClk);
+               ODIV2 => gtediv2,
+               O     => gtrefClk);
 
       GEN_GT_VEC :
       for i in 1 downto 0 generate
@@ -437,7 +438,7 @@ begin
          U_GTH : entity lcls_timing_core.TimingGtCoreWrapper
             generic map (
                TPD_G            => TPD_G,
-               EXTREF_G         => true, --false,
+               EXTREF_G         => EXTREF_G,
                AXI_CLK_FREQ_G   => AXIL_CLK_FREQ_G,
                AXIL_BASE_ADDR_G => AXIL_CONFIG_C(RX_PHY0_INDEX_C+i).baseAddr,
                ADDR_BITS_G      => 12,
@@ -453,7 +454,7 @@ begin
                stableClk       => stableClk,
                stableRst       => stableRst,
                -- GTH FPGA IO
-               gtRefClk        => gtrefClk,     -- MGT_SI570_CLOCK1
+               gtRefClk        => ite(EXTREF_G, gtrefClk, '0'),
                gtRefClkDiv2    => refClkDiv2(i),
                gtRxP           => timingRxP(i),
                gtRxN           => timingRxN(i),
@@ -461,7 +462,7 @@ begin
                gtTxN           => timingTxN(i),
                -- GTGREFCLK Interface Option
                gtgRefClk       => refClk(i),
-               cpllRefClkSel   => "001", -- "111" for gtgRefclk (internal), others for gtRefClk (external)
+               cpllRefClkSel   => ite(EXTREF_G, "001", "111"),
                -- Rx ports
                rxControl       => gtRxControl,
                rxStatus        => gtRxStatus(i),
@@ -564,7 +565,7 @@ begin
    -- Insert user RX reset
    -----------------------
    gtRxControlReset        <= timingRxControl.reset or rxUserRst;
-   gtRxControlPllReset     <= timingRxControl.pllReset; --or rxUserRst;
+   gtRxControlPllReset     <= timingRxControl.pllReset;
    gtRxControl.inhibit     <= timingRxControl.inhibit;
    gtRxControl.polarity    <= timingRxControl.polarity;
    gtRxControl.bufferByRst <= timingRxControl.bufferByRst;
