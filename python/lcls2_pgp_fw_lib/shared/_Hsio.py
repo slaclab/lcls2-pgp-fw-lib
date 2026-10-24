@@ -12,7 +12,15 @@ import pyrogue as pr
 
 import surf.protocols.pgp      as pgp
 import surf.axi                as axi
+import surf.xilinx             as xil
 import lcls2_pgp_fw_lib.shared as shared
+
+# GT DRP device per boardType (same boardType strings as axipcie.AxiPcieCore)
+_GT_DRP_CLASS = {
+    'SlacPgpCardG4':     xil.Gthe3Channel,
+    'XilinxKcu1500':     xil.Gthe3Channel,
+    'XilinxVariumC1100': xil.Gtye4Channel,
+}
 
 class Hsio(pr.Device):
     def __init__(
@@ -21,7 +29,11 @@ class Hsio(pr.Device):
             enLclsI     = False,
             enLclsII    = True,
             pgp4        = False,
+            boardType   = None,
             **kwargs):
+
+        if (boardType is not None) and (boardType not in _GT_DRP_CLASS):
+            raise ValueError(f'boardType={boardType} not in {list(_GT_DRP_CLASS)}')
 
         super().__init__(**kwargs)
 
@@ -45,6 +57,14 @@ class Hsio(pr.Device):
                     statusCountBits = 12,
                     errorCountBits  = 8,
                     writeEn         = True,
+                ))
+
+            # Add GT DRP (skipped if boardType=None)
+            if (boardType is not None):
+                self.add(_GT_DRP_CLASS[boardType](
+                    name    = (f'PgpGtDrp[{i}]'),
+                    offset  = (i*0x00010000 + 0x1000),
+                    expand  = False,
                 ))
 
             self.add(axi.AxiStreamMonAxiL(
