@@ -65,11 +65,29 @@ end Pgp2bLane;
 architecture mapping of Pgp2bLane is
 
    constant PGP_CORE_INDEX_C   : natural := 0;
-   constant RX_MON_INDEX_C     : natural := 1;
-   constant TX_MON_INDEX_C     : natural := 2;
-   constant NUM_AXIL_MASTERS_C : natural := 3;
+   constant DRP_INDEX_C        : natural := 1;
+   constant RX_MON_INDEX_C     : natural := 2;
+   constant TX_MON_INDEX_C     : natural := 3;
+   constant NUM_AXIL_MASTERS_C : natural := 4;
 
-   constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL_MASTERS_C-1 downto 0) := genAxiLiteConfig(NUM_AXIL_MASTERS_C, AXI_BASE_ADDR_G, 16, 13);
+   -- Same lane address map as Pgp4Lane (GT DRP at +0x1000)
+   constant AXIL_CONFIG_C : AxiLiteCrossbarMasterConfigArray(NUM_AXIL_MASTERS_C-1 downto 0) := (
+      PGP_CORE_INDEX_C => (
+         baseAddr      => AXI_BASE_ADDR_G + x"0000",
+         addrBits      => 12,
+         connectivity  => x"FFFF"),
+      DRP_INDEX_C      => (
+         baseAddr      => AXI_BASE_ADDR_G + x"1000",
+         addrBits      => 12,
+         connectivity  => x"FFFF"),
+      RX_MON_INDEX_C   => (
+         baseAddr      => AXI_BASE_ADDR_G + x"2000",
+         addrBits      => 13,
+         connectivity  => x"FFFF"),
+      TX_MON_INDEX_C   => (
+         baseAddr      => AXI_BASE_ADDR_G + x"4000",
+         addrBits      => 13,
+         connectivity  => x"FFFF"));
 
    signal axilWriteMasters : AxiLiteWriteMasterArray(NUM_AXIL_MASTERS_C-1 downto 0);
    signal axilWriteSlaves  : AxiLiteWriteSlaveArray(NUM_AXIL_MASTERS_C-1 downto 0);
@@ -208,9 +226,13 @@ begin
             -- Frame Receive Interface
             pgpRxMasters    => pgpRxMasters,
             pgpRxCtrl       => pgpRxCtrl,
-            -- AXI-Lite Interface
+            -- AXI-Lite DRP Interface (axilClk domain)
             axilClk         => axilClk,
-            axilRst         => axilRst);
+            axilRst         => axilRst,
+            axilReadMaster  => axilReadMasters(DRP_INDEX_C),
+            axilReadSlave   => axilReadSlaves(DRP_INDEX_C),
+            axilWriteMaster => axilWriteMasters(DRP_INDEX_C),
+            axilWriteSlave  => axilWriteSlaves(DRP_INDEX_C));
 
       U_BUFG_TX : BUFG_GT
          port map (
@@ -243,6 +265,10 @@ begin
       pgpRxRst <= axilRst;
       pgpTxClk <= axilClk;
       pgpTxRst <= axilRst;
+
+      -- No GT DRP in simulation
+      axilReadSlaves(DRP_INDEX_C)  <= AXI_LITE_READ_SLAVE_EMPTY_DECERR_C;
+      axilWriteSlaves(DRP_INDEX_C) <= AXI_LITE_WRITE_SLAVE_EMPTY_DECERR_C;
 
       U_Rogue : entity surf.RoguePgp2bSim
          generic map(
