@@ -178,6 +178,7 @@ begin
             TPD_G              => TPD_G,
             RATE_G             => RATE_G,
             EN_PGP_MON_G       => true,
+            EN_DRP_G           => true,
             NUM_VC_G           => 4,
             STATUS_CNT_WIDTH_G => 12,
             ERROR_CNT_WIDTH_G  => 8,

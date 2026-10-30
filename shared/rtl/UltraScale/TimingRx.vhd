@@ -44,7 +44,8 @@ entity TimingRx is
       AXI_BASE_ADDR_G     : slv(31 downto 0);
       NUM_DETECTORS_G     : integer range 1 to 8;
       EN_LCLS_I_TIMING_G  : boolean := false;
-      EN_LCLS_II_TIMING_G : boolean := true);
+      EN_LCLS_II_TIMING_G : boolean := true;
+      EXTREF_G            : boolean := false);  -- True: 185.714 MHz GT reference on timingRefClkInP/N (overrides USE_GT_REFCLK_G)
    port (
       -- Reference Clock and Reset
       userClk156 : in sl := '0';        -- USE_GT_REFCLK_G = FALSE
@@ -84,6 +85,8 @@ entity TimingRx is
       -- GT Serial Ports
       refClkP               : in  slv(1 downto 0)                                    := "00";  -- USE_GT_REFCLK_G = TRUE
       refClkN               : in  slv(1 downto 0)                                    := "11";  -- USE_GT_REFCLK_G = TRUE
+      timingRefClkInP       : in  sl                                                 := '0';   -- EXTREF_G = TRUE
+      timingRefClkInN       : in  sl                                                 := '1';   -- EXTREF_G = TRUE
       timingRxP             : in  slv(1 downto 0);
       timingRxN             : in  slv(1 downto 0);
       timingTxP             : out slv(1 downto 0);
@@ -143,6 +146,8 @@ architecture mapping of TimingRx is
 
    signal mmcmRst    : sl              := '0';
    signal gtediv2    : slv(1 downto 0) := (others => '0');
+   signal extRefDiv2 : sl              := '0';
+   signal gtRefClk   : sl              := '0';
    signal refClk     : slv(1 downto 0) := (others => '0');
    signal refClkDiv2 : slv(1 downto 0) := (others => '0');
    signal refRst     : slv(1 downto 0) := (others => '0');
@@ -232,7 +237,9 @@ begin
          dataOut => timingRxRstTmp);
    timingRxRst <= timingRxRstTmp or not rxStatus.resetDone;
 
-   GEN_MMCM : if (not USE_GT_REFCLK_G) and (not SIMULATION_G) generate
+   GEN_MMCM : if (not USE_GT_REFCLK_G) and (not EXTREF_G) and (not SIMULATION_G) generate
+
+      gtRefClk <= '0';                  -- CPLL uses GTGREFCLK (refClk) instead
 
       -------------------------
       -- Reference LCLS-I Clock
@@ -284,7 +291,9 @@ begin
 
    end generate GEN_MMCM;
 
-   GEN_REFCLK : if (USE_GT_REFCLK_G) and (not SIMULATION_G) generate
+   GEN_REFCLK : if (USE_GT_REFCLK_G) and (not EXTREF_G) and (not SIMULATION_G) generate
+
+      gtRefClk <= '0';                  -- CPLL uses GTGREFCLK (refClk) instead
 
       GEN_GT_VEC :
       for i in 1 downto 0 generate
@@ -325,7 +334,54 @@ begin
 
    end generate GEN_REFCLK;
 
+   GEN_EXTREF : if (EXTREF_G) and (not SIMULATION_G) generate
+
+      ----------------------------------------------------------------
+      -- Single 185.714 MHz external reference shared by both GT lanes
+      -- (O feeds the CPLL, ODIV2 = O feeds the user clocks)
+      ----------------------------------------------------------------
+      U_IBUFDS_GTE3 : IBUFDS_GTE3
+         generic map (
+            REFCLK_EN_TX_PATH  => '0',
+            REFCLK_HROW_CK_SEL => "00",  -- 2'b00: ODIV2 = O
+            REFCLK_ICNTL_RX    => "00")
+         port map (
+            I     => timingRefClkInP,
+            IB    => timingRefClkInN,
+            CEB   => '0',
+            ODIV2 => extRefDiv2,
+            O     => gtRefClk);
+
+      GEN_GT_VEC :
+      for i in 1 downto 0 generate
+
+         U_BUFG_GT : BUFG_GT
+            port map (
+               I       => extRefDiv2,
+               CE      => '1',
+               CEMASK  => '1',
+               CLR     => '0',
+               CLRMASK => '1',
+               DIV     => "000",        -- Divide by 1
+               O       => refClk(i));
+
+         U_RstSync : entity surf.RstSync
+            generic map (
+               TPD_G => TPD_G)
+            port map (
+               clk      => refClk(i),
+               asyncRst => mmcmRst,
+               syncRst  => refRst(i));
+
+         mmcmLocked(i) <= not(refRst(i));
+
+      end generate GEN_GT_VEC;
+
+   end generate GEN_EXTREF;
+
    SIM_PLL : if (SIMULATION_G) generate
+
+      gtRefClk <= '0';
 
       U_238MHz : entity surf.ClkRst
          generic map (
@@ -419,7 +475,7 @@ begin
 
       U_refClkDiv2 : BUFGCE_DIV
          generic map (
-            BUFGCE_DIVIDE => 2)
+            BUFGCE_DIVIDE => ite(EXTREF_G, 1, 2))  -- EXTREF_G: refClk is already at the 185.714 MHz user clock rate
          port map (
             I   => refClk(i),
             CE  => '1',
@@ -447,7 +503,8 @@ begin
          U_GTH : entity lcls_timing_core.TimingGtCoreWrapper
             generic map (
                TPD_G            => TPD_G,
-               EXTREF_G         => false,
+               EXTREF_G         => EXTREF_G,
+               AXI_CLK_FREQ_G   => AXIL_CLK_FREQ_G,
                AXIL_BASE_ADDR_G => AXIL_CONFIG_C(RX_PHY0_INDEX_C+i).baseAddr,
                ADDR_BITS_G      => 12,
                GTH_DRP_OFFSET_G => x"00001000")
@@ -462,7 +519,7 @@ begin
                stableClk       => stableClk,  -- IP core configured for stableClk = 156.25MHz/2
                stableRst       => stableRst,
                -- GTH FPGA IO
-               gtRefClk        => '0',  -- Using GTGREFCLK instead
+               gtRefClk        => gtRefClk,  -- '0' unless EXTREF_G
                gtRefClkDiv2    => refClkDiv2(i),
                gtRxP           => timingRxP(i),
                gtRxN           => timingRxN(i),
@@ -470,7 +527,7 @@ begin
                gtTxN           => timingTxN(i),
                -- GTGREFCLK Interface Option
                gtgRefClk       => refClk(i),
-               cpllRefClkSel   => "111",
+               cpllRefClkSel   => ite(EXTREF_G, "001", "111"),  -- "001": GTREFCLK0, "111": GTGREFCLK
                -- Rx ports
                rxControl       => gtRxControl,
                rxStatus        => gtRxStatus(i),
@@ -576,7 +633,8 @@ begin
    -- Insert user RX reset
    -----------------------
    gtRxControlReset        <= timingRxControl.reset or rxUserRst;
-   gtRxControlPllReset     <= timingRxControl.pllReset or rxUserRst;
+   -- EXTREF_G: the user reset does not reset the CPLL (external reference stays locked)
+   gtRxControlPllReset     <= timingRxControl.pllReset when (EXTREF_G) else (timingRxControl.pllReset or rxUserRst);
    gtRxControl.inhibit     <= timingRxControl.inhibit;
    gtRxControl.polarity    <= timingRxControl.polarity;
    gtRxControl.bufferByRst <= timingRxControl.bufferByRst;
