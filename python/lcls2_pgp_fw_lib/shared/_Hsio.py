@@ -12,15 +12,8 @@ import pyrogue as pr
 
 import surf.protocols.pgp      as pgp
 import surf.axi                as axi
-import surf.xilinx             as xil
+import axipcie                 as pcie
 import lcls2_pgp_fw_lib.shared as shared
-
-# GT DRP device per boardType (same boardType strings as axipcie.AxiPcieCore)
-_GT_DRP_CLASS = {
-    'SlacPgpCardG4':     xil.Gthe3Channel,
-    'XilinxKcu1500':     xil.Gthe3Channel,
-    'XilinxVariumC1100': xil.Gtye4Channel,
-}
 
 class Hsio(pr.Device):
     def __init__(
@@ -32,8 +25,8 @@ class Hsio(pr.Device):
             boardType   = None,
             **kwargs):
 
-        if (boardType is not None) and (boardType not in _GT_DRP_CLASS):
-            raise ValueError(f'boardType={boardType} not in {list(_GT_DRP_CLASS)}')
+        if (boardType is not None) and (boardType not in pcie.GT_CHANNEL_CLASS):
+            raise ValueError(f'boardType={boardType} not in {list(pcie.GT_CHANNEL_CLASS)}')
 
         super().__init__(**kwargs)
 
@@ -41,14 +34,15 @@ class Hsio(pr.Device):
         for i in laneConfig:
 
             if (pgp4):
-                self.add(pgp.Pgp4AxiL(
+                pgpMon = pgp.Pgp4AxiL(
                     name            = (f'PgpMon[{i}]'),
                     offset          = (i*0x00010000),
                     numVc           = 4,
                     statusCountBits = 12,
                     errorCountBits  = 8,
                     writeEn         = True,
-                ))
+                )
+                self.add(pgpMon)
 
             else:
                 self.add(pgp.Pgp2bAxi(
@@ -61,11 +55,16 @@ class Hsio(pr.Device):
 
             # Add GT DRP (skipped if boardType=None)
             if (boardType is not None):
-                self.add(_GT_DRP_CLASS[boardType](
+                gt = pcie.GT_CHANNEL_CLASS[boardType](
                     name    = (f'PgpGtDrp[{i}]'),
                     offset  = (i*0x00010000 + 0x1000),
                     expand  = False,
-                ))
+                )
+                self.add(gt)
+
+                # Eye scan resets the PGP4 RX path to bring its sampler alive (registration only, no hardware access)
+                if pgp4 and hasattr(gt, 'EyeScan'):
+                    pgp.Pgp4EyeScanLink.connectRxReset(gt, pgpMon)
 
             self.add(axi.AxiStreamMonAxiL(
                 name        = (f'PgpRxVcMon[{i}]'),
