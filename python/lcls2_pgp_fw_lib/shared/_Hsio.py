@@ -41,14 +41,15 @@ class Hsio(pr.Device):
         for i in laneConfig:
 
             if (pgp4):
-                self.add(pgp.Pgp4AxiL(
+                pgpMon = pgp.Pgp4AxiL(
                     name            = (f'PgpMon[{i}]'),
                     offset          = (i*0x00010000),
                     numVc           = 4,
                     statusCountBits = 12,
                     errorCountBits  = 8,
                     writeEn         = True,
-                ))
+                )
+                self.add(pgpMon)
 
             else:
                 self.add(pgp.Pgp2bAxi(
@@ -61,11 +62,16 @@ class Hsio(pr.Device):
 
             # Add GT DRP (skipped if boardType=None)
             if (boardType is not None):
-                self.add(_GT_DRP_CLASS[boardType](
+                gt = _GT_DRP_CLASS[boardType](
                     name    = (f'PgpGtDrp[{i}]'),
                     offset  = (i*0x00010000 + 0x1000),
                     expand  = False,
-                ))
+                )
+                self.add(gt)
+
+                # Eye scan resets the PGP4 RX path to bring its sampler alive (registration only, no hardware access)
+                if pgp4 and hasattr(gt, 'EyeScan'):
+                    pgp.Pgp4EyeScanLink.connectRxReset(gt, pgpMon)
 
             self.add(axi.AxiStreamMonAxiL(
                 name        = (f'PgpRxVcMon[{i}]'),
