@@ -207,6 +207,7 @@ architecture mapping of TimingRx is
 
    signal eventTimingMessagesValid : slv(NUM_DETECTORS_G-1 downto 0);
    signal eventTimingMessages      : TimingMessageArray(NUM_DETECTORS_G-1 downto 0);
+   signal eventTimingMessagesCount : Slv8Array(NUM_DETECTORS_G-1 downto 0);
    signal eventTimingMessagesRd    : slv(NUM_DETECTORS_G-1 downto 0);
 
 begin
@@ -827,6 +828,7 @@ begin
          eventRst                 => eventRst,                       -- [in]
          eventTimingMessagesValid => eventTimingMessagesValid,       -- [out]
          eventTimingMessages      => eventTimingMessages,            -- [out]
+         eventTimingMessagesCount => eventTimingMessagesCount,       -- [out]
          eventTimingMessagesRd    => eventTimingMessagesRd,          -- [in]
          eventAxisMasters         => eventTrigMsgMasters,            -- [out]
          eventAxisSlaves          => eventTrigMsgSlaves,             -- [in]
@@ -850,6 +852,7 @@ begin
          -- Input Streams
          eventTimingMessagesValid => eventTimingMessagesValid,  -- [in]
          eventTimingMessages      => eventTimingMessages,       -- [in]
+         eventTimingMessagesCount => eventTimingMessagesCount,  -- [in]
          eventTimingMessagesRd    => eventTimingMessagesRd,     -- [out]
          -- Output Streams
          eventTimingMsgMasters    => eventTimingMsgMasters,     -- [out]
